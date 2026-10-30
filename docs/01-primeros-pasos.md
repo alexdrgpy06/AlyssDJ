@@ -15,8 +15,20 @@ De izquierda a derecha: estado de la sesión de YouTube Music, herramientas, **R
 
 ## Iniciar sesión (YouTube Music Premium)
 
-1. Pulsa **Iniciar sesión** y entra con tu cuenta en la ventana que se abre.
-2. El punto verde indica sesión iniciada. Sin sesión todo funciona, pero YouTube mete anuncios y tus playlists no aparecen.
+Google **bloquea el inicio de sesión dentro de apps como esta** ("No puedes acceder: es posible que no sean seguros este navegador o la app"). Por eso AlyssDJ usa la sesión que ya tienes en tu navegador:
+
+1. En tu navegador (Firefox, Chrome, Chromium, Brave, Edge, Vivaldi u Opera), entra en `music.youtube.com` con tu cuenta Premium.
+2. En AlyssDJ pulsa **Iniciar sesión**, elige ese navegador y pulsa **Importar sesión**.
+
+![Diálogo de inicio de sesión](img/24-login.png)
+
+- Se copian **solo** las cookies de youtube.com y google.com; el resto se descarta y no se guarda ninguna contraseña. El archivo temporal se borra siempre.
+- Con **Chrome o Chromium** puede pedirte desbloquear el llavero del sistema; **Firefox** es el más sencillo.
+- El punto verde indica sesión iniciada. Con Premium no verás anuncios; si ves "anuncio" en un deck, esa cuenta no tiene Premium activo.
+- **Probar inicio directo** abre la ventana de Google con otra huella; Google puede seguir bloqueándola, y entonces usa la importación.
+- Si el navegador cierra sesión o caduca, vuelve a importar. **Ajustes → Cerrar sesión** borra la sesión de la app.
+
+Sin sesión todo funciona, pero YouTube mete anuncios y tus playlists no aparecen.
 
 ## Cargar música
 

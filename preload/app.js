@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('ytdj', {
     status: () => ipcRenderer.invoke('auth:status'),
     login: () => ipcRenderer.invoke('auth:login'),
     logout: () => ipcRenderer.invoke('auth:logout'),
+    browsers: () => ipcRenderer.invoke('auth:browsers'),
+    importBrowser: (id) => ipcRenderer.invoke('auth:import-browser', id),
+    verify: () => ipcRenderer.invoke('auth:verify'),
     onChanged: on('auth:changed'),
   },
   lib: {

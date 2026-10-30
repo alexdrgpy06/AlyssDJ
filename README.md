@@ -73,7 +73,7 @@ YTDJ_SELFTEST=1 YTDJ_USERDATA=/tmp/alyss-test npm start   # autoprueba en silenc
 ## Límites conocidos
 
 - **Dos streams a la vez con la misma cuenta:** YouTube Music podría pausar uno. Sin probar con sesión iniciada; si pasa, pon un deck en LOCAL.
-- **Inicio de sesión de Google:** la app se presenta como Chrome, pero Google puede bloquear el login en un navegador embebido.
+- **Inicio de sesión de Google:** Google bloquea el login dentro de Electron. Se usa **Iniciar sesión → Importar sesión**, que copia la sesión de tu navegador (solo cookies de youtube.com y google.com).
 - **Segunda pantalla en Wayland:** el compositor puede ignorar la posición pedida a la ventana; funciona bien en X11/XWayland y la pantalla completa va en la pantalla donde esté la ventana.
 - **Precisión:** los loops y cues del stream se aplican por software cada 5 ms, no con precisión de muestra. En archivos locales es igual de exacto.
 - **Términos de servicio:** controlar la web de YouTube Music está en zona gris, y descargar con yt-dlp va contra ellos; por eso nunca ocurre sin que lo pidas.

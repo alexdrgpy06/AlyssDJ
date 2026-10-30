@@ -331,6 +331,26 @@
     </form>
   </dialog>
 
+  <dialog id="login" aria-labelledby="login-title">
+    <div class="settings">
+      <h2 id="login-title">Iniciar sesión en YouTube Music</h2>
+      <p class="hint">Google bloquea el inicio de sesión dentro de apps como esta (“No puedes acceder: es posible que no sean seguros este navegador o la app”). Lo más fiable es usar la sesión que ya tienes en tu navegador.</p>
+      <ol class="steps">
+        <li>Abre tu navegador e inicia sesión en <code>music.youtube.com</code> con tu cuenta Premium.</li>
+        <li>Elige ese navegador aquí y pulsa <b>Importar sesión</b>.</li>
+      </ol>
+      <label>Navegador <select id="login-browser" aria-label="Navegador del que importar la sesión"></select></label>
+      <p class="hint">Solo se copian las cookies de youtube.com y google.com; todo lo demás se descarta y no se guarda ninguna contraseña. Con Chrome o Chromium puede pedirte desbloquear el llavero del sistema.</p>
+      <div class="login-msg" id="login-msg" role="status" aria-live="polite"></div>
+      <menu class="login-actions">
+        <button class="btn ghost" id="login-direct" type="button" title="Abre la ventana de Google con otra huella; puede seguir bloqueado">Probar inicio directo</button>
+        <span class="spacer"></span>
+        <button class="btn" id="login-close" type="button">Cerrar</button>
+        <button class="btn primary" id="login-import" type="button">Importar sesión</button>
+      </menu>
+    </div>
+  </dialog>
+
   <dialog id="help">
     <div class="settings">
       <h2>Atajos y ayuda</h2>

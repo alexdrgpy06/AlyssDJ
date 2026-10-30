@@ -437,3 +437,10 @@ dialog { width: 620px; }
 @media (max-width: 1560px) { .legend { display: none; } }
 fieldset { min-width: 0; }
 .folders li span { min-width: 0; flex: 1; }
+
+.steps { margin: 0; padding-left: 20px; color: var(--dim); display: flex; flex-direction: column; gap: 4px; }
+.steps code, .hint code { font-family: var(--mono); color: var(--text); }
+.login-msg { min-height: 36px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+.login-msg.err { color: var(--err); }
+.login-msg.ok { color: var(--ok); }
+.login-actions { display: flex; gap: 8px; align-items: center; }

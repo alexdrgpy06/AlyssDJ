@@ -9,12 +9,14 @@ const { Analyzer } = require('./analyzer');
 const { YtmLibrary } = require('./ytm-library');
 const ytdlp = require('./ytdlp');
 const tools = require('./tools');
+const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
 const PARTITION = 'persist:ytm';
 // UA de Chrome normal: con el UA de Electron, Google suele bloquear el inicio de sesión.
+const FIREFOX_UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0';
 const CHROME_UA = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
 const DECKS = ['A', 'B'];
 
@@ -298,26 +300,58 @@ function openLogin() {
     title: 'Iniciar sesión en YouTube Music',
     webPreferences: { partition: PARTITION, contextIsolation: true, sandbox: true },
   });
+  // Google rechaza el inicio de sesión en navegadores embebidos basados en Electron; con la huella de Firefox a veces lo deja pasar.
+  login.webContents.setUserAgent(FIREFOX_UA);
   login.loadURL('https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=' + encodeURIComponent(YTM));
   login.webContents.on('did-navigate', (_e, url) => {
     if (url.startsWith(YTM)) setTimeout(() => !login.isDestroyed() && login.close(), 800);
   });
   login.on('closed', async () => {
-    for (const id of DECKS) decks[id].view.webContents.loadURL(YTM);
-    libraryView.webContents.loadURL(YTM);
+    reloadViews();
     send('auth:changed', await authStatus());
   });
+}
+
+function reloadViews() {
+  for (const id of DECKS) decks[id].view.webContents.loadURL(YTM);
+  libraryView.webContents.loadURL(YTM);
 }
 
 ipcMain.handle('auth:status', authStatus);
 ipcMain.handle('auth:login', () => openLogin());
 ipcMain.handle('auth:logout', async () => {
   await session.fromPartition(PARTITION).clearStorageData();
-  for (const id of DECKS) decks[id].view.webContents.loadURL(YTM);
-  libraryView.webContents.loadURL(YTM);
+  reloadViews();
   const st = await authStatus();
   send('auth:changed', st);
   return st;
+});
+
+// Importar la sesión desde un navegador instalado (Google bloquea el login dentro de Electron).
+ipcMain.handle('auth:browsers', () => authImport.detectBrowsers());
+ipcMain.handle('auth:import-browser', async (_e, browserId) => {
+  try {
+    const tool = await ytdlp.findYtdlp(settings.get().ytdlpPath);
+    if (!tool) throw new Error('yt-dlp todavía no está instalado: espera a que termine de descargarse (arriba a la derecha) o usa Ajustes → Instalar / actualizar herramientas.');
+    const r = await authImport.importFromBrowser({ bin: tool.bin, browserId, session: session.fromPartition(PARTITION) });
+    reloadViews();
+    const st = await authStatus();
+    send('auth:changed', st);
+    return { ok: true, data: { count: r.count, ...st } };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+// Comprueba con la propia página de YouTube Music si la sesión quedó iniciada (LOGGED_IN de su configuración).
+ipcMain.handle('auth:verify', async () => {
+  for (let i = 0; i < 20; i++) {
+    try {
+      const v = await libraryView.webContents.executeJavaScript('(window.ytcfg && window.ytcfg.data_ && "LOGGED_IN" in window.ytcfg.data_) ? !!window.ytcfg.data_.LOGGED_IN : null');
+      if (v !== null) return { loggedIn: v };
+    } catch {}
+    await new Promise((r) => setTimeout(r, 750));
+  }
+  return { loggedIn: null };
 });
 
 // ---------- biblioteca ----------

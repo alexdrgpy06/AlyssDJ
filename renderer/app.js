@@ -423,8 +423,45 @@ class App {
     }, 200);
   }
 
+  // Inicio de sesión: Google bloquea el login embebido, así que se importa la sesión de un navegador instalado.
+  bindLogin() {
+    const dlg = $('#login');
+    const sel = $('#login-browser');
+    const msg = $('#login-msg');
+    const importBtn = $('#login-import');
+    const say = (text, kind = '') => {
+      msg.textContent = text;
+      msg.className = `login-msg ${kind}`;
+    };
+    $('#btn-login').addEventListener('click', async () => {
+      say('');
+      const list = await window.ytdj.auth.browsers();
+      sel.innerHTML = list.map((b) => `<option value="${b.id}">${b.label}${b.found ? '' : ' (no detectado)'}</option>`).join('');
+      dlg.showModal();
+    });
+    importBtn.addEventListener('click', async () => {
+      importBtn.disabled = true;
+      say('Importando la sesión… puede tardar unos segundos.');
+      const r = await window.ytdj.auth.importBrowser(sel.value);
+      importBtn.disabled = false;
+      if (!r.ok) return say(r.error, 'err');
+      say(`Se importaron ${r.data.count} cookies. Comprobando con YouTube Music…`);
+      const v = await window.ytdj.auth.verify();
+      if (v.loggedIn === false) {
+        return say('Las cookies se importaron, pero YouTube Music no reconoce la sesión (quizá caducó en el navegador). Abre music.youtube.com allí, comprueba que sigues dentro y reintenta.', 'err');
+      }
+      say(v.loggedIn ? 'Listo: sesión iniciada. Con Premium no verás anuncios.' : 'Sesión importada. Si ves anuncios en los decks, la cuenta no tiene Premium activo.', 'ok');
+      setTimeout(() => dlg.open && dlg.close(), 2200);
+    });
+    $('#login-direct').addEventListener('click', () => {
+      say('Se abrió la ventana de Google. Si dice “No puedes acceder”, cierra esa ventana y usa Importar sesión.');
+      window.ytdj.auth.login();
+    });
+    $('#login-close').addEventListener('click', () => dlg.close());
+  }
+
   bindTopbar() {
-    $('#btn-login').addEventListener('click', () => window.ytdj.auth.login());
+    this.bindLogin();
     $('#btn-settings').addEventListener('click', () => this.openSettings());
     $('#btn-midi-learn').addEventListener('click', () => this.setLearning(!this.learning));
   }
