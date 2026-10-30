@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' app:; img-src 'self' app: data: https://*.ytimg.com https://*.googleusercontent.com https://*.ggpht.com; media-src app: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>AlyssDJ</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="/shared/fx.js"></script>
+  <script src="/shared/dsp-chain.js"></script>
+  <script src="/shared/deck-engine.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5 21 7.5v9l-5-3"/></symbol>
+      <symbol id="i-popout" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+      <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
+      <symbol id="i-midi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="7.6" cy="11" r=".9" fill="currentColor"/><circle cx="9.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="14.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="16.4" cy="11" r=".9" fill="currentColor"/><circle cx="12" cy="15.5" r=".9" fill="currentColor"/></symbol>
+      <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6.5" rx="1.6"/><rect x="17" y="14" width="4" height="6.5" rx="1.6"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
+      <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+      <symbol id="i-loop" viewBox="0 0 24 24"><path d="m17 2 3 3-3 3"/><path d="M20 5H8a4 4 0 0 0-4 4v1"/><path d="m7 22-3-3 3-3"/><path d="M4 19h12a4 4 0 0 0 4-4v-1"/></symbol>
+      <symbol id="i-bars" viewBox="0 0 24 24"><path d="M4 12v0M8 8v8M12 4v16M16 8.5v7M20 11v2"/></symbol>
+ <symbol id="i-pads" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-rec" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.2 1-1.2 1.9"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></symbol>
+      <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M4.9 19.1a10 10 0 0 1 0-14.2"/></symbol>
+      <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5v14l10-7z" fill="currentColor" stroke="none"/><path d="M19 5v14"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ</div>
+    <div class="session" id="session">
+      <span class="dot" id="session-dot"></span>
+      <span id="session-label">YouTube Music…</span>
+      <button class="btn ghost sm" id="btn-login">Iniciar sesión</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="status" id="tools-status"></div>
+    <button class="btn ghost" id="btn-rec" title="Grabar la mezcla (lo que sale por tu salida de audio)"><svg class="ic"><use href="#i-rec"/></svg><span>REC</span></button>
+    <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
+    <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
+    <button class="btn ghost" id="btn-video" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-video"/></svg>Video</button>
+    <button class="btn ghost" id="btn-midi-learn" title="Clic aquí, luego en un control, luego mueve el control MIDI"><svg class="ic"><use href="#i-midi"/></svg>MIDI learn</button>
+    <button class="icon-btn" id="btn-help" aria-label="Ayuda y atajos" title="Ayuda y atajos (?)"><svg class="ic"><use href="#i-help"/></svg></button>
+    <button class="btn ghost" id="btn-settings"><svg class="ic"><use href="#i-sliders"/></svg>Ajustes</button>
+  </header>
+
+  <div class="popover" id="video-panel" hidden role="dialog" aria-label="Pantalla de video">
+    <div class="pop-row"><strong>Pantalla de video</strong><button class="icon-btn" id="vp-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
+    <p class="hint">El video sale del mismo reproductor de YouTube Music que suena en el deck, así que va sincronizado. Úsalo en otra pantalla o proyector.</p>
+    <div class="pop-row">
+      <button class="btn primary" id="vp-toggle"><svg class="ic"><use href="#i-popout"/></svg><span>Abrir ventana de video</span></button>
+      <button class="btn" id="vp-full" title="Pantalla completa"><svg class="ic"><use href="#i-fullscreen"/></svg>Completa</button>
+    </div>
+    <div class="pop-field">
+      <span class="lbl">Mostrar</span>
+      <div class="seg" id="vp-show" role="group" aria-label="Qué deck mostrar">
+        <button data-v="auto" class="on" title="Sigue al deck que está al aire">Auto</button>
+        <button data-v="A">A</button><button data-v="B">B</button><button data-v="split">A | B</button>
+      </div>
+    </div>
+    <label class="pop-field"><span class="lbl">Pantalla</span><select id="vp-display"></select></label>
+    <label class="check"><input type="checkbox" id="vp-pref" /><span>Preferir el video musical <small>Experimental: usa otra versión de la pista, así que la rejilla del análisis puede no coincidir.</small></span></label>
+  </div>
+
+  <div class="popover" id="sampler-panel" hidden role="dialog" aria-label="Sampler">
+    <div class="pop-row"><strong>Sampler</strong><button class="icon-btn" id="sp-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
+    <p class="hint">8 pads con sonidos de fábrica. Teclas <b>F1–F8</b> o MIDI. “Cargar…” pone un archivo tuyo; clic derecho en el pad restaura el sonido de fábrica.</p>
+    <div class="sp-grid" id="sp-pads"></div>
+    <label class="pop-field"><span class="lbl">Volumen</span><input type="range" id="sp-vol" min="0" max="1.2" step="0.01" value="0.8" aria-label="Volumen del sampler" /></label>
+  </div>
+
+  <div class="popover" id="automix-panel" hidden role="dialog" aria-label="AutoMix">
+    <div class="pop-row"><strong>AutoMix</strong><button class="icon-btn" id="am-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
+    <p class="hint">Sigue la radio de YouTube Music: elige pistas parecidas a la que suena y las mezcla solo, con tempo y fase igualados cuando hay BPM.</p>
+    <div class="pop-row">
+      <button class="btn primary" id="am-toggle"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+      <button class="btn" id="am-skip" title="Pasar ya a la siguiente pista"><svg class="ic"><use href="#i-skip"/></svg>Siguiente</button>
+    </div>
+    <div class="am-now" id="am-now" aria-live="polite">—</div>
+    <div class="am-bar" id="am-bar" hidden><i></i></div>
+    <div class="pop-field"><span class="lbl">Estilo</span>
+      <div class="seg" id="am-style" role="group" aria-label="Estilo de transición">
+        <button data-v="crossfade" title="Solo crossfader">Fundido</button>
+        <button data-v="bass" class="on" title="Los graves de la entrante entran a mitad de la mezcla">Bass swap</button>
+        <button data-v="filter" title="Filtro: la saliente se cierra y la entrante se abre">Filtro</button>
+      </div>
+    </div>
+    <label class="pop-field"><span class="lbl">Duración</span><span class="range-row"><input type="range" id="am-len" min="4" max="48" step="1" /><output id="am-len-out">16 s</output></span></label>
+    <label class="check"><input type="checkbox" id="am-tempo" /><span>Igualar tempo y fase <small>Necesita BPM: pistas locales (automático) o analizadas de YouTube.</small></span></label>
+    <label class="check"><input type="checkbox" id="am-analyze" /><span>Analizar la siguiente de YouTube con yt-dlp <small>Descarga la pista para tener BPM y poder igualarla. Apagado: solo fundido.</small></span></label>
+    <label class="check"><input type="checkbox" id="am-endless" /><span>Seguir con la radio cuando se acabe la lista</span></label>
+    <div class="pop-row"><strong>Cola</strong><button class="btn ghost sm" id="am-clear">Vaciar</button></div>
+    <ol class="am-queue" id="am-queue"></ol>
+  </div>
+
+  <section class="waves" aria-label="Formas de onda">
+    <div class="wave-row" data-deck="A"><span class="wave-tag">A</span><canvas class="scroll" id="scroll-A"></canvas></div>
+    <div class="wave-row" data-deck="B"><span class="wave-tag">B</span><canvas class="scroll" id="scroll-B"></canvas></div>
+  </section>
+
+  <main class="console">
+    <template id="deck-tpl">
+      <section class="deck">
+        <div class="deck-head">
+          <div class="meta">
+            <div class="title">Arrastra o carga una pista</div>
+            <div class="artist">—</div>
+            <div class="badges">
+              <div class="seg source" role="group" aria-label="Fuente de audio">
+                <button data-src="stream" class="on" data-tip="Reproduce desde YouTube Music con tu sesión Premium">STREAM</button>
+                <button data-src="local" data-tip="Reproduce el archivo (local o bajado con yt-dlp)">LOCAL</button>
+              </div>
+              <button class="btn sm analyze" data-tip="Descargar con yt-dlp y analizar BPM, beatgrid, tonalidad y forma de onda"><svg class="ic"><use href="#i-bars"/></svg><span>Analizar</span></button>
+              <button class="btn ghost sm view-ytm" data-tip="Mostrar la página de YouTube Music de este deck (para iniciar sesión o depurar)">YTM</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="bpm"><span class="bpm-val">—</span><small>BPM</small></div>
+            <div class="sub"><span class="kchip key">—</span><span class="pitch-val">0.00%</span></div>
+          </div>
+        </div>
+        <canvas class="overview"></canvas>
+        <div class="times"><span class="elapsed">0:00.0</span><span class="state"></span><span class="remain">-0:00.0</span></div>
+        <div class="deck-body">
+          <div class="transport">
+            <button class="cue" aria-label="Cue">CUE</button>
+            <button class="play" aria-label="Reproducir / pausar"><svg class="ic i-play"><use href="#i-play"/></svg><svg class="ic i-pause"><use href="#i-pause"/></svg></button>
+            <button class="sync" data-tip="Igualar tempo y fase con el otro deck">SYNC</button>
+          </div>
+          <div class="platter" role="slider" aria-label="Jog wheel" title="Jog: arrastra en círculo (sonando = bend, en pausa = búsqueda)">
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="48"/><circle class="ring-fg" cx="50" cy="50" r="48" pathLength="100"/></svg>
+            <div class="spin"></div>
+            <div class="vid" title="Doble clic: abrir la ventana de video">
+              <div class="rot"><img class="cover" alt="" /><span class="deck-letter"></span></div>
+              <img class="frame" alt="" hidden />
+              <button class="pop" aria-label="Abrir ventana de video"><svg class="ic"><use href="#i-popout"/></svg></button>
+            </div>
+            <div class="pl-info"><span class="pl-time">0:00</span><small class="pl-bpm"></small></div>
+          </div>
+          <div class="pitch">
+            <button class="nudge-up" aria-label="Nudge +" data-tip="Nudge +"><svg class="ic"><use href="#i-plus"/></svg></button>
+            <input type="range" class="vfader pitch-fader" min="-1" max="1" step="0.0005" value="0" aria-label="Pitch" />
+            <button class="nudge-down" aria-label="Nudge −" data-tip="Nudge −"><svg class="ic"><use href="#i-minus"/></svg></button>
+            <button class="btn ghost sm range">±8</button>
+          </div>
+        </div>
+        <div class="pads">
+          <div class="row hotcues">
+            <button class="hc" data-i="0"><b>1</b><small>CUE</small></button>
+            <button class="hc" data-i="1"><b>2</b><small>CUE</small></button>
+            <button class="hc" data-i="2"><b>3</b><small>CUE</small></button>
+            <button class="hc" data-i="3"><b>4</b><small>CUE</small></button>
+          </div>
+          <div class="bank-tabs seg" role="tablist" aria-label="Banco de funciones">
+            <button data-b="loop" class="on" role="tab">LOOP</button>
+            <button data-b="jump" role="tab">JUMP · ROLL</button>
+            <button data-b="fx" role="tab">FX</button>
+            <button data-b="grid" role="tab">GRID</button>
+          </div>
+          <div class="pane loops" data-pane="loop">
+            <button data-beats="1">1</button><button data-beats="2">2</button><button data-beats="4">4</button>
+            <button data-beats="8">8</button><button data-beats="16">16</button>
+            <button class="loop-half" title="Loop a la mitad">÷2</button><button class="loop-double" title="Loop al doble">×2</button>
+            <button class="loop-in">IN</button><button class="loop-out">OUT</button><button class="loop-exit">EXIT</button>
+          </div>
+          <div class="pane jumps" data-pane="jump" hidden>
+            <button data-jump="-16">−16</button><button data-jump="-8">−8</button><button data-jump="-4">−4</button><button data-jump="-1">−1</button>
+            <button data-jump="1">+1</button><button data-jump="4">+4</button><button data-jump="8">+8</button><button data-jump="16">+16</button>
+            <button class="roll" data-roll="0.5" title="Loop roll ½ beat: mantén pulsado; al soltar vuelve a donde estaría la pista">ROLL ½</button>
+            <button class="roll" data-roll="0.25" title="Loop roll ¼ de beat">¼</button>
+            <button class="roll" data-roll="0.125" title="Loop roll ⅛ de beat">⅛</button>
+          </div>
+          <div class="pane fxpane" data-pane="fx" hidden>
+            <button class="fx-on" title="Activar el efecto de este deck">FX</button>
+            <div class="seg fx-types" role="group" aria-label="Tipo de efecto">
+              <button data-fx="echo" class="on">ECO</button><button data-fx="reverb">REVERB</button><button data-fx="flanger">FLANGER</button><button data-fx="gate">GATE</button>
+            </div>
+            <input type="range" class="fx-wet" min="0" max="1" step="0.01" value="0.5" aria-label="Cantidad de efecto" />
+            <select class="fx-div" aria-label="División del eco" title="Tiempo del eco en beats">
+              <option value="0.25">¼</option><option value="0.5">½</option><option value="0.75" selected>¾</option><option value="1">1</option>
+            </select>
+          </div>
+          <div class="pane gridpane" data-pane="grid" hidden>
+            <button class="tap" data-tip="Tap tempo (para pistas sin analizar)">TAP</button>
+            <button class="grid-l" aria-label="Mover beatgrid −5 ms" data-tip="Mover beatgrid −5 ms"><svg class="ic"><use href="#i-left"/></svg></button>
+            <button class="grid-r" aria-label="Mover beatgrid +5 ms" data-tip="Mover beatgrid +5 ms"><svg class="ic"><use href="#i-right"/></svg></button>
+            <button class="grid-set" data-tip="Fijar el beat 1 de la rejilla en la posición actual">SET GRID</button>
+            <button class="keylock on" data-tip="Keylock: cambia el tempo sin cambiar el tono">KEY</button>
+            <button class="quant on" data-tip="Cuantizar cues y loops al beat">QUANT</button>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <div id="deck-A" class="deck-slot"></div>
+
+    <section class="mixer" aria-label="Mezclador">
+      <div class="channels">
+        <div class="ch" data-deck="A"></div>
+        <div class="master">
+          <div class="knob-slot" data-knob="master"></div>
+          <div class="knob-slot" data-knob="cue"></div>
+          <div class="vu master-vu" id="vu-master"><i></i></div>
+        </div>
+        <div class="ch" data-deck="B"></div>
+      </div>
+      <div class="xfader-wrap">
+        <span class="xf-a">A</span>
+        <input type="range" id="xfader" min="-1" max="1" step="0.001" value="0" aria-label="Crossfader" />
+        <span class="xf-b">B</span>
+      </div>
+    </section>
+
+    <div id="deck-B" class="deck-slot"></div>
+  </main>
+
+  <section class="library">
+    <nav class="tabs" aria-label="Librería">
+      <button data-tab="search" class="on">Buscar</button>
+      <button data-tab="liked">Me gusta</button>
+      <button data-tab="playlists">Playlists</button>
+      <button data-tab="imported" title="Playlists importadas (funcionan sin conexión)">Importadas</button>
+      <button data-tab="local">Local</button>
+      <button data-tab="analyzed">Analizados</button>
+      <button data-tab="history">Historial</button>
+      <form id="search-form" role="search">
+        <svg class="ic"><use href="#i-search"/></svg>
+        <input id="search" type="search" placeholder="Buscar en YouTube Music…" autocomplete="off" aria-label="Buscar en YouTube Music" />
+      </form>
+      <button class="btn sm" id="btn-import-pl" hidden title="Copia tus playlists y Me gusta de YouTube Music a este equipo"><svg class="ic"><use href="#i-plus"/></svg>Importar mis playlists</button>
+      <button class="btn sm" id="btn-automix-list" hidden title="Mezclar esta lista seguida con AutoMix"><svg class="ic"><use href="#i-radio"/></svg>AutoMix de esta lista</button>
+      <button class="btn sm" id="btn-add-folder" hidden><svg class="ic"><use href="#i-plus"/></svg>Añadir carpeta…</button>
+      <span class="lib-msg" id="lib-msg"></span>
+      <span class="spacer"></span>
+      <label class="check compact"><input type="checkbox" id="only-compat" /> Solo compatibles</label>
+      <span class="legend" title="Resaltado: tonalidad compatible (rueda Camelot) y BPM dentro de ±6 % del deck de referencia"><i class="compat-dot"></i> compatible con el deck en juego</span>
+    </nav>
+    <div class="table-wrap">
+      <table class="tracks">
+        <colgroup><col style="width:48px"><col><col style="width:26%"><col style="width:64px"><col style="width:70px"><col style="width:64px"><col style="width:262px"></colgroup>
+        <thead><tr><th></th><th data-sort="title">Título</th><th data-sort="artist">Artista</th><th class="num" data-sort="dur">Dur.</th><th class="num" data-sort="bpm">BPM</th><th data-sort="key">Key</th><th class="actions"></th></tr></thead>
+        <tbody id="tracks"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="ytm-float" id="ytm-float-A" hidden><header>YouTube Music · Deck A <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
+  <div class="ytm-float" id="ytm-float-B" hidden><header>YouTube Music · Deck B <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
+
+  <dialog id="settings">
+    <form method="dialog" class="settings">
+      <h2>Ajustes</h2>
+      <fieldset>
+        <legend>yt-dlp (análisis a pedido)</legend>
+        <p class="hint" id="tools-detail"></p>
+        <label>Ruta de yt-dlp <input name="ytdlpPath" placeholder="yt-dlp (en PATH)" /></label>
+        <label>Cookies para yt-dlp
+          <select name="cookieSource">
+            <option value="app">Sesión de esta app (YT Music)</option>
+            <option value="firefox">Firefox</option>
+            <option value="chrome">Chrome</option>
+            <option value="chromium">Chromium</option>
+            <option value="none">Ninguna</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" name="keepAudio" /> Conservar el audio tras analizar (habilita el modo LOCAL)</label>
+        <label class="check"><input type="checkbox" name="autoAnalyzeCue" /> Analizar al cargar una pista en un deck que no está al aire</label>
+        <div class="row-btns">
+          <button type="button" class="btn" id="btn-install-tools">Instalar / actualizar herramientas</button>
+          <button type="button" class="btn ghost" id="btn-open-cache">Abrir carpeta de caché</button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Música local</legend>
+        <p class="hint">Las pistas de tus carpetas se cargan directo al deck y se analizan solas (BPM, tonalidad, forma de onda) sin descargar nada. También puedes arrastrar archivos de audio a un deck.</p>
+        <ul class="folders" id="music-dirs"></ul>
+        <div class="row-btns"><button type="button" class="btn" id="btn-add-folder-2"><svg class="ic"><use href="#i-plus"/></svg>Añadir carpeta…</button></div>
+        <label class="check"><input type="checkbox" name="autoAnalyzeLocal" /> Analizar automáticamente al cargar una pista local</label>
+      </fieldset>
+      <fieldset>
+        <legend>Salida de audio</legend>
+        <label>Modo
+          <select name="outputMode">
+            <option value="split">Dos dispositivos (master y auriculares)</option>
+            <option value="quad">Un dispositivo de 4 canales (1-2 master, 3-4 cue)</option>
+          </select>
+        </label>
+        <label>Master <select name="masterLabel"></select></label>
+        <label>Grabar desde <select name="recordSource"></select></label>
+        <label>Auriculares (cue) <select name="cueLabel"></select></label>
+      </fieldset>
+      <fieldset>
+        <legend>Decks</legend>
+        <label>Rango de pitch
+          <select name="pitchRange"><option>6</option><option>8</option><option>16</option><option>50</option></select>
+        </label>
+        <label>Curva del crossfader
+          <select name="crossfaderCurve"><option value="smooth">Suave (mezcla)</option><option value="sharp">Corte (scratch)</option></select>
+        </label>
+        <label class="check"><input type="checkbox" name="miniVideo" /> Mostrar miniatura de video en cada deck</label>
+      </fieldset>
+      <fieldset>
+        <legend>MIDI</legend>
+        <p class="hint" id="midi-devices">—</p>
+        <div class="row-btns">
+          <button type="button" class="btn ghost" id="btn-midi-export">Exportar mapeo</button>
+          <button type="button" class="btn ghost" id="btn-midi-import">Importar mapeo</button>
+          <button type="button" class="btn ghost" id="btn-midi-clear">Borrar mapeo</button>
+        </div>
+        <p class="hint">Teclado: A → Z play, X cue, 1–4 hot cues, Q sync · B → M play, N cue, 7–0 hot cues, P sync · ←/→ crossfader · Shift+hot cue borra.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Sesión</legend>
+        <button type="button" class="btn ghost" id="btn-logout">Cerrar sesión de YouTube Music</button>
+      </fieldset>
+      <menu><button value="ok" class="btn primary">Listo</button></menu>
+    </form>
+  </dialog>
+
+  <dialog id="help">
+    <div class="settings">
+      <h2>Atajos y ayuda</h2>
+      <div class="help-grid">
+        <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
+        <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
+        <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
+        <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd><dt>Plato (doble clic)</dt><dd>Ventana de video</dd></dl></section>
+      </div>
+      <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
+      <menu><button class="btn primary" id="help-close">Cerrar</button></menu>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" hidden role="status"></div>
+</body>
+</html>

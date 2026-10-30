@@ -1,0 +1,516 @@
+'use strict';
+const path = require('path');
+const fs = require('fs');
+const { Readable } = require('stream');
+const { execFile } = require('child_process');
+const { app, BrowserWindow, WebContentsView, ipcMain, protocol, session, shell, screen, dialog } = require('electron');
+const settings = require('./settings');
+const { Analyzer } = require('./analyzer');
+const { YtmLibrary } = require('./ytm-library');
+const ytdlp = require('./ytdlp');
+const tools = require('./tools');
+const { LocalLibrary } = require('./local-library');
+
+const ROOT = path.join(__dirname, '..');
+const YTM = 'https://music.youtube.com/';
+const PARTITION = 'persist:ytm';
+// UA de Chrome normal: con el UA de Electron, Google suele bloquear el inicio de sesión.
+const CHROME_UA = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
+const DECKS = ['A', 'B'];
+
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+app.setName('AlyssDJ');
+if (process.env.YTDJ_USERDATA) app.setPath('userData', process.env.YTDJ_USERDATA);
+app.userAgentFallback = CHROME_UA;
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
+]);
+
+let win = null;
+let ffmpegBin = 'ffmpeg';
+let localLib = null;
+let toolDirs = [];
+let coversDir = '';
+let videoWin = null;
+let videoShow = 'A'; // 'A' | 'B' | 'split'
+let libraryView = null;
+let analyzer = null;
+const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
+
+function send(channel, ...args) {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, ...args);
+}
+
+// ---------- protocolo app:// (UI + caché con soporte de Range para poder hacer seek) ----------
+function safeJoin(base, rel) {
+  const p = path.normalize(path.join(base, decodeURIComponent(rel)));
+  return p.startsWith(base + path.sep) ? p : null;
+}
+
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png',
+  '.m4a': 'audio/mp4', '.mp4': 'audio/mp4', '.webm': 'audio/webm', '.opus': 'audio/ogg', '.json': 'application/json',
+  '.mp3': 'audio/mpeg', '.flac': 'audio/flac', '.wav': 'audio/wav', '.aac': 'audio/aac', '.ogg': 'audio/ogg', '.aiff': 'audio/aiff', '.aif': 'audio/aiff', '.wma': 'audio/x-ms-wma' };
+
+function serveFile(file, request) {
+  if (!file || !fs.existsSync(file)) return new Response('not found', { status: 404 });
+  const size = fs.statSync(file).size;
+  const type = MIME[path.extname(file)] || 'application/octet-stream';
+  const range = request.headers.get('range');
+  const m = range && range.match(/bytes=(\d*)-(\d*)/);
+  if (m) {
+    const start = m[1] ? Number(m[1]) : Math.max(0, size - Number(m[2]));
+    const end = m[1] && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+    return new Response(Readable.toWeb(fs.createReadStream(file, { start, end })), {
+      status: 206,
+      headers: { 'content-type': type, 'content-length': String(end - start + 1), 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes' },
+    });
+  }
+  return new Response(Readable.toWeb(fs.createReadStream(file)), {
+    headers: { 'content-type': type, 'content-length': String(size), 'accept-ranges': 'bytes' },
+  });
+}
+
+function registerAppProtocol() {
+  protocol.handle('app', (request) => {
+    const url = new URL(request.url);
+    if (url.host === 'ui') {
+      const rel = url.pathname.replace(/^\//, '');
+      // La caché va bajo el mismo origen que la UI: si no, Web Audio recibe silencio por CORS.
+      // Archivos locales: solo los que están en el índice (el renderer pide por id, nunca por ruta).
+      if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
+      if (rel.startsWith('localfile/')) return serveFile(localLib.pathOf(decodeURIComponent(rel.slice(10))), request);
+      if (rel.startsWith('cache/')) return serveFile(safeJoin(analyzer.cacheDir, rel.slice(6)), request);
+      const base = rel.startsWith('shared/') ? ROOT : path.join(ROOT, 'renderer');
+      return serveFile(safeJoin(base, rel || 'index.html'), request);
+    }
+    return new Response('not found', { status: 404 });
+  });
+}
+
+// ---------- sesiones y permisos ----------
+function setupSession(ses) {
+  ses.setUserAgent(CHROME_UA);
+  const allowed = new Set(['media', 'midi', 'midiSysex', 'speaker-selection', 'fullscreen']);
+  ses.setPermissionRequestHandler((_wc, perm, cb) => cb(allowed.has(perm)));
+  ses.setPermissionCheckHandler((_wc, perm) => allowed.has(perm));
+}
+
+// ---------- vistas de deck (music.youtube.com con tu sesión) ----------
+function createDeckView(id) {
+  const view = new WebContentsView({
+    webPreferences: {
+      partition: PARTITION,
+      preload: path.join(ROOT, 'preload', 'deck.js'),
+      contextIsolation: true,
+      sandbox: false,
+      backgroundThrottling: false,
+      additionalArguments: [`--ytdj-deck=${id}`],
+    },
+  });
+  view.setVisible(false);
+  view.setBackgroundColor('#000000');
+  win.contentView.addChildView(view);
+  const wc = view.webContents;
+  wc.setAudioMuted(false);
+  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  wc.on('did-start-navigation', (e) => {
+    if (e.isMainFrame && !e.isSameDocument) decks[id].ready = false;
+  });
+  wc.on('render-process-gone', () => {
+    decks[id].ready = false;
+    send('deck:state', id, { error: 'La vista del deck se cerró; recargando…' });
+    setTimeout(() => wc.loadURL(YTM), 1000);
+  });
+  decks[id] = { view, ready: false, replay: {}, pendingLoad: null };
+  wc.loadURL(YTM);
+}
+
+function deckCmd(id, cmd) {
+  const d = decks[id];
+  if (!d) return;
+  if (['mix', 'routing', 'rate', 'loop', 'videoView', 'frames', 'videoPref'].includes(cmd.type)) d.replay[cmd.type] = { ...(d.replay[cmd.type] || {}), ...cmd };
+  if (!d.ready) {
+    if (cmd.type === 'load') d.pendingLoad = cmd;
+    return;
+  }
+  d.view.webContents.send('deck:cmd', cmd);
+}
+
+function deckIdOf(sender) {
+  return DECKS.find((id) => decks[id]?.view.webContents.id === sender.id);
+}
+
+ipcMain.on('deck:ready', (e) => {
+  const id = deckIdOf(e.sender);
+  if (!id) return;
+  const d = decks[id];
+  d.ready = true;
+  for (const cmd of Object.values(d.replay)) e.sender.send('deck:cmd', cmd);
+  if (d.pendingLoad) {
+    e.sender.send('deck:cmd', d.pendingLoad);
+    d.pendingLoad = null;
+  }
+  send('deck:ready', id);
+});
+ipcMain.on('deck:state', (e, state) => {
+  const id = deckIdOf(e.sender);
+  if (id) send('deck:state', id, state);
+});
+// La vista no tiene reproductor (p. ej. tras un error): recargar en la URL de la pista.
+ipcMain.on('deck:reload-at', (e, videoId) => {
+  const id = deckIdOf(e.sender);
+  if (id) decks[id].view.webContents.loadURL(`${YTM}watch?v=${encodeURIComponent(videoId)}`);
+});
+ipcMain.on('deck:cmd', (_e, id, cmd) => deckCmd(id, cmd));
+ipcMain.on('deck:show', (_e, id, rect) => {
+  const d = decks[id];
+  if (!d) return;
+  if (rect) {
+    attach(id, win);
+    d.view.setBounds({ x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) });
+    d.view.setVisible(true);
+  } else if (videoOpen()) layoutVideo();
+  else d.view.setVisible(false);
+});
+ipcMain.on('deck:frame', (e, dataUrl) => {
+  const id = deckIdOf(e.sender);
+  if (id) send('deck:frame', id, dataUrl);
+});
+
+// ---------- ventana de video (segunda pantalla) ----------
+// Las vistas de los decks son las mismas que reproducen el audio: se mueven a esta ventana y su CSS
+// aísla el video de YouTube Music, así que el video va a su fps real y sincronizado con el audio.
+const videoOpen = () => !!videoWin && !videoWin.isDestroyed();
+
+function attach(id, host) {
+  const v = decks[id]?.view;
+  if (!v || !host || host.isDestroyed()) return;
+  for (const w of [win, videoWin]) {
+    if (w && !w.isDestroyed() && w !== host) {
+      try { w.contentView.removeChildView(v); } catch {}
+    }
+  }
+  host.contentView.addChildView(v);
+}
+
+function layoutVideo() {
+  if (!videoOpen()) return;
+  const [w, h] = videoWin.getContentSize();
+  const half = Math.floor(w / 2);
+  const rects = videoShow === 'split'
+    ? { A: { x: 0, y: 0, width: half, height: h }, B: { x: half, y: 0, width: w - half, height: h } }
+    : { [videoShow]: { x: 0, y: 0, width: w, height: h } };
+  for (const id of DECKS) {
+    const v = decks[id].view;
+    attach(id, videoWin);
+    if (rects[id]) {
+      v.setBounds(rects[id]);
+      v.setVisible(true);
+      deckCmd(id, { type: 'videoView', on: true });
+    } else v.setVisible(false);
+  }
+}
+
+function videoDisplays() {
+  const primary = screen.getPrimaryDisplay().id;
+  return screen.getAllDisplays().map((d, i) => ({
+    id: d.id,
+    label: `${d.label || 'Pantalla ' + (i + 1)} · ${d.size.width}×${d.size.height}${d.id === primary ? ' (principal)' : ''}`,
+    primary: d.id === primary,
+  }));
+}
+
+function moveVideoTo(displayId, fullscreen) {
+  const d = screen.getAllDisplays().find((x) => x.id === displayId);
+  if (!d || !videoOpen()) return;
+  const wasFs = videoWin.isFullScreen();
+  if (wasFs) videoWin.setFullScreen(false);
+  const { x, y, width, height } = d.workArea;
+  videoWin.setBounds({ x: x + Math.round(width * 0.1), y: y + Math.round(height * 0.1), width: Math.round(width * 0.6), height: Math.round((width * 0.6 * 9) / 16) });
+  if (fullscreen ?? wasFs) setTimeout(() => videoOpen() && videoWin.setFullScreen(true), 200);
+}
+
+function openVideo({ displayId, fullscreen, show } = {}) {
+  if (['A', 'B', 'split'].includes(show)) videoShow = show;
+  if (!videoOpen()) {
+    const cur = screen.getDisplayMatching(win.getBounds());
+    const target = (displayId != null && screen.getAllDisplays().find((d) => d.id === displayId)) ||
+      screen.getAllDisplays().find((d) => d.id !== cur.id) || cur;
+    videoWin = new BrowserWindow({
+      width: 960, height: 540, x: target.workArea.x + 60, y: target.workArea.y + 60,
+      backgroundColor: '#000000', title: 'AlyssDJ — Video', autoHideMenuBar: true,
+      webPreferences: { sandbox: true },
+    });
+    videoWin.loadURL('data:text/html,<body style="margin:0;background:%23000">');
+    videoWin.on('resize', layoutVideo);
+    videoWin.on('enter-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
+    videoWin.on('leave-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
+    videoWin.on('closed', () => {
+      videoWin = null;
+      for (const id of DECKS) {
+        if (win && !win.isDestroyed()) attach(id, win);
+        decks[id].view.setVisible(false);
+        deckCmd(id, { type: 'videoView', on: false });
+      }
+      send('video:state', videoState());
+    });
+    layoutVideo();
+    if (fullscreen) setTimeout(() => videoOpen() && videoWin.setFullScreen(true), 200);
+  } else {
+    if (displayId != null) moveVideoTo(displayId, fullscreen);
+    else if (fullscreen != null) videoWin.setFullScreen(fullscreen);
+    layoutVideo();
+    videoWin.show();
+  }
+  send('video:state', videoState());
+}
+
+function videoState() {
+  const open = videoOpen();
+  return {
+    open, show: videoShow, fullscreen: open && videoWin.isFullScreen(),
+    displayId: open ? screen.getDisplayMatching(videoWin.getBounds()).id : null,
+  };
+}
+
+ipcMain.handle('video:open', (_e, opts) => (openVideo(opts), videoState()));
+ipcMain.handle('video:close', () => { if (videoOpen()) videoWin.close(); return videoState(); });
+ipcMain.handle('video:state', videoState);
+ipcMain.handle('video:displays', videoDisplays);
+ipcMain.on('video:show', (_e, show) => {
+  if (!['A', 'B', 'split'].includes(show)) return;
+  videoShow = show;
+  layoutVideo();
+});
+
+// ---------- sesión de YouTube Music ----------
+async function authStatus() {
+  const ses = session.fromPartition(PARTITION);
+  const cookies = await ses.cookies.get({ domain: '.youtube.com' });
+  return { loggedIn: cookies.some((c) => c.name === 'SAPISID' || c.name === '__Secure-3PAPISID') };
+}
+
+function openLogin() {
+  const login = new BrowserWindow({
+    width: 520,
+    height: 720,
+    parent: win,
+    title: 'Iniciar sesión en YouTube Music',
+    webPreferences: { partition: PARTITION, contextIsolation: true, sandbox: true },
+  });
+  login.loadURL('https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=' + encodeURIComponent(YTM));
+  login.webContents.on('did-navigate', (_e, url) => {
+    if (url.startsWith(YTM)) setTimeout(() => !login.isDestroyed() && login.close(), 800);
+  });
+  login.on('closed', async () => {
+    for (const id of DECKS) decks[id].view.webContents.loadURL(YTM);
+    libraryView.webContents.loadURL(YTM);
+    send('auth:changed', await authStatus());
+  });
+}
+
+ipcMain.handle('auth:status', authStatus);
+ipcMain.handle('auth:login', () => openLogin());
+ipcMain.handle('auth:logout', async () => {
+  await session.fromPartition(PARTITION).clearStorageData();
+  for (const id of DECKS) decks[id].view.webContents.loadURL(YTM);
+  libraryView.webContents.loadURL(YTM);
+  const st = await authStatus();
+  send('auth:changed', st);
+  return st;
+});
+
+// ---------- biblioteca ----------
+const library = new YtmLibrary(() => libraryView?.webContents);
+const wrap = (fn) => async (_e, ...args) => {
+  try {
+    return { ok: true, data: await fn(...args) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+};
+ipcMain.handle('lib:search', wrap((q) => library.search(q)));
+ipcMain.handle('lib:liked', wrap(() => library.liked()));
+ipcMain.handle('lib:playlists', wrap(() => library.playlists()));
+ipcMain.handle('lib:playlist', wrap((id) => library.playlist(id)));
+ipcMain.handle('lib:radio', wrap((videoId) => library.radio(videoId)));
+
+// Importar playlists: copia título y pistas de cada lista (y Me gusta) a disco para usarlas sin conexión y en AutoMix.
+const cratesFile = () => path.join(app.getPath('userData'), 'playlists.json');
+const readCrates = () => {
+  try { return JSON.parse(fs.readFileSync(cratesFile(), 'utf8')); } catch { return []; }
+};
+ipcMain.handle('lib:import-playlists', wrap(async () => {
+  const lists = [{ browseId: 'VLLM', title: 'Canciones que me gustan', thumb: '' }, ...(await library.playlists())];
+  const out = [];
+  for (let i = 0; i < lists.length; i++) {
+    const pl = lists[i];
+    send('lib:import-progress', { done: i, total: lists.length, title: pl.title });
+    try {
+      const tracks = await library.browseSongs(pl.browseId, 40);
+      out.push({ id: pl.browseId, title: pl.title, thumb: pl.thumb, tracks, importedAt: new Date().toISOString() });
+    } catch (e) {
+      send('lib:import-progress', { done: i, total: lists.length, title: pl.title, error: e.message });
+    }
+  }
+  fs.writeFileSync(cratesFile(), JSON.stringify(out));
+  send('lib:import-progress', { done: lists.length, total: lists.length, finished: true });
+  return out.map(({ tracks, ...l }) => ({ ...l, count: tracks.length }));
+}));
+ipcMain.handle('crates:list', () => readCrates().map(({ tracks, ...l }) => ({ ...l, count: tracks.length })));
+ipcMain.handle('crates:get', (_e, id) => readCrates().find((c) => c.id === id)?.tracks || []);
+
+// ---------- análisis (yt-dlp, siempre a pedido) ----------
+ipcMain.handle('analysis:request', (_e, id, opts) => analyzer.request(id, opts));
+ipcMain.handle('analysis:cancel', (_e, id) => analyzer.cancel(id));
+ipcMain.handle('analysis:get', (_e, id) => analyzer.get(id));
+ipcMain.handle('analysis:list', () => analyzer.list());
+ipcMain.handle('analysis:set-meta', (_e, id, patch) => analyzer.setMeta(id, patch));
+ipcMain.handle('analysis:remove-audio', (_e, id) => analyzer.removeAudio(id));
+ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));
+
+// ---------- ajustes y herramientas ----------
+ipcMain.handle('settings:get', () => settings.get());
+ipcMain.handle('settings:set', (_e, patch) => settings.set(patch));
+ipcMain.handle('tools:check', async () => {
+  const st = settings.get();
+  const yt = await ytdlp.findYtdlp(st.ytdlpPath);
+  const ff = await tools.findFfmpeg(st.ffmpegPath);
+  return { ytdlp: yt, ffmpeg: ff, ffmpegHint: ff ? '' : tools.installHint() };
+});
+
+// Instala lo que falte (yt-dlp se descarga solo; ffmpeg se detecta y, si no está, se avisa cómo instalarlo).
+let ensuring = null;
+function ensureTools() {
+  if (ensuring) return ensuring;
+  ensuring = (async () => {
+    const st = settings.get();
+    const ff = await tools.findFfmpeg(st.ffmpegPath);
+    if (ff) ffmpegBin = ff.bin;
+    try {
+      const r = await tools.ensureYtdlp({
+        dirs: toolDirs,
+        configured: st.ytdlpPath,
+        onProgress: (p) => send('tools:progress', { stage: 'ytdlp', progress: p }),
+      });
+      if (r.installed) send('tools:progress', { stage: 'installed', version: r.version });
+      tools.maybeUpdate(r.bin, toolDirs).catch(() => {});
+    } catch (e) {
+      send('tools:progress', { stage: 'error', error: e.message });
+    }
+    send('tools:progress', { stage: 'done' });
+  })().finally(() => (ensuring = null));
+  return ensuring;
+}
+ipcMain.handle('tools:install', () => ensureTools());
+
+// ---------- grabación de la mezcla (Linux: monitor de PulseAudio/PipeWire + ffmpeg) ----------
+// Las vistas de YouTube Music suenan en otros procesos, así que la mezcla completa solo se puede capturar a la salida.
+let rec = null;
+const run = (cmd, args) => new Promise((resolve) => execFile(cmd, args, { timeout: 8000 }, (err, out) => resolve(err ? '' : String(out))));
+async function monitorSources() {
+  const out = await run('pactl', ['list', 'short', 'sources']);
+  return out.split('\n').map((l) => l.split('\t')[1]).filter((n) => n && n.endsWith('.monitor'));
+}
+ipcMain.handle('rec:sources', wrap(async () => {
+  const def = (await run('pactl', ['get-default-sink'])).trim();
+  return { sources: await monitorSources(), default: def ? `${def}.monitor` : '' };
+}));
+ipcMain.handle('rec:start', wrap(async () => {
+  if (process.platform !== 'linux') throw new Error('La grabación de la mezcla está disponible en Linux (PulseAudio/PipeWire) por ahora.');
+  if (rec) throw new Error('Ya se está grabando');
+  const def = (await run('pactl', ['get-default-sink'])).trim();
+  const source = settings.get().recordSource || (def && `${def}.monitor`);
+  if (!source) throw new Error('No se encontró la salida de audio a grabar (¿está pactl/PipeWire disponible?)');
+  const dir = path.join(app.getPath('music'), 'AlyssDJ');
+  fs.mkdirSync(dir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
+  const file = path.join(dir, `mix-${stamp}.mp3`);
+  const p = require('child_process').spawn(ffmpegBin, ['-y', '-loglevel', 'error', '-f', 'pulse', '-i', source, '-ac', '2', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '256k', file]);
+  let err = '';
+  p.stderr.on('data', (d) => (err += d));
+  rec = { p, file, t0: Date.now(), err: () => err };
+  p.on('close', () => { if (rec?.p === p) { rec = null; send('rec:ended', { file, error: err.trim() }); } });
+  return { file, source };
+}));
+ipcMain.handle('rec:stop', wrap(async () => {
+  if (!rec) return null;
+  const r = rec;
+  rec = null;
+  const closed = new Promise((res) => r.p.once('close', res));
+  r.p.stdin.write('q');
+  setTimeout(() => r.p.kill('SIGINT'), 4000);
+  await closed;
+  const size = fs.existsSync(r.file) ? fs.statSync(r.file).size : 0;
+  if (!size) throw new Error(r.err().trim().split('\n').pop() || 'La grabación quedó vacía');
+  return { file: r.file, seconds: Math.round((Date.now() - r.t0) / 1000), size };
+}));
+ipcMain.handle('rec:state', () => (rec ? { recording: true, file: rec.file, t0: rec.t0 } : { recording: false }));
+ipcMain.handle('path:reveal', (_e, f) => shell.showItemInFolder(f));
+
+// ---------- música local ----------
+const musicDirs = () => settings.get().musicDirs || [];
+const localSnapshot = () => ({ rows: localLib.list(musicDirs()), dirs: musicDirs(), pending: localLib.pending() });
+ipcMain.handle('local:list', wrap(() => (localLib.scan(musicDirs()), localSnapshot())));
+ipcMain.handle('local:add-folder', wrap(async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Añadir carpeta de música', properties: ['openDirectory'] });
+  if (!r.canceled && r.filePaths[0]) {
+    const dirs = [...new Set([...musicDirs(), r.filePaths[0]])];
+    settings.set({ musicDirs: dirs });
+    localLib.scan(dirs);
+  }
+  return localSnapshot();
+}));
+ipcMain.handle('local:remove-folder', wrap((dir) => (settings.set({ musicDirs: musicDirs().filter((d) => d !== dir) }), localSnapshot())));
+ipcMain.handle('local:register', wrap((p) => localLib.register(p)));
+
+// ---------- arranque ----------
+app.whenReady().then(() => {
+  registerAppProtocol();
+  setupSession(session.defaultSession);
+  const ytm = session.fromPartition(PARTITION);
+  setupSession(ytm);
+
+  coversDir = path.join(app.getPath('userData'), 'covers');
+  toolDirs = [path.join(ROOT, 'bin'), path.join(app.getPath('userData'), 'bin')];
+  ytdlp.setManagedDirs(toolDirs);
+  localLib = new LocalLibrary({
+    file: path.join(app.getPath('userData'), 'local-index.json'),
+    coversDir,
+    ffmpeg: () => ffmpegBin,
+    emit: (ev) => send('local:event', ev),
+  });
+  analyzer = new Analyzer({
+    ffmpeg: () => ffmpegBin,
+    cacheDir: path.join(app.getPath('userData'), 'cache'),
+    settings,
+    session: ytm,
+    emit: (ev) => send('analysis:event', ev),
+  });
+
+  win = new BrowserWindow({
+    width: 1600,
+    height: 1000,
+    minWidth: 1200,
+    minHeight: 760,
+    backgroundColor: '#0b0d10',
+    title: 'AlyssDJ',
+    webPreferences: { preload: path.join(ROOT, 'preload', 'app.js'), contextIsolation: true, sandbox: true },
+  });
+  win.loadURL('app://ui/index.html');
+  win.on('closed', () => { if (videoOpen()) videoWin.destroy(); });
+
+  for (const id of DECKS) createDeckView(id);
+  libraryView = new WebContentsView({ webPreferences: { partition: PARTITION, contextIsolation: true, sandbox: true } });
+  libraryView.setVisible(false);
+  win.contentView.addChildView(libraryView);
+  libraryView.webContents.setAudioMuted(true);
+  libraryView.webContents.loadURL(YTM);
+
+  win.webContents.once('did-finish-load', () => ensureTools());
+  if (process.env.YTDJ_DEVTOOLS) win.webContents.openDevTools({ mode: 'detach' });
+  if (process.env.YTDJ_SELFTEST) require(process.env.YTDJ_SELFTEST_MODULE || './selftest')(win, decks);
+});
+
+app.on('window-all-closed', () => app.quit());
+
