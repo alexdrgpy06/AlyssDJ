@@ -3,7 +3,7 @@ change: 2026-10-31-arreglos-bot-y-pista-equivocada
 type: fix
 domains: [library, video]
 paths: [main/ytdlp.js, preload/deck.js, scripts/**, .github/**, renderer/**, main/settings.js, docs/**, README.md]
-commits: []
+commits: [43228c1]
 status: approved
 rev: 1
 approved_rev: 1
