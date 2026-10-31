@@ -28,8 +28,8 @@ const sh = (args, env, opts = {}) => spawnSync('bash', args, { encoding: 'utf8',
 tests.script = async () => {
   if (process.platform !== 'linux') return console.log('install-linux script: omitida (no es Linux)');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-home-'));
-  const env = { HOME: home, XDG_DATA_HOME: '', XDG_CONFIG_HOME: '', ALYSSDJ_OPT: '', PATH: process.env.PATH };
-  delete env.XDG_DATA_HOME; delete env.XDG_CONFIG_HOME; delete env.ALYSSDJ_OPT;
+  // XDG_* y ALYSSDJ_OPT apuntan a este HOME aislado (en CI ya vienen definidos y se heredarían)
+  const env = { HOME: home, XDG_DATA_HOME: path.join(home, '.local/share'), XDG_CONFIG_HOME: path.join(home, '.config'), ALYSSDJ_OPT: path.join(home, '.local/opt/AlyssDJ'), ALYSSDJ_LIBRARY: path.join(home, 'Música/AlyssDJ'), PATH: process.env.PATH };
   const fake = path.join(home, 'AlyssDJ-9.9.9.AppImage');
   fs.writeFileSync(fake, '#!/bin/sh\necho "AlyssDJ de mentira $@"\n', { mode: 0o755 });
   const OPT = path.join(home, '.local/opt/AlyssDJ');
@@ -77,7 +77,7 @@ tests.script = async () => {
   assert.match(spawnSync(wrapper, ['x'], { encoding: 'utf8', env }).stdout, /descargado x/, 'instaló lo descargado del release');
   // sin release y sin conexión, fuera de un clon: mensaje claro y código ≠ 0 (se copia el script a una carpeta aislada)
   const alone = path.join(home, 'solo'); fs.mkdirSync(alone); fs.copyFileSync(path.join(root, 'scripts/install-linux.sh'), path.join(alone, 'install-linux.sh'));
-  r = await asyncSh([path.join(alone, 'install-linux.sh')], { ...env, ALYSSDJ_API: 'http://127.0.0.1:1', HOME: path.join(home, 'otro') });
+  r = await asyncSh([path.join(alone, 'install-linux.sh')], { ...env, ALYSSDJ_API: 'http://127.0.0.1:1', HOME: path.join(home, 'otro'), ALYSSDJ_OPT: path.join(home, 'otro/.local/opt/AlyssDJ'), XDG_DATA_HOME: path.join(home, 'otro/.local/share') });
   assert.notStrictEqual(r.status, 0); assert.match(r.out, /--from-file/, 'explica qué falta');
   // desde un clon y sin release: construye (comando sustituido por uno de mentira que deja un AppImage en dist/)
   const clone = path.join(home, 'clon'); fs.mkdirSync(path.join(clone, 'scripts'), { recursive: true }); fs.mkdirSync(path.join(clone, 'build'));
