@@ -2,8 +2,8 @@
 change: 2026-10-31-automix-buscar-y-agregar
 type: feature
 domains: [automix, library]
-paths: [renderer/automix.js, renderer/mixplan.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, scripts/test-automix-add.js, docs/**]
-commits: []
+paths: [main/ytm-library.js, .github/**, main/main.js, main/ytm-library.js, preload/app.js, docs/**, renderer/**, scripts/**, renderer/automix.js, renderer/mixplan.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, scripts/test-automix-add.js, docs/**]
+commits: [2a8658a, e2d35a7]
 status: approved
 rev: 1
 approved_rev: 1

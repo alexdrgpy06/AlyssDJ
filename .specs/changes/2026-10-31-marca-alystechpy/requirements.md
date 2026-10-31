@@ -2,8 +2,8 @@
 change: 2026-10-31-marca-alystechpy
 type: feature
 domains: [install, ui]
-paths: [LICENSE, README.md, package.json, renderer/index.html, renderer/app.js, renderer/styles.css, docs/**, scripts/test-brand.js, main/main.js]
-commits: []
+paths: [.github/**, preload/app.js, main/main.js, renderer/**, scripts/**, LICENSE, README.md, package.json, renderer/index.html, renderer/app.js, renderer/styles.css, docs/**, scripts/test-brand.js, main/main.js]
+commits: [e74e5f9]
 status: approved
 rev: 1
 approved_rev: 1

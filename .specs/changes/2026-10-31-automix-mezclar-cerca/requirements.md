@@ -2,8 +2,8 @@
 change: 2026-10-31-automix-mezclar-cerca
 type: feature
 domains: [automix]
-paths: [renderer/mixplan.js, renderer/automix.js, renderer/app.js, scripts/test-mix-now.js]
-commits: []
+paths: [.github/**, docs/**, renderer/**, renderer/mixplan.js, renderer/automix.js, renderer/app.js, scripts/test-mix-now.js]
+commits: [65b48ec]
 status: approved
 rev: 1
 approved_rev: 1
