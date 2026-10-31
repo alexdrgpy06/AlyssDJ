@@ -41,7 +41,7 @@
   </svg>
 
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ</div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ<small class="brand-by">by AlystechPY</small></div>
     <div class="session" id="session">
       <span class="dot" id="session-dot"></span>
       <span id="session-label">YouTube Music…</span>
@@ -405,6 +405,18 @@
     </div>
   </dialog>
 
+  <dialog id="about" aria-labelledby="about-name">
+    <div class="about">
+      <img src="/build/icon.png" alt="" width="96" height="96" />
+      <h2 id="about-name">AlyssDJ</h2>
+      <p class="about-ver" id="about-ver"></p>
+      <p class="about-org">Un software de <b>AlystechPY</b> · por <b>Alejandro Ramírez</b></p>
+      <p class="hint">Licencia MIT · © 2026 AlystechPY — Alejandro Ramírez</p>
+      <p><a href="#" id="about-link" class="about-link">github.com/alexdrgpy06/AlyssDJ</a></p>
+      <menu><button class="btn primary" id="about-close" type="button">Cerrar</button></menu>
+    </div>
+  </dialog>
+
   <dialog id="help">
     <div class="settings">
       <h2>Atajos y ayuda</h2>
@@ -415,7 +427,7 @@
         <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd><dt>Plato (doble clic)</dt><dd>Ventana de video</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
-      <menu><button class="btn primary" id="help-close">Cerrar</button></menu>
+      <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>
     </div>
   </dialog>
 

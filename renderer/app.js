@@ -248,6 +248,13 @@ class App {
   bindHelp() {
     const dlg = $('#help');
     $('#btn-help').addEventListener('click', () => dlg.showModal());
+    $('#btn-about').addEventListener('click', async () => {
+      const info = await window.ytdj.app.info();
+      $('#about-ver').textContent = `Versión ${info.version}`;
+      $('#about-link').onclick = (e) => (e.preventDefault(), window.ytdj.app.openRepo());
+      $('#about').showModal();
+    });
+    $('#about-close').addEventListener('click', () => $('#about').close());
     $('#help-close').addEventListener('click', () => dlg.close());
     window.addEventListener('keydown', (e) => {
       if (e.key === '?' && !e.target.matches?.('input, textarea, select')) {

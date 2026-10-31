@@ -36,6 +36,7 @@ jobs:
           node scripts/test-install-linux.js config
           node scripts/test-install-linux.js script
           node scripts/test-updater.js unit
+          node scripts/test-brand.js files
           node scripts/test-layouts.js unit
           node scripts/test-video-local.js detect
           for m in chain prepare; do node --experimental-default-type=module scripts/test-queue-order.js $m; done
@@ -54,11 +55,13 @@ jobs:
           sudo chown root node_modules/electron/dist/chrome-sandbox && sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
           xvfb-run -a node scripts/test-login-flow.js
           xvfb-run -a node scripts/test-updater.js ui
+          xvfb-run -a node scripts/test-brand.js e2e
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |
           node scripts/test-login-flow.js
           node scripts/test-updater.js ui
+          node scripts/test-brand.js e2e
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

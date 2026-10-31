@@ -1,5 +1,7 @@
 # Guías de AlyssDJ
 
+*Un software de AlystechPY, por Alejandro Ramírez.*
+
 ![Vista general](img/01-vista-general.png)
 
 | Guía | Qué cubre |

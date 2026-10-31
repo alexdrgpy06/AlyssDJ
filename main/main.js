@@ -84,6 +84,7 @@ function registerAppProtocol() {
       // La caché va bajo el mismo origen que la UI: si no, Web Audio recibe silencio por CORS.
       // Archivos locales: solo los que están en el índice (el renderer pide por id, nunca por ruta).
       if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
+      if (rel === 'build/icon.png') return serveFile(path.join(ROOT, 'build/icon.png'), request);
       if (rel.startsWith('localvideo/')) {
         const f = analyzer.videoPath(decodeURIComponent(rel.slice(11)));
         return f ? serveFile(f, request) : new Response('sin video', { status: 404 });
@@ -302,6 +303,10 @@ ipcMain.on('video:deck-source', (_e, id, src) => {
 ipcMain.on('video:sync', (_e, id, s) => {
   if (videoOpen() && localVideo[id]) videoWin.webContents.send('vwin:sync', id, s);
 });
+// ---------- acerca de ----------
+ipcMain.handle('app:info', () => ({ name: 'AlyssDJ', version: app.getVersion(), org: 'AlystechPY', author: 'Alejandro Ramírez', license: 'MIT', repo: 'https://github.com/alexdrgpy06/AlyssDJ' }));
+ipcMain.handle('app:open-repo', () => shell.openExternal('https://github.com/alexdrgpy06/AlyssDJ'));
+
 // ---------- actualizaciones ----------
 let updater = null;
 let anyPlaying = false;

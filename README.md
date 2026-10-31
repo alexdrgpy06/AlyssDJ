@@ -1,5 +1,7 @@
 # AlyssDJ
 
+*Un software de **AlystechPY**, por Alejandro Ramírez.*
+
 > **Instalar en Windows, macOS y Linux:** [docs/00-instalacion.md](docs/00-instalacion.md) · **Guías con capturas:** [docs/](docs/README.md) · [Comparativa con Rekordbox, djay y Mixxx](docs/COMPARATIVA.md)
 
 DJ de dos decks con **YouTube Music Premium** y **tu música local**, con análisis de BPM, tonalidad y beatgrid.
@@ -82,4 +84,4 @@ YTDJ_SELFTEST=1 YTDJ_USERDATA=/tmp/alyss-test npm start   # autoprueba en silenc
 
 ## Licencia
 
-MIT © 2026 Alejandro Ramirez. Ver [LICENSE](LICENSE).
+MIT © 2026 **AlystechPY** — Alejandro Ramírez. Ver [LICENSE](LICENSE).

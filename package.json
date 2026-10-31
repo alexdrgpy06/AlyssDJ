@@ -3,7 +3,7 @@
   "productName": "AlyssDJ",
   "version": "0.2.0",
   "private": true,
-  "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local",
+  "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local — un software de AlystechPY, por Alejandro Ramírez",
   "main": "main/main.js",
   "scripts": {
     "postinstall": "node scripts/setup.js --soft",
@@ -19,7 +19,8 @@
     "electron-builder": "^26.18.0"
   },
   "author": {
-    "name": "Alejandro Ramirez"
+    "name": "Alejandro Ramírez",
+    "url": "https://github.com/alexdrgpy06"
   },
   "license": "MIT",
   "homepage": "https://github.com/alexdrgpy06/AlyssDJ",
@@ -28,9 +29,9 @@
     "url": "git+https://github.com/alexdrgpy06/AlyssDJ.git"
   },
   "build": {
-    "appId": "com.alejandroramirez.alyssdj",
+    "appId": "py.alystech.alyssdj",
     "productName": "AlyssDJ",
-    "copyright": "Copyright © 2026 Alejandro Ramirez",
+    "copyright": "Copyright © 2026 AlystechPY — Alejandro Ramírez",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -41,7 +42,8 @@
       "renderer/**",
       "shared/**",
       "package.json",
-      "!**/*.md"
+      "!**/*.md",
+      "build/icon.png"
     ],
     "asar": false,
     "win": {
@@ -54,13 +56,15 @@
         }
       ],
       "icon": "build/icon.png",
-      "artifactName": "AlyssDJ-Setup-${version}.${ext}"
+      "artifactName": "AlyssDJ-Setup-${version}.${ext}",
+      "publisherName": "AlystechPY"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "shortcutName": "AlyssDJ"
     },
     "mac": {
       "target": [
@@ -91,7 +95,7 @@
       "artifactName": "AlyssDJ-${version}.${ext}",
       "synopsis": "DJ de dos decks con YouTube Music y música local",
       "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local",
-      "maintainer": "Alejandro Ramirez",
+      "maintainer": "Alejandro Ramírez <alexdrg06@gmail.com>",
       "vendor": "AlystechPY"
     },
     "extraMetadata": {

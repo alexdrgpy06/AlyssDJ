@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# AlyssDJ — un software de AlystechPY, por Alejandro Ramírez.
 # Instala AlyssDJ como app para tu usuario en Linux (sin sudo): el AppImage del último release en ~/.local/opt/AlyssDJ,
 # una entrada en el menú de aplicaciones con su icono y el comando `alyssdj`. La app se actualiza sola desde ahí.
 #

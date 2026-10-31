@@ -15,6 +15,10 @@ contextBridge.exposeInMainWorld('ytdj', {
     onFrame: on('deck:frame'),
     onReady: on('deck:ready'),
   },
+  app: {
+    info: () => ipcRenderer.invoke('app:info'),
+    openRepo: () => ipcRenderer.invoke('app:open-repo'),
+  },
   update: {
     state: () => ipcRenderer.invoke('update:state'),
     check: () => ipcRenderer.invoke('update:check'),

@@ -1,5 +1,7 @@
 # Instalación en Windows, macOS y Linux
 
+*AlyssDJ es un software de AlystechPY, por Alejandro Ramírez.*
+
 AlyssDJ es una app de Electron: se instala igual en los tres sistemas, con Node.js 22 o más nuevo y Git.
 La primera vez descarga sola **yt-dlp** y **ffmpeg** a la carpeta `bin/` del proyecto.
 
