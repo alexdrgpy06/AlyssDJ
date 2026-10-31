@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-30-automix-puntos-de-mezcla
+last_change: 2026-10-31-mix-points-editables
 ---
 # automix · spec
 
@@ -16,3 +16,15 @@ WHEN AutoMix prepara una transición THE SYSTEM SHALL salir de la pista que suen
 WHILE decide la siguiente pista THE SYSTEM SHALL puntuar las listas por BPM, tonalidad y energía y poner primero la mejor, respetando el orden que el usuario fijó a mano.
 IF el salto de BPM supera el 8 % THEN THE SYSTEM SHALL preferir otra candidata y, si no la hay, mezclar largo con filtro sin forzar el tempo y avisar.
 WHEN se iguala el tempo THE SYSTEM SHALL limitar el ajuste a ±8 % y devolver el tempo natural gradualmente.
+
+## decks compactos con AutoMix
+
+WHILE AutoMix está activo o su vista abierta THE SYSTEM SHALL mostrar los decks y el mezclador compactos y dar a la vista de AutoMix al menos el 40% de la altura de la ventana.
+
+## cola analizada y ordenada como cadena
+
+WHEN se añade una pista a la cola de AutoMix THE SYSTEM SHALL analizarla sin esperar su turno, de a 2 como máximo, y ordenar las pistas analizadas como una cadena de coste mínimo (BPM gradual, tonalidad, energía) respetando lo fijado a mano y la pista ya precargada.
+
+## puntos de mezcla editables
+
+WHEN el usuario edita la entrada o las salidas (hasta 6) de una pista THE SYSTEM SHALL guardarlas aparte y hacer que AutoMix use solo las editadas, en su orden de preferencia, también tras reanalizar.

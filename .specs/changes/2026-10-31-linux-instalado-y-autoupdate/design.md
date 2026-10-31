@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-linux-instalado-y-autoupdate
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 41bcd14fc0c772d5a0ee92940c5b3858501c3d16f836d6e3a7cc1965f26f32fa
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-linux-instalado-y-autoupdate
 

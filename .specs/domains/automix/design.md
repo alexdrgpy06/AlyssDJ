@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-30-automix-puntos-de-mezcla
+last_change: 2026-10-31-automix-cola-organizada
 ---
 # automix · design
 
@@ -12,3 +12,7 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## Planificador de mezcla
 
 `renderer/mixplan.js` (funciones puras: `planTransition`, `scoreTransition`, `pickNext`) decide salida, entrada, duración y orden; `automix.js` lo aplica en `tick()`; un análisis sin estructura se recalcula con el archivo ya guardado (`reuse`).
+
+## orderChain
+
+`mixplan.orderChain` es exacto hasta 8 pistas libres y voraz con mejora local (intercambio e inserción, 120 ms) más allá; `AutoMix.prepareAhead` analiza toda la cola; `reorganizeNow` y `undoReorder` dan el control manual.

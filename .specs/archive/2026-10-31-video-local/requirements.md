@@ -3,7 +3,7 @@ change: 2026-10-31-video-local
 type: feature
 domains: [video, library]
 paths: [docs/**, main/main.js, main/settings.js, preload/video-window.js, renderer/localvideo.js, renderer/video.html, renderer/video.js, scripts/video-live-selftest.js, scripts/video-local-selftest.js, main/ytm-library.js, main/analyzer.js, main/main.js, main/ytdlp.js, main/library-save.js, main/analyzer.js, main/ytm-library.js, preload/**, renderer/deck.js, renderer/app.js, renderer/video.html, renderer/video.js, renderer/index.html, renderer/styles.css, scripts/test-video-local.js]
-commits: [81614fb, 9686331]
+commits: [81614fb, 9686331, 0067b34]
 status: approved
 rev: 1
 approved_rev: 1

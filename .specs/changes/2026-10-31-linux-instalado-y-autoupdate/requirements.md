@@ -4,11 +4,12 @@ type: feature
 domains: [install]
 paths: [package.json, build/**, scripts/install-linux.sh, scripts/uninstall-linux.sh, main/updater.js, main/main.js, renderer/app.js, renderer/index.html, preload/app.js, .github/workflows/release.yml, docs/**, README.md, scripts/test-updater.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 8cba73fe3bbb072fc60b3ecb7c45203da14d467dee640b87b8ad1f95ce373d2b
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-linux-instalado-y-autoupdate
 
