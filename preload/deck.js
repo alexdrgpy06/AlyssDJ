@@ -119,7 +119,13 @@ const adapter = {
   tick(eng) {
     const v = document.querySelector('video');
     if (v && v !== eng.media) eng.attach(v);
-    if (!v || !expected) return;
+    if (!v) return;
+    // Sin pista cargada en el deck, YT Music retoma sola lo último que sonaba: debe quedarse callado y en pausa.
+    if (!expected) {
+      if (!v.paused) v.pause();
+      if (!v.muted) v.muted = true;
+      return;
+    }
     // Mientras YT Music cambia de pista, silenciar: arranca sola y no debe sonar si el deck está al aire.
     if (settling) {
       if (!v.muted) v.muted = true;
