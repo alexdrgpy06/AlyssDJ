@@ -186,7 +186,8 @@ tests.reanalyze = async () => {
   fs.writeFileSync(wav, buf);
 
   const events = [];
-  const an = new Analyzer({ cacheDir: path.join(dir, 'cache'), settings: { get: () => ({}) }, session: null, emit: (e) => events.push(e), ffmpeg: () => 'ffmpeg', localLib: null, libraryDir: () => dir });
+  const ff = (await require('../main/tools').findFfmpeg('', [path.join(process.cwd(), 'bin')]))?.bin || 'ffmpeg';
+  const an = new Analyzer({ cacheDir: path.join(dir, 'cache'), settings: { get: () => ({}) }, session: null, emit: (e) => events.push(e), ffmpeg: () => ff, localLib: null, libraryDir: () => dir });
   // análisis anterior (versión 1): sin `mix`, con el vínculo a la copia local
   const old = { id: 'ABCDEFGHIJK', bpm: 124, offset: 0.3, duration: n / SR, camelot: '8A', title: 'Pista', artist: 'Artista', thumb: 't.jpg', saved: { path: wav, localId: 'L1' } };
   fs.writeFileSync(an.jsonPath('ABCDEFGHIJK'), JSON.stringify(old));
