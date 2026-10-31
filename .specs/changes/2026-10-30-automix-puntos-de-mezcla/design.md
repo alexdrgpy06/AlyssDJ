@@ -33,3 +33,19 @@ Dos piezas. (1) El análisis añade `mix` con la estructura de la pista. (2) Un 
 - **Frases de 16 beats:** es la unidad habitual de mezcla en música de baile; alinear a ella evita cortar frases a la mitad.
 - **Puntuación simple y explicable:** pesos fijos visibles en el código, para ajustarlos con la escucha.
 - **Sin estructura, se conserva el comportamiento actual:** nada se rompe con pistas no analizadas.
+
+## Domain deltas
+### automix
+#### ADDED spec: Mezclar en puntos óptimos con el BPM siempre en cuenta
+WHEN AutoMix prepara una transición THE SYSTEM SHALL salir de la pista que suena en su mejor punto (alineado a una frase, no necesariamente el final), entrar en el punto de entrada de la siguiente y durar compases enteros acotados al tramo disponible.
+WHILE decide la siguiente pista THE SYSTEM SHALL puntuar las listas por BPM, tonalidad y energía y poner primero la mejor, respetando el orden que el usuario fijó a mano.
+IF el salto de BPM supera el 8 % THEN THE SYSTEM SHALL preferir otra candidata y, si no la hay, mezclar largo con filtro sin forzar el tempo y avisar.
+WHEN se iguala el tempo THE SYSTEM SHALL limitar el ajuste a ±8 % y devolver el tempo natural gradualmente.
+#### ADDED design: Planificador de mezcla
+`renderer/mixplan.js` (funciones puras: `planTransition`, `scoreTransition`, `pickNext`) decide salida, entrada, duración y orden; `automix.js` lo aplica en `tick()`; un análisis sin estructura se recalcula con el archivo ya guardado (`reuse`).
+### analysis
+#### ADDED spec: Estructura de la pista
+WHEN una pista se analiza THE SYSTEM SHALL calcular frases de 16 beats con su energía, el fin de la intro, el comienzo del outro, un punto de entrada y puntos de salida candidatos.
+WHEN el tempo detectado sea ambiguo (3:2 o 2:1) THE SYSTEM SHALL decidir con los golpes graves.
+#### ADDED design: Estructura y tempo
+`shared/structure.js` calcula la energía por beat (banda < 2 kHz) y por frase y deriva `introEnd`, `outroStart`, `mixIn` y `mixOut`; `analysis.mix` y `version: 2` se guardan con el análisis; `tempo()` afina cada candidato 3:2 y 2:1 y elige por la energía grave.

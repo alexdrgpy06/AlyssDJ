@@ -21,3 +21,11 @@ Quitar las cookies de la ruta de yt-dlp y darle un runtime de JavaScript. Es un 
 ## Decisiones
 - **Sin sesión por defecto:** es lo que pidió el usuario y lo que se verificó que devuelve formatos; la calidad es la mejor sin sesión (~130 kbps opus/AAC).
 - **Sin reintento con cookies:** evita volver a mezclar la cuenta del usuario con las descargas.
+
+## Domain deltas
+### analysis
+#### ADDED spec: yt-dlp sin sesión
+WHEN el sistema ejecuta yt-dlp para analizar o guardar una pista THE SYSTEM SHALL hacerlo sin cookies de ninguna sesión por defecto, con un runtime de JavaScript disponible.
+IF yt-dlp responde que el formato no está disponible THEN THE SYSTEM SHALL reintentar una vez con una selección más abierta y, si falla, explicar la causa.
+#### ADDED design: Cookies solo para el streaming
+`ytdlp.cookieArgs` devuelve `[]` para `none` y `app` (los ajustes antiguos se migran); `ytdlp.runtime` pasa `--js-runtimes` con Node del sistema o Electron como Node; `withFormatRetry` aplica el reintento.

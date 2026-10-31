@@ -64,7 +64,7 @@ Con **Ordenar por compatibilidad** (activado), AutoMix pone **primero la pista q
 | **Tonalidad** | Misma clave mejor que vecina o relativa (rueda Camelot), y esas mejor que una que choca |
 | **Energía** | Que no haya un salto grande entre la energía donde sale una y donde entra la otra |
 
-Cada pista de la cola muestra su **BPM**, **tonalidad**, **energía** y la **diferencia de BPM** con lo que suena (`+1.6 %`). Lo que colocas a mano (**⤒**, arrastrar, subir/bajar) lleva **📌 fija** y no se reordena solo.
+Cada pista de la cola muestra su **BPM**, **tonalidad**, **energía** y la **diferencia de BPM** con lo que suena (`+1.6 %`). Si reordenas a mano (**⤒**, arrastrar, subir/bajar), el orden que dejas queda **📌 fijo** y no se toca; solo lo que se añada después se ordena solo.
 
 ### Sin cambios bruscos
 

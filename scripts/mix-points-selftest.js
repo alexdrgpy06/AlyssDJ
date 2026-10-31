@@ -50,6 +50,7 @@ module.exports = (win) => {
       }
       res.order = order;
       flush('ordenada');
+      await wait(800); // deja que la vista se refresque
       // REQ-1: la estructura llegó a los decks y a la vista
       res.view = await js(`return { items: [...document.querySelectorAll('#amv-list li')].map((l) => ({ t: l.querySelector('b').textContent, bpm: l.querySelector('.am-bpm, .bpm') && l.querySelector('.bpm').textContent, key: l.querySelector('.kchip') && l.querySelector('.kchip').textContent, gap: l.querySelector('.am-gap').textContent, jump: l.querySelector('.am-gap').classList.contains('jump') })), points: document.getElementById('amv-points').checked, order: document.getElementById('amv-order').checked, curSub: document.getElementById('amv-cur-sub').textContent }`);
       res.analysisA = await js(`const a = __app.decks.A.analysis || __app.decks.B.analysis; return a && a.mix ? { version: a.mix.version, outroStart: a.mix.outroStart, mixIn: a.mix.mixIn, outs: a.mix.mixOut.map((c) => c.kind) } : null`);

@@ -23,3 +23,11 @@ Sustituir el popover por una pestaña **AutoMix** de la librería (misma zona qu
 - **Pestaña en vez de popover:** deja la cola siempre visible mientras se mira la librería y los decks, y admite más pistas y controles.
 - **Anticipación de 3 pistas:** suficiente para que haya archivo listo sin saturar la cola del analizador (que descarga de a una).
 - **Nada de cancelar transiciones:** complica el audio y no se pidió.
+
+## Domain deltas
+### automix
+#### ADDED spec: Vista de AutoMix con cola editable
+WHEN el usuario abre AutoMix THE SYSTEM SHALL mostrar la pista que suena, la siguiente, la cola con el estado de cada pista y los controles, y permitir reordenar, quitar, añadir, fijar a continuación y mezclar ahora (Mayús + →) sin interrumpir la mezcla.
+WHEN una pista de YouTube entra en la cola THE SYSTEM SHALL descargarla sin sesión, analizarla y guardarla con antelación y cargarla en modo LOCAL, esperando hasta 20 s y saltando a otra lista si no está a tiempo.
+#### ADDED design: Pestaña AutoMix y preparación anticipada
+La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor mantiene `prep` por pista a partir de los eventos del analizador, precarga solo pistas listas y retira de la cola la pista que entró (no «la primera») al terminar una transición.

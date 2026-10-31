@@ -25,3 +25,16 @@ El analizador ya baja el audio con yt-dlp. En vez de a la caché interna (y borr
 - **Sin conversión:** se guarda el original para no perder calidad.
 - **Cola única:** las descargas por reproducción usan la cola del analizador (una a la vez), así no compiten con el streaming en vivo.
 - **Interruptores por defecto:** guardar al analizar activado; guardar lo que reproduzca, activado por petición expresa del usuario y visible en Ajustes.
+
+## Domain deltas
+### library
+#### ADDED spec: Guardar pistas de YouTube en la librería local
+WHEN el usuario analiza una pista de YouTube o una lleva 30 s sonando por streaming y la opción correspondiente está activa THE SYSTEM SHALL conservar el audio en la mejor calidad que ofrezca YouTube, con etiquetas y carátula, en la carpeta de la librería de YouTube.
+WHEN se guarda un archivo THE SYSTEM SHALL añadirlo a la pestaña Local con el análisis ya calculado y sin duplicarlo.
+WHEN una pista de YouTube ya está guardada THE SYSTEM SHALL reproducirla desde el archivo (modo LOCAL).
+IF la carpeta no es escribible o no hay espacio THEN THE SYSTEM SHALL mostrar la causa sin dejar parciales y sin colgarse.
+#### ADDED design: Descarga a la librería y registro local
+`ytdlp.downloadToLibrary` descarga directo a la carpeta destino (`-f bestaudio/best -S abr,asr`, metadatos incrustados, carátula en `.thumbs`); `Analyzer.registerSaved` registra el archivo en el índice local y copia el análisis bajo el id local; `ensureWritableDir` comprueba el primer ancestro existente antes de crear carpetas.
+### analysis
+#### ADDED spec: Vínculo entre la pista de YouTube y su copia local
+THE SYSTEM SHALL guardar en el análisis de la pista de YouTube la ruta y el id local de su copia, y dejar de considerarla guardada si el archivo desaparece.

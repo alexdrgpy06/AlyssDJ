@@ -27,10 +27,10 @@ module.exports = (win) => {
       await wait(5000);
 
       // REQ-1: la vista muestra lo que suena, lo que sigue y la cola
-      res.view = await js(`return { visible: !document.getElementById('am-view').hidden, tableHidden: document.querySelector('.table-wrap').hidden, cur: document.getElementById('amv-cur').textContent, next: document.getElementById('amv-next').textContent, status: document.getElementById('amv-status').textContent, items: [...document.querySelectorAll('#amv-list li')].map((l) => l.querySelector('b').textContent), badges: [...document.querySelectorAll('#amv-list .am-badge')].map((b) => b.textContent), head: document.querySelector('#amv-list li').classList.contains('head'), toggle: document.querySelector('#amv-toggle span').textContent }`);
+      res.view = await js(`return { visible: !document.getElementById('am-view').hidden, tableHidden: document.querySelector('.table-wrap').hidden, cur: document.getElementById('amv-cur').textContent, next: document.getElementById('amv-next').textContent, status: document.getElementById('amv-status').textContent, items: [...document.querySelectorAll('#amv-list li')].map((l) => l.querySelector('b').firstChild.textContent), badges: [...document.querySelectorAll('#amv-list .am-badge')].map((b) => b.textContent), head: document.querySelector('#amv-list li').classList.contains('head'), toggle: document.querySelector('#amv-toggle span').textContent }`);
 
       // REQ-2: editar la cola con los botones de la vista
-      const order = () => js(`return [__app.automix.queue.map((t) => t.title), [...document.querySelectorAll('#amv-list li b')].map((b) => b.textContent)]`);
+      const order = () => js(`return [__app.automix.queue.map((t) => t.title), [...document.querySelectorAll('#amv-list li b')].map((b) => b.firstChild.textContent)]`);
       flush('vista');
       res.edit = { start: await order() };
       await js(`document.querySelector('#amv-list li[data-i="0"] [data-act="down"]').click(); await new Promise((r) => setTimeout(r, 300)); return 1`);
@@ -68,7 +68,7 @@ module.exports = (win) => {
       const states = [];
       for (let i = 0; i < 150; i++) {
         await wait(1000);
-        const s = await js(`const am = __app.automix; return { state: am.prepOf(am.queue.find((t) => t.videoId === ${JSON.stringify(YT.videoId)}) || { videoId: ${JSON.stringify(YT.videoId)} }).state, badge: [...document.querySelectorAll('#amv-list li')].map((l) => [l.querySelector('b').textContent, l.querySelector('.am-badge').textContent]).find((x) => /Flickering/.test(x[0])) }`);
+        const s = await js(`const am = __app.automix; return { state: am.prepOf(am.queue.find((t) => t.videoId === ${JSON.stringify(YT.videoId)}) || { videoId: ${JSON.stringify(YT.videoId)} }).state, badge: [...document.querySelectorAll('#amv-list li')].map((l) => [l.querySelector('b').firstChild.textContent, l.querySelector('.am-badge').textContent]).find((x) => /Flickering/.test(x[0])) }`);
         if (!states.length || states[states.length - 1] !== s.state) states.push(s.state);
         if (s.state === 'ready' || s.state === 'error') {
           res.ytBadge = s.badge && s.badge[1];

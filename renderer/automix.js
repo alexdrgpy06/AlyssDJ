@@ -144,7 +144,8 @@ export class AutoMix {
     if (i < 0 || i >= this.queue.length || to < 0 || to >= this.queue.length || i === to) return;
     const [t] = this.queue.splice(i, 1);
     this.queue.splice(to, 0, t);
-    this.pinned.add(t.videoId); // lo que el usuario coloca a mano se respeta
+    // Si el usuario reordena a mano, el orden que deja queda fijo; solo lo que se añada después se ordena solo.
+    for (const x of this.queue) this.pinned.add(x.videoId);
     this.emit();
   }
   playNext(i) {
@@ -220,7 +221,10 @@ export class AutoMix {
   }
 
   onAnalysis(ev) {
-    if (ev.stage === 'done' && ev.analysis) this.ana.set(ev.id, ev.analysis);
+    if (ev.stage === 'done' && ev.analysis) {
+      this.ana.set(ev.id, ev.analysis);
+      this.emit(); // la vista muestra BPM, tonalidad y energía en cuanto llegan
+    }
     if (!this.prep.has(ev.id)) return;
     if (ev.stage === 'queued') this.setPrep(ev.id, { state: 'queued' });
     else if (ev.stage === 'download') this.setPrep(ev.id, { state: 'download', progress: ev.progress || 0 });

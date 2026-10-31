@@ -343,7 +343,13 @@ tests.engine = async () => {
     assert.deepStrictEqual(am.queue.map((t) => t.videoId), ['far', 'good', 'clash'], 'la fijada se queda');
     am.pinned.clear();
     am.move(2, 0);
-    assert.ok(am.pinned.has('clash'), 'mover a mano fija la pista');
+    assert.ok(am.pinned.has('clash') && am.pinned.has('good') && am.pinned.has('far'), 'reordenar a mano fija el orden que dejó el usuario');
+    // lo que llega después sí se ordena solo, en los huecos libres
+    am.queue.push(mk('late', 124, '8A'));
+    am.lastReorder = -Infinity;
+    am.reorder();
+    assert.strictEqual(am.queue.at(-1).videoId, 'late');
+    assert.deepStrictEqual(am.queue.slice(0, 3).map((t) => t.videoId), ['clash', 'far', 'good'], 'lo fijado no se movió');
     // el snapshot informa de BPM, tonalidad, salto y energía por pista
     const sn = am.snapshot();
     const far = sn.queue.find((t) => t.videoId === 'far');
