@@ -32,9 +32,9 @@ assert.strictEqual(A.toElectron({ ...parsed[0], name: '__Host-x' }).domain, unde
 
 // detectBrowsers con un HOME falso
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-home-'));
-assert.strictEqual(A.detectBrowsers(home).every((b) => !b.found), true, 'sin perfiles: lista completa marcada como no encontrada');
+assert.strictEqual(A.detectBrowsers(home, 'linux').every((b) => !b.found), true, 'sin perfiles: lista completa marcada como no encontrada');
 fs.mkdirSync(path.join(home, '.mozilla/firefox'), { recursive: true });
-assert.deepStrictEqual(A.detectBrowsers(home).map((b) => b.id), ['firefox']);
+assert.deepStrictEqual(A.detectBrowsers(home, 'linux').map((b) => b.id), ['firefox']);
 
 (async () => {
   const set = [];
