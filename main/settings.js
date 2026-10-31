@@ -26,6 +26,9 @@ const DEFAULTS = {
   saveOnAnalyze: true,
   saveOnPlay: true,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
+  // Guardar también el video de las pistas que lo tengan de verdad (no las de solo portada).
+  saveVideo: true,
+  videoMaxHeight: 1080, // 480 | 720 | 1080
 };
 
 let cache = null;

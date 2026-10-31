@@ -124,6 +124,7 @@
             <div class="vid" title="Doble clic: abrir la ventana de video">
               <div class="rot"><img class="cover" alt="" /><span class="deck-letter"></span></div>
               <img class="frame" alt="" hidden />
+              <video class="lvid" muted playsinline hidden></video>
               <button class="pop" aria-label="Abrir ventana de video"><svg class="ic"><use href="#i-popout"/></svg></button>
             </div>
             <div class="pl-info"><span class="pl-time">0:00</span><small class="pl-bpm"></small></div>
@@ -309,6 +310,8 @@
         <p class="hint">Tu sesión de YouTube Music se usa <b>solo para el streaming</b> de los decks. Las descargas de yt-dlp van sin sesión: así no se mezcla tu cuenta y evitan errores de “formato no disponible”.</p>
         <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
         <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
+        <label class="check"><input type="checkbox" name="saveVideo" /><span>Guardar también el video de las pistas que lo tengan <small>Solo videos musicales de verdad; las pistas de solo portada no descargan video. Se usa en la ventana de video y la miniatura del deck.</small></span></label>
+        <label>Calidad máxima del video <select name="videoMaxHeight"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select></label>
         <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>
         <div class="row-btns">
           <button type="button" class="btn" id="btn-pick-library">Cambiar carpeta…</button>

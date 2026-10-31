@@ -702,6 +702,8 @@ class App {
     f.layoutMode.value = s.layoutMode || 'auto';
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
+    f.saveVideo.checked = s.saveVideo !== false;
+    f.videoMaxHeight.value = String(s.videoMaxHeight || 1080);
     f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
     f.autoAnalyzeCue.checked = !!s.autoAnalyzeCue;
     f.outputMode.value = s.output?.mode || 'split';
@@ -760,6 +762,8 @@ class App {
         cookieSource: f.cookieSource.value,
         saveOnAnalyze: f.saveOnAnalyze.checked,
         saveOnPlay: f.saveOnPlay.checked,
+        saveVideo: f.saveVideo.checked,
+        videoMaxHeight: Number(f.videoMaxHeight.value),
         libraryDir: f.libraryDir.value,
         autoAnalyzeCue: f.autoAnalyzeCue.checked,
         output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value },

@@ -129,4 +129,38 @@ function downloadToLibrary({ bin, videoId, dir, extraArgs, onProgress, format = 
   });
 }
 
-module.exports = { findYtdlp, setManagedDirs, cookieArgs, runtime, isFormatError, withFormatRetry, FORMAT_ERROR, download, downloadToLibrary };
+// Descarga el video (sin audio) de una pista con video real a <librería>/.video/<id>.mp4. Si falla no deja parciales.
+function downloadVideo({ bin, videoId, dir, extraArgs = [], onProgress, maxHeight = 1080 }) {
+  L.safeId(videoId);
+  try {
+    L.ensureWritableDir(L.videoDir(dir));
+  } catch (e) {
+    return Promise.reject(new Error(L.friendlyError(`${e.code} ${e.message}`) || e.message));
+  }
+  return new Promise((resolve, reject) => {
+    const args = [...L.videoArgs(dir, videoId, maxHeight), ...runtime().args, ...extraArgs, '--newline', '--progress', '--progress-template', 'download:YTDJ %(progress._percent_str)s', `https://www.youtube.com/watch?v=${videoId}`];
+    const p = spawn(bin, args, { env: { ...process.env, ...runtime().env } });
+    let err = '';
+    let buf = '';
+    const onLine = (line) => {
+      const m = line.match(/YTDJ\s+([\d.]+)%/);
+      if (m) onProgress?.(parseFloat(m[1]) / 100);
+    };
+    p.stdout.on('data', (d) => {
+      buf += d;
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      lines.forEach(onLine);
+    });
+    p.stderr.on('data', (d) => (err += d));
+    p.on('error', reject);
+    p.on('close', (code) => {
+      const file = L.findVideo(dir, videoId);
+      if (file) return resolve(file);
+      for (const n of fs.existsSync(L.videoDir(dir)) ? fs.readdirSync(L.videoDir(dir)) : []) if (n.startsWith(`${videoId}.`)) fs.rmSync(path.join(L.videoDir(dir), n), { force: true });
+      reject(new Error(err.trim().split('\n').filter((l) => /ERROR/.test(l)).pop() || `yt-dlp salió con ${code}`));
+    });
+  });
+}
+
+module.exports = { downloadVideo, findYtdlp, setManagedDirs, cookieArgs, runtime, isFormatError, withFormatRetry, FORMAT_ERROR, download, downloadToLibrary };

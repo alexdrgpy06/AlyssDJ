@@ -56,6 +56,30 @@ function findSaved(dir, id) {
   return hit ? path.join(dir, hit) : null;
 }
 
+// Video de una pista (solo las que tienen video real): <librería>/.video/<id>.mp4, oculto para que el índice no lo tome por música.
+const videoDir = (dir) => path.join(dir, '.video');
+function findVideo(dir, id) {
+  const f = path.join(videoDir(dir), `${safeId(id)}.mp4`);
+  return fs.existsSync(f) ? f : null;
+}
+
+// ¿Esta pista tiene video de verdad? OMV (video musical oficial), UGC y fuente oficial sí; ATV (audio con portada) no.
+const REAL_VIDEO = new Set(['MUSIC_VIDEO_TYPE_OMV', 'MUSIC_VIDEO_TYPE_UGC', 'MUSIC_VIDEO_TYPE_OFFICIAL_SOURCE_MUSIC']);
+const isRealVideo = (musicVideoType) => REAL_VIDEO.has(String(musicVideoType || ''));
+
+const VIDEO_HEIGHTS = [480, 720, 1080];
+// Video sin audio (el audio ya está guardado), mp4 hasta la altura pedida; si no hay mp4 de esa altura, el mejor video que quepa.
+function videoArgs(dir, id, maxHeight = 1080) {
+  const h = VIDEO_HEIGHTS.includes(Number(maxHeight)) ? Number(maxHeight) : 1080;
+  return [
+    // H.264 primero (lo reproduce Electron sin esfuerzo); si no hay, mp4 de cualquier códec y, al final, el mejor que quepa.
+    '-f', `bv*[height<=${h}][vcodec^=avc1]/bv*[height<=${h}][ext=mp4]/bv*[height<=${h}]/bv*[ext=mp4]`,
+    '--no-playlist', '--no-overwrites', '--no-mtime', '--no-warnings',
+    '--remux-video', 'mp4',
+    '-o', path.join(videoDir(dir), `${safeId(id)}.%(ext)s`),
+  ];
+}
+
 function findThumb(dir, id) {
   const f = path.join(dir, '.thumbs', `${safeId(id)}.jpg`);
   return fs.existsSync(f) ? f : null;
@@ -107,4 +131,4 @@ function ensureWritableDir(dir) {
 
 const friendlyError = (text) => (FRIENDLY.find(([re]) => re.test(text)) || [])[1] || null;
 
-module.exports = { ensureWritableDir, formatArgs, defaultLibraryDir, withLibraryDir, wantsSave, saveArgs, findSaved, findThumb, cleanPartials, friendlyError, safeId };
+module.exports = { videoDir, findVideo, isRealVideo, videoArgs, ensureWritableDir, formatArgs, defaultLibraryDir, withLibraryDir, wantsSave, saveArgs, findSaved, findThumb, cleanPartials, friendlyError, safeId };

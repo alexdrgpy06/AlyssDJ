@@ -172,6 +172,12 @@ class YtmLibrary {
     return parseRadio(json).filter((t) => t.videoId !== videoId);
   }
 
+  // Tipo de video de la pista según YouTube Music: OMV/UGC = video de verdad; ATV = audio con portada.
+  async videoType(videoId) {
+    const json = await this.call('next', { videoId, isAudioOnly: false, enablePersistentPlaylistPanel: true });
+    return musicVideoTypeOf(json, videoId);
+  }
+
   liked() {
     return this.browseSongs('VLLM');
   }
@@ -185,4 +191,16 @@ class YtmLibrary {
   }
 }
 
-module.exports = { YtmLibrary, parseSongs, parsePlaylists, parseRadio };
+// El primer elemento del panel es la pista pedida; su navigationEndpoint trae musicVideoType.
+function musicVideoTypeOf(json, videoId) {
+  const items = [];
+  (function walk(o) {
+    if (!o || typeof o !== 'object') return;
+    if (o.playlistPanelVideoRenderer) items.push(o.playlistPanelVideoRenderer);
+    for (const v of Object.values(o)) walk(v);
+  })(json);
+  const mine = items.find((i) => i.videoId === videoId) || items[0];
+  return first(mine || json, 'musicVideoType') || null;
+}
+
+module.exports = { musicVideoTypeOf, YtmLibrary, parseSongs, parsePlaylists, parseRadio };

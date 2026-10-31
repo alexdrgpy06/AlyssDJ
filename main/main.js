@@ -36,6 +36,8 @@ let toolDirs = [];
 let coversDir = '';
 let videoWin = null;
 let videoShow = 'A'; // 'A' | 'B' | 'split'
+let videoPageReady = false; // la página de la ventana de video ya cargó y escucha mensajes
+const localVideo = { A: null, B: null }; // src del video guardado de cada deck que suena desde archivo (o null)
 let libraryView = null;
 let analyzer = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
@@ -81,6 +83,10 @@ function registerAppProtocol() {
       // La caché va bajo el mismo origen que la UI: si no, Web Audio recibe silencio por CORS.
       // Archivos locales: solo los que están en el índice (el renderer pide por id, nunca por ruta).
       if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
+      if (rel.startsWith('localvideo/')) {
+        const f = analyzer.videoPath(decodeURIComponent(rel.slice(11)));
+        return f ? serveFile(f, request) : new Response('sin video', { status: 404 });
+      }
       if (rel.startsWith('localfile/')) return serveFile(localLib.pathOf(decodeURIComponent(rel.slice(10))), request);
       if (rel.startsWith('cache/')) return serveFile(safeJoin(analyzer.cacheDir, rel.slice(6)), request);
       const base = rel.startsWith('shared/') ? ROOT : path.join(ROOT, 'renderer');
@@ -203,15 +209,22 @@ function layoutVideo() {
   const rects = videoShow === 'split'
     ? { A: { x: 0, y: 0, width: half, height: h }, B: { x: half, y: 0, width: w - half, height: h } }
     : { [videoShow]: { x: 0, y: 0, width: w, height: h } };
+  const tiles = { A: null, B: null };
   for (const id of DECKS) {
     const v = decks[id].view;
     attach(id, videoWin);
-    if (rects[id]) {
+    if (rects[id] && localVideo[id]) {
+      // deck local con video guardado: lo muestra la página de la ventana y la vista del stream se oculta
+      tiles[id] = { ...rects[id], src: localVideo[id] };
+      v.setVisible(false);
+      deckCmd(id, { type: 'videoView', on: false });
+    } else if (rects[id]) {
       v.setBounds(rects[id]);
       v.setVisible(true);
       deckCmd(id, { type: 'videoView', on: true });
     } else v.setVisible(false);
   }
+  if (videoPageReady) videoWin.webContents.send('vwin:layout', tiles);
 }
 
 function videoDisplays() {
@@ -242,14 +255,17 @@ function openVideo({ displayId, fullscreen, show } = {}) {
     videoWin = new BrowserWindow({
       width: 960, height: 540, x: target.workArea.x + 60, y: target.workArea.y + 60,
       backgroundColor: '#000000', title: 'AlyssDJ — Video', autoHideMenuBar: true,
-      webPreferences: { sandbox: true },
+      webPreferences: { sandbox: true, preload: path.join(__dirname, '../preload/video-window.js') },
     });
-    videoWin.loadURL('data:text/html,<body style="margin:0;background:%23000">');
+    videoWin.loadURL('app://ui/video.html');
+    videoPageReady = false;
+    videoWin.webContents.on('did-finish-load', () => ((videoPageReady = true), layoutVideo()));
     videoWin.on('resize', layoutVideo);
     videoWin.on('enter-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
     videoWin.on('leave-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
     videoWin.on('closed', () => {
       videoWin = null;
+      videoPageReady = false;
       for (const id of DECKS) {
         if (win && !win.isDestroyed()) attach(id, win);
         decks[id].view.setVisible(false);
@@ -276,6 +292,15 @@ function videoState() {
   };
 }
 
+ipcMain.handle('video:local-src', (_e, key) => (analyzer.videoPath(key) ? `app://ui/localvideo/${encodeURIComponent(key)}` : null));
+ipcMain.on('video:deck-source', (_e, id, src) => {
+  if (!DECKS.includes(id) || localVideo[id] === src) return;
+  localVideo[id] = src;
+  if (videoOpen()) layoutVideo();
+});
+ipcMain.on('video:sync', (_e, id, s) => {
+  if (videoOpen() && localVideo[id]) videoWin.webContents.send('vwin:sync', id, s);
+});
 ipcMain.handle('video:open', (_e, opts) => (openVideo(opts), videoState()));
 ipcMain.handle('video:close', () => { if (videoOpen()) videoWin.close(); return videoState(); });
 ipcMain.handle('video:state', videoState);
@@ -369,6 +394,7 @@ ipcMain.handle('lib:liked', wrap(() => library.liked()));
 ipcMain.handle('lib:playlists', wrap(() => library.playlists()));
 ipcMain.handle('lib:playlist', wrap((id) => library.playlist(id)));
 ipcMain.handle('lib:radio', wrap((videoId) => library.radio(videoId)));
+ipcMain.handle('lib:video-type', wrap((videoId) => library.videoType(videoId)));
 
 // Importar playlists: copia título y pistas de cada lista (y Me gusta) a disco para usarlas sin conexión y en AutoMix.
 const cratesFile = () => path.join(app.getPath('userData'), 'playlists.json');
@@ -542,6 +568,7 @@ app.whenReady().then(() => {
   analyzer = new Analyzer({
     localLib,
     libraryDir,
+    videoType: (id) => library.videoType(id),
     ffmpeg: () => ffmpegBin,
     cacheDir: path.join(app.getPath('userData'), 'cache'),
     settings,

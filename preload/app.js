@@ -22,6 +22,9 @@ contextBridge.exposeInMainWorld('ytdj', {
     displays: () => ipcRenderer.invoke('video:displays'),
     show: (which) => ipcRenderer.send('video:show', which),
     onState: on('video:state'),
+    localSrc: (key) => ipcRenderer.invoke('video:local-src', key),
+    setDeckSource: (id, src) => ipcRenderer.send('video:deck-source', id, src),
+    sync: (id, s) => ipcRenderer.send('video:sync', id, s),
   },
   auth: {
     status: () => ipcRenderer.invoke('auth:status'),
@@ -38,6 +41,7 @@ contextBridge.exposeInMainWorld('ytdj', {
     playlists: () => ipcRenderer.invoke('lib:playlists'),
     playlist: (id) => ipcRenderer.invoke('lib:playlist', id),
     radio: (videoId) => ipcRenderer.invoke('lib:radio', videoId),
+    videoType: (videoId) => ipcRenderer.invoke('lib:video-type', videoId),
     importPlaylists: () => ipcRenderer.invoke('lib:import-playlists'),
     onImportProgress: on('lib:import-progress'),
     crates: () => ipcRenderer.invoke('crates:list'),
