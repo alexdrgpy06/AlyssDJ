@@ -95,6 +95,21 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 
 ![Decks compactos](img/31-automix-decks-compactos.png)
 
+## Buscar y agregar desde la propia vista
+
+![Buscar para agregar](img/35-automix-buscar.png)
+
+- Escribe en el buscador de la vista de AutoMix: salen resultados de tu **librería** y de **YouTube Music**, con sus **reproducciones** («856 M»). **Agregar** (o Enter, que agrega la primera) y **A continuación** (para ponerla la siguiente). No repite lo que ya está en la cola o suena.
+- Si la pista ya está analizada, la fila dice **→ posición N** y se inserta en el hueco que menos empeora la cadena de BPM, tonalidad y energía; el aviso te dice dónde quedó. Si no, entra al final, se **analiza** y se **mueve sola** a su mejor lugar («movida de 5 a 2»); el resto de la cola se reordena alrededor.
+
+## Qué iría a continuación
+
+![Sugeridas para continuar](img/36-automix-sugeridas.png)
+
+Bajo la cola aparecen hasta 6 **sugeridas**: la radio de YouTube Music y lo ya analizado de tu librería, ordenadas por cómo mezclan desde la **última pista de la cola**. Las que aún no tienen BPM se analizan en segundo plano (de a una, sin guardar el audio) y suben o bajan al llegar su análisis. Cada una se agrega con un clic.
+
+**Priorizar lo popular** (Poco / Medio / Mucho) hace que, entre pistas que mezclan igual de bien, gane la más reproducida (las reproducciones salen de la búsqueda o de la ficha de la pista, con caché de 30 días). **Nunca** pone por delante una popular que no encaja (salto de BPM mayor al 8 % o tonalidad incompatible). El estilo también cuenta: la misma radio de la semilla, el mismo artista y un año cercano suman. Vale igual para llenar la cola con la radio.
+
 ## Editar los puntos de mezcla
 
 Con **✎** en una fila de la cola, o **Puntos** en un deck, se abre el editor de la pista (debe estar analizada):

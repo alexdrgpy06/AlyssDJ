@@ -212,6 +212,58 @@ export function planNearest(cur, next, { pos = 0, len = 16, minLead = 1, maxWait
   return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style: jump ? 'filter' : null, tempo: !!gap && !jump, warnings, kind: c.kind, waitS: c.t - pos };
 }
 
+// ---------- candidatas: BPM, tonalidad, energía, estilo y popularidad ----------
+export const POP_WEIGHTS = { low: 2, mid: 4, high: 8 };
+// 100 mil reproducciones → 0, 1000 millones → 1 (escala logarítmica).
+export const popScore = (plays) => (plays > 0 ? Math.max(0, Math.min(1, (Math.log10(plays) - 5) / 4)) : 0);
+
+// ¿Encaja con `ref` (BPM dentro del 8% con mitad/doble y tonalidad compatible)? Sin análisis de alguna: se asume que sí.
+export function fitsWith(ref, ana) {
+  if (!ref?.bpm || !ana?.bpm) return true;
+  const g = bpmGap(ref.bpm, ana.bpm);
+  if (g && g.gap > MAX_BPM_GAP) return false;
+  return !(ref.camelot && ana.camelot && ref.camelot !== ana.camelot && !keysCompatible(ref.camelot, ana.camelot));
+}
+
+// Ordena candidatas para continuar desde `ref` (análisis de la última pista de la cola o de la que suena).
+//   cands: [{ track: { videoId, artist, year, plays, fromRadio }, analysis? }]
+//   score = coste de transición − bonus de estilo − bonus de popularidad. Menor = mejor.
+//   Las que no encajan (salto de BPM > 8 % o tonalidad incompatible) van siempre DESPUÉS de las que encajan, sea cual sea su popularidad.
+export function rankCandidates({ ref, refTrack = null, cands, popularity = true, popWeight = 'mid' }) {
+  const w = POP_WEIGHTS[popWeight] ?? POP_WEIGHTS.mid;
+  const out = cands.map((c, i) => {
+    const t = c.track;
+    const cost = ref?.bpm && c.analysis?.bpm ? edgeCost(ref, c.analysis) : null;
+    const fits = fitsWith(ref, c.analysis);
+    let style = 0;
+    if (t.fromRadio) style += 1.5;
+    if (refTrack?.artist && t.artist && refTrack.artist.split(', ')[0].toLowerCase() === t.artist.split(', ')[0].toLowerCase()) style += 1;
+    if (refTrack?.year && t.year) style += Math.max(0, 1 - 0.05 * Math.abs(refTrack.year - t.year));
+    const popBonus = popularity ? w * popScore(t.plays || 0) : 0;
+    const score = (cost ?? 6) - style - popBonus; // sin análisis, un coste neutro: ni premia ni castiga
+    return { ...c, cost, fits, style: Math.round(style * 100) / 100, popBonus: Math.round(popBonus * 100) / 100, score: Math.round(score * 100) / 100, i };
+  });
+  out.sort((a, b) => (b.fits - a.fits) || a.score - b.score || a.i - b.i);
+  return out;
+}
+
+// Mejor hueco para insertar `track` en la cola: el de menor aumento del coste total de la cadena. Los primeros `lock` lugares
+// (la pista ya precargada) y los huecos que partirían a una fijada no se tocan. No muta la entrada.
+export function bestInsertion({ cur, queue, track, analysisOf, lock = 0 }) {
+  const a = analysisOf(track);
+  if (!a?.bpm) return { index: queue.length, delta: null };
+  const anaAt = (i) => (i < 0 ? (cur?.bpm ? cur : null) : analysisOf(queue[i]));
+  const edge = (x, y) => (x && y ? edgeCost(x, y) : 0);
+  let best = { index: queue.length, delta: Infinity };
+  for (let k = Math.max(0, lock); k <= queue.length; k++) {
+    const prev = anaAt(k - 1);
+    const nxt = k < queue.length ? anaAt(k) : null;
+    const delta = edge(prev, a) + (nxt ? edge(a, nxt) : 0) - (nxt ? edge(prev, nxt) : 0);
+    if (delta < best.delta - 1e-9) best = { index: k, delta: Math.round(delta * 100) / 100 };
+  }
+  return best;
+}
+
 // Plan de la transición entre `cur` (suena, en `pos`) y `next`.
 //   cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), optimal, style }.
 export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } = {}) {

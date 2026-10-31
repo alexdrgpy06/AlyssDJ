@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('ytdj', {
     playlist: (id) => ipcRenderer.invoke('lib:playlist', id),
     radio: (videoId) => ipcRenderer.invoke('lib:radio', videoId),
     videoType: (videoId) => ipcRenderer.invoke('lib:video-type', videoId),
+    popularity: (ids) => ipcRenderer.invoke('lib:popularity', ids),
     importPlaylists: () => ipcRenderer.invoke('lib:import-playlists'),
     onImportProgress: on('lib:import-progress'),
     crates: () => ipcRenderer.invoke('crates:list'),

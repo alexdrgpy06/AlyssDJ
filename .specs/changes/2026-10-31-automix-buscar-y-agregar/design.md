@@ -27,3 +27,11 @@ approved_at: 2026-10-31
 Buscador sobre la lista, resultados en filas con «Agregar» y «A continuación», panel de sugeridas bajo la cola; estilo oscuro de la app.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: buscar y agregar desde AutoMix con popularidad
+WHEN el usuario busca y agrega desde la vista de AutoMix THE SYSTEM SHALL colocar la pista en el hueco de menor coste de la cadena (o analizarla y moverla al llegar su análisis) y sugerir qué sigue según BPM, tonalidad, energía, estilo y popularidad, sin anteponer nunca una popular que no encaje.
+### library
+#### ADDED design: popularidad y sugeridas
+`ytm-library.parsePlays/popularity` (endpoint player, caché de 30 días), `mixplan.rankCandidates/bestInsertion`, `AutoMix.addSmart/suggestions/analyzeSuggestions` y `renderer/automix-add.js`.

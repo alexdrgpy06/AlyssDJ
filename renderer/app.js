@@ -7,6 +7,7 @@ import { AutoMix } from './automix.js';
 import { watchLayout } from './layout.js';
 import { MixEditor } from './mixeditor.js';
 import { renderUpdate } from './update-ui.js';
+import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 
@@ -304,6 +305,10 @@ class App {
     $('#amv-reorder').addEventListener('click', () => am.reorganizeNow());
     $('#amv-undo').addEventListener('click', () => am.undoReorder());
     $('#amv-endless').addEventListener('change', (e) => am.setCfg({ endless: e.target.checked }));
+    $('#amv-pop').addEventListener('change', (e) => am.setCfg({ popularity: e.target.checked }));
+    $('#amv-popw').addEventListener('change', (e) => am.setCfg({ popWeight: e.target.value }));
+    this.addPanel = new AddPanel(this);
+    document.addEventListener('alyss:tab', (e) => e.detail === 'automix' && am.refreshPools());
 
     const list = $('#amv-list');
     list.addEventListener('click', (e) => {
@@ -439,6 +444,11 @@ class App {
     $('#amv-reorder').disabled = st.queue.length < 2;
     $('#amv-quality').textContent = st.queue.length ? `${st.chain.analyzed}/${st.queue.length} analizadas${st.chain.analyzed > 1 ? ` · transiciones ${st.chain.total / Math.max(1, st.chain.analyzed) < 6 ? 'muy buenas' : st.chain.total / Math.max(1, st.chain.analyzed) < 14 ? 'aceptables' : 'flojas'}` : ''}` : '';
     $('#amv-endless').checked = st.cfg.endless;
+    $('#amv-pop').checked = st.cfg.popularity !== false;
+    $('#amv-popw').value = st.cfg.popWeight || 'mid';
+    $('#amv-popw').disabled = st.cfg.popularity === false;
+    this.addPanel?.renderSuggestions(st.suggestions || []);
+    this.automix.analyzeSuggestions(st.suggestions || []);
     $('#amv-cur').textContent = st.cur ? st.cur.title || '—' : '—';
     const planKinds = { outro: 'outro', rotura: 'rotura', final: 'final' };
     $('#amv-cur-sub').textContent = st.cur

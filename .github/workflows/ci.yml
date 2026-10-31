@@ -37,6 +37,7 @@ jobs:
           node scripts/test-install-linux.js script
           node scripts/test-updater.js unit
           node scripts/test-brand.js files
+          for m in popularity insert engine; do node --experimental-default-type=module scripts/test-automix-add.js $m; done
           for m in plan engine; do node --experimental-default-type=module scripts/test-mix-now.js $m; done
           node scripts/test-layouts.js unit
           node scripts/test-video-local.js detect

@@ -22,3 +22,11 @@ IPC `app:info -> { name, version, org, author, license, repo }`.
 Diálogo sencillo centrado con el logotipo (`build/icon.svg`), nombre, versión y créditos.
 
 ## Amendments
+
+## Domain deltas
+### install
+#### ADDED spec: autoría AlystechPY
+THE SYSTEM SHALL declarar a AlystechPY como organización y a Alejandro Ramírez como autor en la licencia, el paquete, los instaladores, la documentación y el diálogo «Acerca de».
+### ui
+#### ADDED design: Acerca de y marca
+Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (oculta en compacto) e identificador py.alystech.alyssdj.

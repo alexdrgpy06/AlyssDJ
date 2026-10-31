@@ -1,7 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
-import { planTransition, planNearest, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { planTransition, planNearest, rankCandidates, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -33,7 +33,13 @@ export class AutoMix {
     this.reanalyzed = new Set();
     this.plan = null;
     this.lastReorder = -Infinity;
-    this.cfg = { len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, optimalPoints: true, smartOrder: true };
+    this.radioPool = []; // candidatas de la radio que no entraron a la cola: alimentan las sugeridas
+    this.libPool = []; // pistas ya analizadas de la librería
+    this.libPoolAt = -Infinity;
+    this.poolAt = -Infinity;
+    this.moves = new Map(); // agregadas sin analizar: se avisa dónde acaban cuando llega su análisis
+    this.suggestBusy = new Set();
+    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, optimalPoints: true, smartOrder: true };
     try {
       Object.assign(this.cfg, JSON.parse(localStorage.getItem(LS) || '{}'));
     } catch {}
@@ -154,6 +160,32 @@ export class AutoMix {
   }
 
   // ---------- cola (radio de YouTube Music) ----------
+  // Candidatas frescas de la radio de YouTube Music para `seedTrack`, con sus reproducciones, ordenadas por BPM, tonalidad,
+  // estilo y popularidad. No toca la cola.
+  async radioCandidates(seedTrack) {
+    let vid = seedTrack.videoId;
+    if (seedTrack.local) {
+      // Pista local: se busca su equivalente en YouTube Music para sacar la radio.
+      const q = await window.ytdj.lib.search(`${seedTrack.artist || ''} ${seedTrack.title || ''}`.trim());
+      if (!q.ok || !q.data[0]) throw new Error(q.error || 'sin equivalente en YouTube Music');
+      vid = q.data[0].videoId;
+    }
+    const r = await window.ytdj.lib.radio(vid);
+    if (!r.ok) throw new Error(r.error);
+    const known = new Set([...this.history, ...this.queue.map((t) => t.videoId), this.app.decks.A.track?.videoId, this.app.decks.B.track?.videoId]);
+    const fresh = r.data.filter((t) => !known.has(t.videoId) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR))).map((t) => ({ ...t, fromRadio: true }));
+    const noPlays = fresh.filter((t) => !t.plays); // algunas ya traen las vistas en sus créditos
+    if (this.cfg.popularity && noPlays.length && window.ytdj.lib.popularity) {
+      // Las reproducciones llegan en segundos; si tardan, la candidata entra sin ellas y la cola se reordena con el análisis.
+      const pop = await Promise.race([window.ytdj.lib.popularity(noPlays.map((t) => t.videoId)), new Promise((res) => setTimeout(() => res(null), 4000))]).catch(() => null);
+      if (pop?.ok) for (const t of noPlays) t.plays = pop.data[t.videoId] || 0;
+    }
+    const last = this.queue[this.queue.length - 1] || this.cur?.track;
+    const ref = this.ana.get(last?.videoId) || this.cur?.analysis || null;
+    const ranked = rankCandidates({ ref, refTrack: last || null, cands: fresh.map((t) => ({ track: t, analysis: this.ana.get(t.videoId) })), popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
+    return ranked.map((c) => c.track);
+  }
+
   async ensureQueue(force = false) {
     if (this.filling || (!force && (this.queue.length >= 3 || performance.now() < this.failUntil))) return;
     if (!force && !this.cfg.endless && this.queue.length) return;
@@ -161,24 +193,10 @@ export class AutoMix {
     try {
       const seedTrack = this.queue[this.queue.length - 1] || this.cur?.track;
       if (!seedTrack) return;
-      let vid = seedTrack.videoId;
-      if (seedTrack.local) {
-        // Pista local: se busca su equivalente en YouTube Music para sacar la radio.
-        const q = await window.ytdj.lib.search(`${seedTrack.artist || ''} ${seedTrack.title || ''}`.trim());
-        if (!q.ok || !q.data[0]) throw new Error(q.error || 'sin equivalente en YouTube Music');
-        vid = q.data[0].videoId;
-      }
-      const r = await window.ytdj.lib.radio(vid);
-      if (!r.ok) throw new Error(r.error);
-      const known = new Set([
-        ...this.history,
-        ...this.queue.map((t) => t.videoId),
-        this.app.decks.A.track?.videoId,
-        this.app.decks.B.track?.videoId,
-      ]);
-      const fresh = r.data.filter((t) => !known.has(t.videoId) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR)));
-      this.queue.push(...fresh.slice(0, 8));
-      if (!fresh.length) throw new Error('la radio no devolvió pistas nuevas');
+      const cands = await this.radioCandidates(seedTrack);
+      this.queue.push(...cands.slice(0, 8));
+      this.radioPool = [...cands.slice(8), ...this.radioPool].slice(0, 30);
+      if (!cands.length) throw new Error('la radio no devolvió pistas nuevas');
       this.note = '';
     } catch (e) {
       this.note = `Radio: ${String(e.message).includes('aún no cargó') ? 'YouTube Music todavía está cargando…' : e.message}`;
@@ -188,6 +206,111 @@ export class AutoMix {
       this.emit();
     }
   }
+
+  // ---------- agregar ----------
+  isKnown(id) {
+    return this.queue.some((t) => t.videoId === id) || this.cur?.track?.videoId === id || this.app.decks.A.track?.videoId === id || this.app.decks.B.track?.videoId === id;
+  }
+
+  // Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola.
+  // { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }.
+  addSmart(track, { next = false, analysis = null } = {}) {
+    if (!track?.videoId) return { ok: false, reason: 'invalid' };
+    if (this.isKnown(track.videoId)) {
+      this.app.toast(`“${track.title || 'La pista'}” ya está en la cola o suena ahora.`, true);
+      return { ok: false, reason: 'dup' };
+    }
+    const t = { ...track };
+    if (analysis && !this.ana.get(t.videoId)) this.ana.set(t.videoId, analysis);
+    if (next) {
+      this.insertNext(t);
+      this.note = `“${t.title}” suena a continuación`;
+      this.emit();
+      return { ok: true, index: 0 };
+    }
+    const a = this.ana.get(t.videoId);
+    if (a?.bpm) {
+      const curAna = this.cur ? { ...(this.cur.analysis || this.ana.get(this.cur.track?.videoId) || {}) } : null;
+      const head = this.queue[0];
+      const lock = head && (this.loadingNext || (this.cur && this.app.other(this.cur).track?.videoId === head.videoId)) ? 1 : 0;
+      const r = bestInsertion({ cur: curAna?.bpm ? curAna : null, queue: this.queue, track: t, analysisOf: (x) => this.ana.get(x.videoId), lock });
+      this.queue.splice(r.index, 0, t);
+      this.note = `“${t.title}” quedó en la posición ${r.index + 1} de ${this.queue.length} (la que mejor encaja)`;
+      this.prepareAhead();
+      this.emit();
+      return { ok: true, index: r.index };
+    }
+    this.queue.push(t);
+    this.moves.set(t.videoId, { from: this.queue.length });
+    this.note = `“${t.title}” agregada al final: la analizo para ver dónde encaja`;
+    this.loadAna(t);
+    this.prepareAhead();
+    this.emit();
+    return { ok: true, index: this.queue.length - 1, pending: true };
+  }
+
+  // Cuando llega el análisis de una agregada sin analizar: dónde quedó (y de dónde se movió).
+  settleMoves() {
+    for (const [id, m] of [...this.moves]) {
+      if (!this.ana.get(id)?.bpm) continue;
+      const to = this.queue.findIndex((t) => t.videoId === id);
+      this.moves.delete(id);
+      if (to < 0) continue;
+      const title = this.queue[to].title;
+      this.note = to + 1 === m.from ? `“${title}” analizada: ya estaba en su mejor lugar (posición ${to + 1})` : `“${title}” analizada: movida de ${m.from} a ${to + 1}`;
+    }
+  }
+
+  // ---------- sugeridas: qué iría a continuación ----------
+  async refreshPools() {
+    const now = performance.now();
+    if (now - this.libPoolAt > 60000) {
+      this.libPoolAt = now;
+      try {
+        const list = (await window.ytdj.analysis.list()) || [];
+        this.libPool = list.filter((a) => a.bpm && a.id && !a.ytId).map((a) => {
+          if (!this.ana.get(a.id)) this.ana.set(a.id, a);
+          return { videoId: a.id, title: a.title || a.id, artist: a.artist || '', thumb: a.thumb || '', duration: a.trackDuration || a.duration || 0, local: !!a.local };
+        });
+      } catch {}
+    }
+    const seed = this.queue[this.queue.length - 1] || this.cur?.track;
+    if (seed && now - this.poolAt > 60000 && !this.poolBusy) {
+      this.poolAt = now;
+      this.poolBusy = true;
+      try {
+        const cands = await this.radioCandidates(seed);
+        const have = new Set(this.radioPool.map((t) => t.videoId));
+        this.radioPool = [...cands.filter((t) => !have.has(t.videoId)), ...this.radioPool].slice(0, 30);
+      } catch {}
+      this.poolBusy = false;
+    }
+    this.emit();
+  }
+
+  suggestions(limit = 6) {
+    const last = this.queue[this.queue.length - 1] || this.cur?.track;
+    const ref = this.ana.get(last?.videoId) || this.cur?.analysis || null;
+    const seen = new Set();
+    const cands = [...this.radioPool, ...this.libPool]
+      .filter((t) => !this.isKnown(t.videoId) && !this.history.has(t.videoId) && !seen.has(t.videoId) && seen.add(t.videoId))
+      .map((t) => ({ track: t, analysis: this.ana.get(t.videoId) }));
+    const ranked = rankCandidates({ ref, refTrack: last || null, cands, popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
+    return ranked.slice(0, limit).map((c) => ({ track: c.track, cost: c.cost, fits: c.fits, plays: c.track.plays || 0, analyzed: !!c.analysis?.bpm, popBonus: c.popBonus }));
+  }
+
+  // Analiza en segundo plano (solo analiza, no guarda) las mejores sugeridas que aún no tienen BPM, de a una.
+  analyzeSuggestions(list) {
+    if (!this.cfg.analyze || this.suggestBusy.size >= 1) return;
+    const busy = [...this.prep.values()].filter((p) => ['queued', 'download', 'analyze'].includes(p.state)).length;
+    if (busy >= 2) return;
+    const c = list.slice(0, 3).find((s) => !s.analyzed && !s.track.local && !this.suggestBusy.has(s.track.videoId) && !this.suggestTried?.has(s.track.videoId));
+    if (!c) return;
+    (this.suggestTried ??= new Set()).add(c.track.videoId);
+    this.suggestBusy.add(c.track.videoId);
+    window.ytdj.analysis.request(c.track.videoId, { meta: { title: c.track.title, artist: c.track.artist, thumb: c.track.thumb, trackDuration: c.track.duration }, save: false });
+  }
+
 
   // ---------- preparación: analizar y usar el archivo (sin anuncios, con BPM) ----------
   isReady(track) {
@@ -240,10 +363,13 @@ export class AutoMix {
       this.emit();
       return;
     }
+    if (ev.stage === 'error') this.suggestBusy.delete(ev.id);
     if (ev.stage === 'done' && ev.analysis) {
       if (!ev.analysis.mixEdit && this.ana.get(ev.id)?.mixEdit) ev.analysis.mixEdit = this.ana.get(ev.id).mixEdit;
       this.ana.set(ev.id, ev.analysis);
+      this.suggestBusy.delete(ev.id);
       if (this.queue.some((t) => t.videoId === ev.id)) this.reorder({ force: true });
+      this.settleMoves();
       this.emit(); // la vista muestra BPM, tonalidad y energía en cuanto llegan
     }
     if (!this.prep.has(ev.id)) return;
@@ -555,6 +681,7 @@ export class AutoMix {
       next: this.queue[0] || null,
       nextReady: !!next && this.ready(next, this.queue[0]),
       queue: items,
+      suggestions: this.suggestions(),
       chain: { canUndo: !!this.undoStack, total: items.reduce((x, i) => x + (i.cost || 0), 0), analyzed: items.filter((i) => i.bpm).length },
       plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
       pos: this.cur ? posOf(this.cur) : null,

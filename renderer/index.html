@@ -272,11 +272,21 @@
         <span class="am-sub" id="amv-quality" aria-live="polite"></span>
         <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
         <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
+        <label class="check compact" title="Entre pistas que mezclan igual de bien, prefiere las más reproducidas; nunca antepone una popular que no encaje"><input type="checkbox" id="amv-pop" /> Priorizar lo popular</label>
+        <select id="amv-popw" aria-label="Peso de la popularidad" title="Cuánto pesa la popularidad frente al BPM y la tonalidad"><option value="low">Poco</option><option value="mid">Medio</option><option value="high">Mucho</option></select>
         <span class="spacer"></span>
         <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
         <button class="btn ghost sm" id="amv-clear" type="button">Vaciar cola</button>
       </div>
+      <div class="am-add">
+        <label class="am-search"><svg class="ic"><use href="#i-search"/></svg><input id="amv-search" type="search" autocomplete="off" placeholder="Buscar para agregar a la cola: YouTube Music, tu librería y lo analizado (Enter agrega la primera)" aria-label="Buscar para agregar a la cola de AutoMix" /></label>
+        <ul class="am-results" id="amv-results" aria-label="Resultados" hidden></ul>
+      </div>
       <ol class="am-list" id="amv-list" aria-label="Cola de AutoMix"></ol>
+      <section class="am-suggest" id="amv-suggest" hidden>
+        <h3>Sugeridas para continuar <small>BPM, tonalidad, estilo y popularidad desde el final de la cola</small></h3>
+        <ul class="am-results" id="amv-sug-list" aria-label="Sugeridas"></ul>
+      </section>
     </div>
   </section>
 

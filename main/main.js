@@ -398,7 +398,7 @@ ipcMain.handle('auth:verify', async () => {
 });
 
 // ---------- biblioteca ----------
-const library = new YtmLibrary(() => libraryView?.webContents);
+const library = new YtmLibrary(() => libraryView?.webContents, { cacheFile: () => path.join(app.getPath('userData'), 'popularity.json') });
 const wrap = (fn) => async (_e, ...args) => {
   try {
     return { ok: true, data: await fn(...args) };
@@ -411,6 +411,7 @@ ipcMain.handle('lib:liked', wrap(() => library.liked()));
 ipcMain.handle('lib:playlists', wrap(() => library.playlists()));
 ipcMain.handle('lib:playlist', wrap((id) => library.playlist(id)));
 ipcMain.handle('lib:radio', wrap((videoId) => library.radio(videoId)));
+ipcMain.handle('lib:popularity', wrap((ids) => library.popularityMany(Array.isArray(ids) ? ids.filter((x) => /^[\w-]{6,20}$/.test(x)) : [])));
 ipcMain.handle('lib:video-type', wrap((videoId) => library.videoType(videoId)));
 
 // Importar playlists: copia título y pistas de cada lista (y Me gusta) a disco para usarlas sin conexión y en AutoMix.

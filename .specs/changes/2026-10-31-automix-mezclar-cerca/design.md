@@ -21,3 +21,10 @@ approved_at: 2026-10-31
 Texto de cuenta atrás en la barra de estado de AutoMix y botón «Cancelar» junto a «Mezclar ahora».
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: Mezclar ahora busca lo más cercano
+WHEN el usuario pulsa «Mezclar ahora» THE SYSTEM SHALL elegir como salida el punto más cercano por delante (punto de la pista, editado o límite de frase de 8 beats, a lo sumo 12 s), entrar en la siguiente por su punto de entrada con el tempo igualado, durar compases enteros y poder cancelarse con otra pulsación.
+#### ADDED design: planNearest
+`mixplan.planNearest` es pura; `AutoMix.mixNow` guarda un plan pendiente que `tick` inicia al llegar a la salida y la vista cuenta atrás con `snapshot().pendingMix`.

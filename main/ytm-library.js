@@ -48,10 +48,25 @@ function* walk(node, key) {
 const first = (node, key) => walk(node, key).next().value;
 const runsText = (t) => (t?.runs || []).map((r) => r.text).join('') || t?.simpleText || '';
 const DURATION = /^\d{1,2}(:\d{2}){1,2}$/;
+const allTextsOf = (cols) => cols.flatMap((t) => (t?.runs || []).map((x) => x.text.trim())).find((t) => parsePlays(t)) || '';
 
 function parseDuration(s) {
   if (!s) return 0;
   return s.split(':').reduce((acc, n) => acc * 60 + Number(n), 0);
+}
+
+// «856 M reproducciones», «135 k», «1,2 B plays», «34.861.726 visualizaciones», «2.3M views» → número (o 0 si no es un conteo).
+const PLAYS_RE = /^\s*([\d][\d.,\s]*)\s*(k|mil|m|mill?ones?|b|bill?ones?)?\.?\s*(?:de\s+)?(reproducciones|reproducción|plays?|views?|visualizaciones|vistas)\b/i;
+function parsePlays(text) {
+  const m = PLAYS_RE.exec(String(text || ''));
+  if (!m) return 0;
+  const unit = (m[2] || '').toLowerCase();
+  const mult = /^(k|mil)$/.test(unit) ? 1e3 : /^(m|mill)/.test(unit) ? 1e6 : /^(b|bill)/.test(unit) ? 1e9 : 1;
+  let n = m[1].trim().replace(/\s/g, '');
+  if (mult === 1) n = n.replace(/[.,](?=\d{3}(\D|$))/g, ''); // separadores de miles: 34.861.726 / 34,861,726
+  else n = n.replace(',', '.'); // «1,2 B» → 1.2
+  const v = parseFloat(n);
+  return Number.isFinite(v) ? Math.round(v * mult) : 0;
 }
 
 function parseSong(r) {
@@ -63,7 +78,9 @@ function parseSong(r) {
   const subRuns = (cols[1]?.runs || []).filter((x) => x.text.trim() && x.text.trim() !== '•');
   const pageType = (x) => x.navigationEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType;
   const artists = subRuns.filter((x) => pageType(x) === 'MUSIC_PAGE_TYPE_ARTIST' || pageType(x) === 'MUSIC_PAGE_TYPE_USER_CHANNEL').map((x) => x.text);
-  const album = subRuns.find((x) => pageType(x) === 'MUSIC_PAGE_TYPE_ALBUM')?.text || runsText(cols[2]) || '';
+  const col2 = runsText(cols[2]);
+  const plays = parsePlays(col2) || parsePlays(allTextsOf(cols)); // en las búsquedas la 3.ª columna trae las reproducciones
+  const album = subRuns.find((x) => pageType(x) === 'MUSIC_PAGE_TYPE_ALBUM')?.text || (parsePlays(col2) ? '' : col2) || '';
   const allTexts = [...cols, ...fixed].flatMap((t) => (t?.runs || []).map((x) => x.text.trim()));
   const duration = allTexts.find((t) => DURATION.test(t)) || '';
   const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
@@ -73,6 +90,7 @@ function parseSong(r) {
     artist: artists.join(', ') || subRuns.filter((x) => !DURATION.test(x.text.trim()))[0]?.text || '',
     album: album === title ? '' : album,
     duration: parseDuration(duration),
+    plays,
     thumb: thumbs.length ? thumbs[thumbs.length - 1].url : `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
   };
 }
@@ -115,11 +133,17 @@ function parseRadio(json) {
       if (run.text.trim() && !/^(,|&|y|and|e|und|et)$/i.test(run.text.trim())) artists.push(run.text.trim());
     }
     const thumbs = r.thumbnail?.thumbnails || [];
+    const parts = runs.map((x) => x.text.trim()).filter((t) => t && t !== '•');
+    const playsText = parts.find((t) => parsePlays(t)); // algunos temas de la radio (videos) traen «26 M de vistas»
+    const credits = parts.filter((t) => !parsePlays(t));
+    const year = Number((credits.find((t) => /^(19|20)\d{2}$/.test(t))) || 0) || null;
     out.push({
       videoId: r.videoId,
       title: runsText(r.title),
       artist: artists.join(', '),
-      album: '',
+      album: credits.length >= 3 ? credits[credits.length - 2] : '',
+      year,
+      plays: playsText ? parsePlays(playsText) : 0,
       duration: parseDuration(runsText(r.lengthText)),
       thumb: thumbs.length ? thumbs[thumbs.length - 1].url : `https://i.ytimg.com/vi/${r.videoId}/hqdefault.jpg`,
     });
@@ -131,9 +155,71 @@ function continuationToken(json) {
   return first(json, 'continuationCommand')?.token || first(json, 'nextContinuationData')?.continuation || null;
 }
 
+const POP_TTL = 30 * 864e5;
+
 class YtmLibrary {
-  constructor(getWebContents) {
+  constructor(getWebContents, { cacheFile = null } = {}) {
     this.wc = getWebContents;
+    this.popFile = cacheFile;
+    this.pop = null; // videoId → { v: reproducciones, at }
+    this.popQueue = [];
+    this.popRunning = 0;
+  }
+
+  loadPop() {
+    if (this.pop) return this.pop;
+    this.pop = {};
+    try {
+      const f = typeof this.popFile === 'function' ? this.popFile() : this.popFile;
+      if (f) this.pop = JSON.parse(require('fs').readFileSync(f, 'utf8'));
+    } catch {}
+    return this.pop;
+  }
+
+  savePop() {
+    clearTimeout(this.popSave);
+    this.popSave = setTimeout(() => {
+      try {
+        const f = typeof this.popFile === 'function' ? this.popFile() : this.popFile;
+        if (f) require('fs').writeFileSync(f, JSON.stringify(this.pop));
+      } catch {}
+    }, 500);
+  }
+
+  // Reproducciones de una pista (endpoint `player` de YouTube Music: videoDetails.viewCount). Caché de 30 días y 3 consultas a la vez.
+  popularity(videoId) {
+    const cache = this.loadPop();
+    const hit = cache[videoId];
+    if (hit && Date.now() - hit.at < POP_TTL) return Promise.resolve(hit.v);
+    return new Promise((resolve) => {
+      this.popQueue.push({ videoId, resolve });
+      this.pumpPop();
+    });
+  }
+
+  async popularityMany(ids, { limit = 24 } = {}) {
+    const out = {};
+    await Promise.all([...new Set(ids)].slice(0, limit).map(async (id) => (out[id] = await this.popularity(id))));
+    return out;
+  }
+
+  pumpPop() {
+    while (this.popRunning < 3 && this.popQueue.length) {
+      const { videoId, resolve } = this.popQueue.shift();
+      this.popRunning++;
+      this.call('player', { videoId })
+        .then((json) => {
+          const v = Number(json?.videoDetails?.viewCount) || 0;
+          this.loadPop()[videoId] = { v, at: Date.now() };
+          this.savePop();
+          resolve(v);
+        })
+        .catch(() => resolve(0))
+        .finally(() => {
+          this.popRunning--;
+          this.pumpPop();
+        });
+    }
   }
 
   async call(endpoint, body) {
@@ -203,4 +289,4 @@ function musicVideoTypeOf(json, videoId) {
   return first(mine || json, 'musicVideoType') || null;
 }
 
-module.exports = { PAGE_CALL, musicVideoTypeOf, YtmLibrary, parseSongs, parsePlaylists, parseRadio };
+module.exports = { PAGE_CALL, parsePlays, musicVideoTypeOf, YtmLibrary, parseSongs, parsePlaylists, parseRadio };
