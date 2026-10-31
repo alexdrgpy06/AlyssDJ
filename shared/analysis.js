@@ -2,6 +2,8 @@
 // Funciones puras: las usa el worker de la app y el CLI de pruebas.
 'use strict';
 
+const { structure } = require('./structure');
+
 const WAVE_BINS_PER_SEC = 100;
 
 // ---------- FFT radix-2 in-place ----------
@@ -202,6 +204,28 @@ function tempo(samples, sr, { min = 70, max = 180 } = {}) {
   while (bpm < min) bpm *= 2;
   while (bpm >= max) bpm /= 2;
 
+  // Ambigüedad 3:2 y 2:1 (p. ej. 150 contra 100): los golpes graves (el bombo) deciden. Se compara cuánto de la energía
+  // grave cae sobre cada rejilla candidata y solo se cambia si la alternativa gana con claridad.
+  const kickEnv = normalized(low);
+  // Cada candidato se afina localmente (±2,5 %): el retardo entero de la autocorrelación deja ~0,6 % de error y,
+  // sobre una pista larga, esa rejilla se desfasa y deja de caer sobre los golpes.
+  const lowScore = (b) => {
+    let best = 0;
+    for (let d = -0.025; d <= 0.0251; d += 0.0005) best = Math.max(best, combScore(kickEnv, (60 * fps) / (b * (1 + d)), 1).score);
+    return best;
+  };
+  const baseScore = lowScore(bpm);
+  let pick = { bpm, score: baseScore };
+  for (const f of [1.5, 1 / 1.5, 2, 0.5]) {
+    let c = bpm * f;
+    while (c < min) c *= 2;
+    while (c >= max) c /= 2;
+    if (Math.abs(c - bpm) < 0.5) continue;
+    const sc = lowScore(c);
+    if (sc > pick.score * 1.3 && sc > baseScore * 1.3) pick = { bpm: c, score: sc };
+  }
+  if (pick.bpm !== bpm) bpm = pick.bpm; // el afinado fino de abajo corrige el pequeño error del candidato
+
   // 2) Afinado fino con la rejilla sobre toda la pista.
   let best = { score: -1, bpm, phase: 0 };
   for (let cand = bpm - 2; cand <= bpm + 2; cand += 0.01) {
@@ -290,14 +314,16 @@ function loudness(samples) {
 }
 
 function analyze(samples, sr) {
+  const t = tempo(samples, sr);
   return {
-    version: 1,
+    version: 2,
     duration: samples.length / sr,
-    ...tempo(samples, sr),
+    ...t,
     ...key(samples, sr),
     ...loudness(samples),
+    mix: t.bpm ? structure(samples, sr, t) : null, // puntos de mezcla (frases, intro, outro)
     waveform: waveform(samples, sr),
   };
 }
 
-module.exports = { analyze, tempo, key, waveform, loudness, ANALYSIS_SR: 22050 };
+module.exports = { analyze, tempo, key, waveform, loudness, ANALYSIS_SR: 22050, _internals: { onsetEnvelope, combScore, normalized } };

@@ -79,6 +79,8 @@ export class Deck {
     this.playedMs = 0;
     this.lastRender = performance.now();
     this.logged = false;
+    this.streamPlayedMs = 0;
+    this.saveRequested = false;
     this.zoom = 1;
     this.roll = null;
     this.lastFxBpm = 0;
@@ -163,6 +165,19 @@ export class Deck {
   setMiniVideo(on) {
     this.sendStream({ type: 'frames', on });
     if (!on) this.frameUrl = null;
+  }
+
+  // Una pista de YouTube que lleva 30 s sonando por streaming se guarda y analiza en segundo plano (si el ajuste está activo).
+  tickSaveOnPlay(dtMs) {
+    if (!this.track || this.track.local || this.source !== 'stream' || !this.st.playing || this.st.ad || this.saveRequested) return;
+    if (this.app.settings.saveOnPlay === false) return;
+    if (this.analysis?.saved) return void (this.saveRequested = true);
+    this.streamPlayedMs += dtMs;
+    if (this.streamPlayedMs < 30000) return;
+    this.saveRequested = true;
+    const { videoId, title, artist, thumb, duration } = this.track;
+    this.analyzing = { stage: 'queued' };
+    window.ytdj.analysis.request(videoId, { meta: { title, artist, thumb, trackDuration: duration }, save: true });
   }
 
   // ---------- tiempo, tempo y grid ----------
@@ -251,10 +266,14 @@ export class Deck {
     this.frameUrl = null;
     this.playedMs = 0;
     this.logged = false;
-    if (track.local) {
+    this.streamPlayedMs = 0;
+    this.saveRequested = false;
+    const savedId = !track.local && this.analysis?.saved?.localId;
+    if (savedId) this.source = 'local'; // ya está guardada: se reproduce el archivo, sin streaming ni anuncios
+    if (track.local || savedId) {
       this.sendStream({ type: 'pause' });
       const { engine } = this.ensureLocal();
-      engine.handle({ type: 'load', videoId: track.videoId, url: `/localfile/${encodeURIComponent(track.videoId)}`, startAt: this.cuePoint, play })
+      engine.handle({ type: 'load', videoId: track.videoId, url: `/localfile/${encodeURIComponent(savedId || track.videoId)}`, startAt: this.cuePoint, play })
         .catch((e) => this.app.toast(`No se pudo abrir ${track.title}: ${e.message}`, true));
     } else this.sendStream({ type: 'load', videoId: track.videoId, startAt: this.cuePoint, play });
     this.trimTouched = false;
@@ -269,8 +288,9 @@ export class Deck {
   async setSource(src) {
     if (!this.track || src === this.source) return;
     if (this.track.local) return this.app.toast('Es una pista local: solo se puede reproducir desde el archivo.');
-    if (src === 'local' && !this.analysis?.audio) {
-      this.app.toast('No hay audio local de esta pista: activa “Conservar audio” en Ajustes y analízala.', true);
+    const savedId = this.analysis?.saved?.localId;
+    if (src === 'local' && !this.analysis?.audio && !savedId) {
+      this.app.toast('Esta pista no está guardada: analízala (o actívalo en Ajustes → Guardar en la librería) y podrás reproducir el archivo.', true);
       return;
     }
     const pos = this.pos();
@@ -279,7 +299,7 @@ export class Deck {
       const { engine } = this.ensureLocal();
       this.sendStream({ type: 'pause' });
       this.source = 'local';
-      await engine.handle({ type: 'load', videoId: this.track.videoId, file: this.analysis.audio, startAt: pos, play: playing });
+      await engine.handle({ type: 'load', videoId: this.track.videoId, file: this.analysis.audio, url: savedId ? `/localfile/${encodeURIComponent(savedId)}` : undefined, startAt: pos, play: playing });
     } else {
       this.sendLocal({ type: 'pause' });
       this.source = 'stream';
@@ -803,6 +823,7 @@ export class Deck {
         this.app.logHistory(this.track);
       }
     }
+    this.tickSaveOnPlay(Math.min(nowT - this.lastRender, 1000));
     this.lastRender = nowT;
     const el = this.el;
     const t = this.track;
@@ -841,7 +862,7 @@ export class Deck {
     setText(el.elapsed, fmt(pos));
     setText(el.remain, `-${fmt(dur - pos)}`);
     const loading = t && this.source === 'stream' && this.st.videoId === t.videoId && !this.st.ready;
-    setText(el.state, this.st.ad ? 'anuncio (sin Premium)' : loading ? 'cargando…' : this.track?.local ? 'ARCHIVO LOCAL' : this.source === 'local' ? 'LOCAL' : '');
+    setText(el.state, this.st.ad ? 'anuncio (sin Premium)' : loading ? 'cargando…' : this.track?.local ? 'ARCHIVO LOCAL' : this.source === 'local' ? 'LOCAL · GUARDADA' : this.analysis?.saved ? 'GUARDADA' : '');
 
     el.play.classList.toggle('on', this.st.playing);
     el.cue.classList.toggle('on', !this.st.playing && Math.abs(pos - this.cuePoint) < 0.08 && !!t);
@@ -858,7 +879,7 @@ export class Deck {
     el.quant.classList.toggle('on', this.quantize);
     el.srcBtns.forEach((b) => {
       b.classList.toggle('on', b.dataset.src === this.source);
-      if (b.dataset.src === 'local') b.disabled = !(this.track?.local || this.analysis?.audio);
+      if (b.dataset.src === 'local') b.disabled = !(this.track?.local || this.analysis?.audio || this.analysis?.saved);
       if (b.dataset.src === 'stream') b.disabled = !!this.track?.local;
     });
 
@@ -894,6 +915,7 @@ export class Deck {
       hotcues: this.hotcues,
       loop: this.loop,
       zoom: this.zoom,
+      mixMarks: this.analysis?.mix ? { in: this.analysis.mix.mixIn, outroStart: this.analysis.mix.outroStart, outs: this.analysis.mix.mixOut.slice(0, 3).map((c) => c.t) } : null,
     };
     drawScroll(el.scroll, view);
     drawOverview(el.overview, view, this.ovCache);

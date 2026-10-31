@@ -33,9 +33,16 @@ Sirven sin conexión y como fuente de [AutoMix](04-automix.md) (**AutoMix de est
 - Las pistas locales **se analizan solas** al cargarlas (BPM, tonalidad, onda). No se descarga ni se toca nada.
 - También puedes **arrastrar archivos** del explorador directo a un deck.
 
-## Analizar pistas de YouTube
+## Analizar y guardar pistas de YouTube
 
-El botón **Analizar** (en el deck o en la fila) descarga el audio con yt-dlp, calcula BPM, rejilla, tonalidad y onda, y **borra el audio** (salvo que actives *Conservar audio*). Solo ocurre cuando lo pides, nunca solo.
+El botón **Analizar** (en el deck o en la fila) descarga el audio **sin sesión** con yt-dlp, calcula BPM, rejilla, tonalidad y onda, y **lo guarda en tu librería local**: `Música/AlyssDJ/YouTube`, en la mejor calidad que ofrece YouTube (sin convertir), con título, artista y carátula.
+
+- Aparece en la pestaña **Local** con su análisis ya hecho, y la fila de YouTube pasa a decir **Guardada**.
+- Al cargar de nuevo esa pista, el deck **reproduce el archivo** (modo LOCAL, sin anuncios y sincronizable) y muestra **GUARDADA**. Puedes volver al stream con el botón **STREAM**.
+- **Guardar lo que reproduzcas:** una pista que lleva **30 s sonando por streaming** se guarda y analiza en segundo plano, de a una, sin cortar la reproducción.
+- En **Ajustes → yt-dlp** puedes apagar cualquiera de las dos opciones, cambiar la carpeta de la librería o abrirla. Con ambas apagadas no se descarga nada salvo que pulses Analizar.
+
+> yt-dlp va **sin tu sesión**: tus cookies se usan solo para el streaming. Así se evitan errores de "formato no disponible". Las pistas que exijan iniciar sesión (restricción de edad, privadas) no se pueden analizar; seguirán sonando por streaming.
 
 ## Orden y compatibles
 

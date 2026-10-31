@@ -83,30 +83,6 @@
     <label class="pop-field"><span class="lbl">Volumen</span><input type="range" id="sp-vol" min="0" max="1.2" step="0.01" value="0.8" aria-label="Volumen del sampler" /></label>
   </div>
 
-  <div class="popover" id="automix-panel" hidden role="dialog" aria-label="AutoMix">
-    <div class="pop-row"><strong>AutoMix</strong><button class="icon-btn" id="am-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
-    <p class="hint">Sigue la radio de YouTube Music: elige pistas parecidas a la que suena y las mezcla solo, con tempo y fase igualados cuando hay BPM.</p>
-    <div class="pop-row">
-      <button class="btn primary" id="am-toggle"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
-      <button class="btn" id="am-skip" title="Pasar ya a la siguiente pista"><svg class="ic"><use href="#i-skip"/></svg>Siguiente</button>
-    </div>
-    <div class="am-now" id="am-now" aria-live="polite">—</div>
-    <div class="am-bar" id="am-bar" hidden><i></i></div>
-    <div class="pop-field"><span class="lbl">Estilo</span>
-      <div class="seg" id="am-style" role="group" aria-label="Estilo de transición">
-        <button data-v="crossfade" title="Solo crossfader">Fundido</button>
-        <button data-v="bass" class="on" title="Los graves de la entrante entran a mitad de la mezcla">Bass swap</button>
-        <button data-v="filter" title="Filtro: la saliente se cierra y la entrante se abre">Filtro</button>
-      </div>
-    </div>
-    <label class="pop-field"><span class="lbl">Duración</span><span class="range-row"><input type="range" id="am-len" min="4" max="48" step="1" /><output id="am-len-out">16 s</output></span></label>
-    <label class="check"><input type="checkbox" id="am-tempo" /><span>Igualar tempo y fase <small>Necesita BPM: pistas locales (automático) o analizadas de YouTube.</small></span></label>
-    <label class="check"><input type="checkbox" id="am-analyze" /><span>Analizar la siguiente de YouTube con yt-dlp <small>Descarga la pista para tener BPM y poder igualarla. Apagado: solo fundido.</small></span></label>
-    <label class="check"><input type="checkbox" id="am-endless" /><span>Seguir con la radio cuando se acabe la lista</span></label>
-    <div class="pop-row"><strong>Cola</strong><button class="btn ghost sm" id="am-clear">Vaciar</button></div>
-    <ol class="am-queue" id="am-queue"></ol>
-  </div>
-
   <section class="waves" aria-label="Formas de onda">
     <div class="wave-row" data-deck="A"><span class="wave-tag">A</span><canvas class="scroll" id="scroll-A"></canvas></div>
     <div class="wave-row" data-deck="B"><span class="wave-tag">B</span><canvas class="scroll" id="scroll-B"></canvas></div>
@@ -237,6 +213,7 @@
       <button data-tab="local">Local</button>
       <button data-tab="analyzed">Analizados</button>
       <button data-tab="history">Historial</button>
+      <button data-tab="automix" class="am-tab"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
       <form id="search-form" role="search">
         <svg class="ic"><use href="#i-search"/></svg>
         <input id="search" type="search" placeholder="Buscar en YouTube Music…" autocomplete="off" aria-label="Buscar en YouTube Music" />
@@ -256,6 +233,36 @@
         <tbody id="tracks"></tbody>
       </table>
     </div>
+    <div class="am-view" id="am-view" hidden>
+      <div class="am-top">
+        <div class="am-card am-now"><span class="lbl">SUENA</span><div class="am-title" id="amv-cur">—</div><div class="am-sub" id="amv-cur-sub"></div></div>
+        <div class="am-card am-flow">
+          <div class="am-status" id="amv-status" aria-live="polite">Detenido</div>
+          <div class="am-bar" id="amv-bar-wrap" hidden><i id="amv-bar"></i></div>
+          <div class="am-sub" id="amv-note"></div>
+        </div>
+        <div class="am-card am-next"><span class="lbl">SIGUE</span><div class="am-title" id="amv-next">—</div><div class="am-sub" id="amv-next-sub"></div></div>
+      </div>
+      <div class="am-controls">
+        <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+        <button class="btn" id="amv-mix" type="button" title="Pasa ya a la siguiente pista lista (Mayús + →)"><svg class="ic"><use href="#i-skip"/></svg>Mezclar ahora <kbd>⇧→</kbd></button>
+        <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
+          <button data-v="crossfade" type="button" title="Solo crossfader">Fundido</button>
+          <button data-v="bass" type="button" class="on" title="Los graves de la entrante entran a mitad">Bass swap</button>
+          <button data-v="filter" type="button" title="La saliente se cierra y la entrante se abre">Filtro</button>
+        </div>
+        <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
+        <label class="check compact" title="Descarga sin sesión, analiza y reproduce el archivo: sin anuncios y con BPM"><input type="checkbox" id="amv-local" /> Analizar y usar archivo (evita anuncios)</label>
+        <label class="check compact" title="Sale por el mejor punto de la pista (frase al empezar el outro o una rotura), no necesariamente al final"><input type="checkbox" id="amv-points" /> Mezclar en puntos óptimos</label>
+        <label class="check compact" title="Pone primero la pista que mejor encaja por BPM, tonalidad y energía; lo que tú colocas no se mueve"><input type="checkbox" id="amv-order" /> Ordenar por compatibilidad</label>
+        <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
+        <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
+        <span class="spacer"></span>
+        <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
+        <button class="btn ghost sm" id="amv-clear" type="button">Vaciar cola</button>
+      </div>
+      <ol class="am-list" id="amv-list" aria-label="Cola de AutoMix"></ol>
+    </div>
   </section>
 
   <div class="ytm-float" id="ytm-float-A" hidden><header>YouTube Music · Deck A <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
@@ -268,16 +275,23 @@
         <legend>yt-dlp (análisis a pedido)</legend>
         <p class="hint" id="tools-detail"></p>
         <label>Ruta de yt-dlp <input name="ytdlpPath" placeholder="yt-dlp (en PATH)" /></label>
-        <label>Cookies para yt-dlp
-          <select name="cookieSource">
-            <option value="app">Sesión de esta app (YT Music)</option>
-            <option value="firefox">Firefox</option>
-            <option value="chrome">Chrome</option>
-            <option value="chromium">Chromium</option>
-            <option value="none">Ninguna</option>
+        <label>Cookies para yt-dlp <small class="inline-hint">avanzado</small>
+          <select name="cookieSource" title="yt-dlp va sin sesión. Solo cambia esto si una pista exige iniciar sesión.">
+            <option value="none">Ninguna: sin sesión (recomendado)</option>
+            <option value="firefox">Usar cookies de Firefox</option>
+            <option value="chrome">Usar cookies de Chrome</option>
+            <option value="chromium">Usar cookies de Chromium</option>
+            <option value="brave">Usar cookies de Brave</option>
           </select>
         </label>
-        <label class="check"><input type="checkbox" name="keepAudio" /> Conservar el audio tras analizar (habilita el modo LOCAL)</label>
+        <p class="hint">Tu sesión de YouTube Music se usa <b>solo para el streaming</b> de los decks. Las descargas de yt-dlp van sin sesión: así no se mezcla tu cuenta y evitan errores de “formato no disponible”.</p>
+        <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
+        <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
+        <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>
+        <div class="row-btns">
+          <button type="button" class="btn" id="btn-pick-library">Cambiar carpeta…</button>
+          <button type="button" class="btn ghost" id="btn-open-library">Abrir carpeta</button>
+        </div>
         <label class="check"><input type="checkbox" name="autoAnalyzeCue" /> Analizar al cargar una pista en un deck que no está al aire</label>
         <div class="row-btns">
           <button type="button" class="btn" id="btn-install-tools">Instalar / actualizar herramientas</button>
@@ -357,7 +371,7 @@
       <div class="help-grid">
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
-        <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
+        <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
         <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd><dt>Plato (doble clic)</dt><dd>Ventana de video</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>

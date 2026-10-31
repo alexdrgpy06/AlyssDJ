@@ -32,7 +32,10 @@ export class Library {
     this.importBtn = document.getElementById('btn-import-pl');
     this.listBtn = document.getElementById('btn-automix-list');
     this.importBtn.addEventListener('click', () => this.importPlaylists());
-    this.listBtn.addEventListener('click', () => this.app.automix.start({ tracks: this.rows.filter((r) => r.videoId) }));
+    this.listBtn.addEventListener('click', () => {
+      this.app.automix.start({ tracks: this.rows.filter((r) => r.videoId) });
+      this.show('automix');
+    });
     window.ytdj.lib.onImportProgress((p) => {
       this.setMsg(p.finished ? 'Importación terminada' : `Importando ${p.done + 1}/${p.total}: ${p.title || ''}${p.error ? ' (error)' : ''}`);
     });
@@ -70,6 +73,14 @@ export class Library {
   async show(tab, query) {
     this.tab = tab;
     document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    const isAm = tab === 'automix';
+    document.getElementById('am-view').hidden = !isAm;
+    document.querySelector('.table-wrap').hidden = isAm;
+    if (isAm) {
+      this.addFolder.hidden = this.importBtn.hidden = this.listBtn.hidden = true;
+      this.setMsg('');
+      return this.app.renderAutoMix();
+    }
     this.addFolder.hidden = tab !== 'local';
     this.importBtn.hidden = !['playlists', 'imported'].includes(tab);
     const call = async (p, empty) => {
@@ -156,7 +167,10 @@ export class Library {
     if (row.playlist) return this.openPlaylist(row);
     if (!btn) return;
     if (btn.dataset.act === 'A' || btn.dataset.act === 'B') this.app.decks[btn.dataset.act].load(row);
-    if (btn.dataset.act === 'radio') this.app.automix.start({ seed: row });
+    if (btn.dataset.act === 'radio') {
+      this.app.automix.start({ seed: row });
+      this.show('automix');
+    }
     if (btn.dataset.act === 'queue') {
       this.app.automix.add(row);
       this.app.toast(`En la cola de AutoMix: ${row.title}`);
@@ -182,7 +196,9 @@ export class Library {
   analyzeLabel(id) {
     const j = this.jobs.get(id);
     if (j) return [j.stage === 'download' ? `${Math.round((j.progress || 0) * 100)}%` : j.stage === 'analyze' ? 'Analizando' : 'En cola', 'busy'];
-    return this.analyzed.has(id) ? ['✓', 'done'] : ['Analizar', ''];
+    const a = this.analyzed.get(id);
+    if (a?.saved) return ['Guardada', 'done'];
+    return a ? ['✓', 'done'] : ['Analizar', ''];
   }
 
   rowHtml(r, i) {

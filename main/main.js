@@ -11,6 +11,7 @@ const ytdlp = require('./ytdlp');
 const tools = require('./tools');
 const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
+const libSave = require('./library-save');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
@@ -405,7 +406,25 @@ ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));
 
 // ---------- ajustes y herramientas ----------
 ipcMain.handle('settings:get', () => settings.get());
-ipcMain.handle('settings:set', (_e, patch) => settings.set(patch));
+// Carpeta donde se guardan las pistas de YouTube analizadas/reproducidas; forma parte de las carpetas de música.
+const libraryDir = () => settings.get().libraryDir || libSave.defaultLibraryDir(app.getPath('music'));
+function syncMusicDirs() {
+  const st = settings.get();
+  if (st.saveOnAnalyze === false && st.saveOnPlay === false) return;
+  const dirs = libSave.withLibraryDir(st.musicDirs, libraryDir());
+  if (dirs.length !== (st.musicDirs || []).length) settings.set({ musicDirs: dirs });
+}
+ipcMain.handle('settings:set', (_e, patch) => {
+  settings.set(patch);
+  syncMusicDirs();
+  return settings.get();
+});
+ipcMain.handle('settings:pick-dir', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Carpeta de la librería de YouTube', properties: ['openDirectory', 'createDirectory'] });
+  return r.canceled ? null : r.filePaths[0];
+});
+ipcMain.handle('settings:library-dir', () => libraryDir());
+ipcMain.handle('path:open', (_e, p) => shell.openPath(p));
 ipcMain.handle('tools:check', async () => {
   const st = settings.get();
   const yt = await ytdlp.findYtdlp(st.ytdlpPath);
@@ -515,6 +534,8 @@ app.whenReady().then(() => {
     emit: (ev) => send('local:event', ev),
   });
   analyzer = new Analyzer({
+    localLib,
+    libraryDir,
     ffmpeg: () => ffmpegBin,
     cacheDir: path.join(app.getPath('userData'), 'cache'),
     settings,
@@ -541,6 +562,7 @@ app.whenReady().then(() => {
   libraryView.webContents.setAudioMuted(true);
   libraryView.webContents.loadURL(YTM);
 
+  syncMusicDirs();
   win.webContents.once('did-finish-load', () => ensureTools());
   if (process.env.YTDJ_DEVTOOLS) win.webContents.openDevTools({ mode: 'detach' });
   if (process.env.YTDJ_SELFTEST) require(process.env.YTDJ_SELFTEST_MODULE || './selftest')(win, decks);

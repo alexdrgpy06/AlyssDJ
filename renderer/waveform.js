@@ -167,6 +167,32 @@ export function drawOverview(c, v, cache) {
     ctx.fillStyle = HOTCUE_COLORS[i];
     ctx.fillRect(px(t), 0, 2 * dpr, H * 0.4);
   });
+  // Puntos de mezcla del análisis: entrada (verde), región de outro (ámbar) y salidas candidatas.
+  const mm = v.mixMarks;
+  if (mm) {
+    if (mm.outroStart != null) {
+      ctx.fillStyle = 'rgba(255, 179, 36, 0.14)';
+      ctx.fillRect(px(mm.outroStart), 0, W - px(mm.outroStart), H);
+    }
+    (mm.outs || []).forEach((t, i) => {
+      ctx.fillStyle = i === 0 ? '#ffb324' : '#ffb32488';
+      ctx.fillRect(px(t), H - 8 * dpr, 2 * dpr, 8 * dpr);
+      ctx.beginPath();
+      ctx.moveTo(px(t) - 4 * dpr, H);
+      ctx.lineTo(px(t) + 4 * dpr, H);
+      ctx.lineTo(px(t), H - 6 * dpr);
+      ctx.fill();
+    });
+    if (mm.in != null) {
+      ctx.fillStyle = '#3df08e';
+      ctx.fillRect(px(mm.in), 0, 2 * dpr, 8 * dpr);
+      ctx.beginPath();
+      ctx.moveTo(px(mm.in) - 4 * dpr, 0);
+      ctx.lineTo(px(mm.in) + 4 * dpr, 0);
+      ctx.lineTo(px(mm.in), 6 * dpr);
+      ctx.fill();
+    }
+  }
   ctx.fillStyle = '#ff3b3b';
   ctx.fillRect(px(v.pos), 0, 2 * dpr, H);
 }

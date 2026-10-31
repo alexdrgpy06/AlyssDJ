@@ -444,3 +444,55 @@ fieldset { min-width: 0; }
 .login-msg.err { color: var(--err); }
 .login-msg.ok { color: var(--ok); }
 .login-actions { display: flex; gap: 8px; align-items: center; }
+
+.inline-hint { color: var(--faint); font-size: 11px; margin-left: 6px; }
+
+/* ---------- vista AutoMix ---------- */
+.am-tab .ic { margin-right: 4px; }
+.am-view { overflow: auto; min-height: 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-color: var(--line-2) transparent; }
+.am-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); gap: 10px; }
+.am-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.am-now { border-top: 2px solid var(--play); }
+.am-next { border-top: 2px solid var(--cue); }
+.am-flow { justify-content: center; }
+.am-title { font-weight: 650; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.am-sub { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.am-status { font-weight: 600; }
+.am-bar { height: 6px; background: var(--inset); border-radius: 3px; overflow: hidden; }
+.am-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--a), var(--b)); }
+.am-controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.am-controls kbd { font-family: var(--mono); font-size: 11px; background: #0003; border: 1px solid #ffffff22; border-radius: 4px; padding: 0 5px; margin-left: 4px; }
+.am-len { display: inline-flex; align-items: center; gap: 8px; }
+.am-len input { accent-color: var(--a); padding: 0; width: 120px; }
+.am-len output { font-family: var(--mono); min-width: 38px; }
+.am-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.am-list:empty::after { content: 'La cola está vacía: la radio de YouTube Music la irá llenando, o añade pistas con + en la librería.'; color: var(--faint); padding: 14px 4px; }
+.am-item { display: grid; grid-template-columns: 18px 26px 34px minmax(0, 1fr) 236px 128px 46px auto; gap: 10px; align-items: center; padding: 4px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.am-item.head { border-color: #6a5420; background: #17140a; }
+.am-item.drop-before { box-shadow: 0 -3px 0 0 var(--a); }
+.am-item.dragging { opacity: .4; }
+.am-grip { color: var(--faint); cursor: grab; text-align: center; letter-spacing: -2px; user-select: none; }
+.am-num { font-family: var(--mono); color: var(--faint); text-align: right; }
+.am-item img, .am-item .noart { width: 34px; height: 34px; border-radius: 4px; object-fit: cover; }
+.am-item .noart { background: var(--raised-2); display: grid; place-items: center; color: var(--faint); }
+.am-info { min-width: 0; }
+.am-info b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.am-info small { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.am-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line-2); color: var(--dim); text-align: center; white-space: nowrap; }
+.am-badge.ready { color: var(--ok); border-color: #1f5a3a; }
+.am-badge.work { color: var(--warn); border-color: #6a5420; }
+.am-badge.error { color: var(--err); border-color: #6a2530; }
+.am-dur { font-family: var(--mono); color: var(--dim); text-align: right; }
+.am-actions { display: flex; gap: 3px; }
+.am-actions button { padding: 2px 7px; font-size: 12px; }
+
+.am-meta { display: flex; gap: 8px; align-items: center; justify-content: flex-end; font-family: var(--mono); font-size: 12px; }
+.am-meta .bpm { min-width: 44px; text-align: right; }
+.am-meta .kchip { font-size: 10.5px; padding: 0 6px; }
+.am-energy { width: 34px; height: 6px; background: var(--inset); border-radius: 3px; overflow: hidden; flex: none; }
+.am-energy i { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn) 70%, var(--err)); }
+.am-gap { min-width: 64px; text-align: right; color: var(--dim); }
+.am-gap.warn { color: var(--warn); }
+.am-gap.jump { color: var(--err); font-weight: 700; }
+.am-pin { color: var(--cue); font-size: 11px; margin-left: 6px; }
+.am-plan { color: var(--cue); }

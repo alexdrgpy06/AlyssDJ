@@ -127,21 +127,21 @@ module.exports = (win, decks) => {
       await shot('20-grabando.png', '.topbar');
       await js(`const b=document.getElementById('btn-rec'); b.classList.remove('recording'); b.querySelector('span').textContent='REC'; return 1`);
 
-      // ---- AutoMix ----
+      // ---- AutoMix (vista en la librería) ----
       await js(`
         const A=__app.decks.A, B=__app.decks.B;
         for (const d of [A,B]) { if (d.st.playing) d.togglePlay(); d.setLoop(null); d.syncLock=false; d.setPitch(0); }
         const xf=document.getElementById('xfader'); xf.value=-1; xf.dispatchEvent(new Event('input'));
-        const am=__app.automix; am.setCfg({ len: 12, style: 'bass', matchTempo: true, endless: false });
+        const am=__app.automix; am.setCfg({ len: 12, style: 'bass', matchTempo: true, endless: false, preferLocal: true });
         await am.start({ tracks: ${JSON.stringify([rows[1], rows[2], rows[3], rows[0]])} });
-        document.getElementById('btn-automix').click();
+        __app.library.show('automix');
         return 1`);
       await wait(6000);
-      await shot('21-automix.png', '#automix-panel', 12);
-      await js(`const cur = __app.automix.cur; cur.seek(cur.st.dur - 11.5); return 1`);
-      await wait(6200);
+      await shot('21-automix.png', '.library');
+      await js(`const cur = __app.automix.cur; cur.seek(cur.st.dur - 13.5); return 1`);
+      await wait(7000);
       await shot('22-automix-mezclando.png');
-      await shot('23-automix-panel-mezclando.png', '#automix-panel', 12);
+      await shot('23-automix-vista-mezclando.png', '.library');
       await js(`__app.automix.stop(); return 1`);
     } catch (e) {
       L('error', e.stack.slice(0, 500));

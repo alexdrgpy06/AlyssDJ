@@ -104,6 +104,17 @@ class LocalLibrary {
     return this.row(e);
   }
 
+  // Carátula externa (p. ej. la miniatura que bajó yt-dlp): se copia a la caché de carátulas y se borra el original.
+  setCover(id, src) {
+    const e = this.index.get(id);
+    if (!e || !this.coversDir || !src || !fs.existsSync(src)) return false;
+    fs.copyFileSync(src, path.join(this.coversDir, `${id}.jpg`));
+    fs.rmSync(src, { force: true });
+    e.cover = true;
+    this.save();
+    return true;
+  }
+
   list(dirs) {
     return [...this.index.values()]
       .filter((e) => !dirs || dirs.some((d) => e.path.startsWith(d + path.sep)) || e.manual)

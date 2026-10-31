@@ -5,6 +5,7 @@ import { Library } from './library.js';
 import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
 import { Sampler } from './sampler.js';
+import { camelotColor } from './camelot.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -243,7 +244,7 @@ class App {
     $('#btn-help').addEventListener('click', () => dlg.showModal());
     $('#help-close').addEventListener('click', () => dlg.close());
     window.addEventListener('keydown', (e) => {
-      if (e.key === '?' && !e.target.matches('input, textarea, select')) {
+      if (e.key === '?' && !e.target.matches?.('input, textarea, select')) {
         e.preventDefault();
         dlg.open ? dlg.close() : dlg.showModal();
       }
@@ -255,7 +256,7 @@ class App {
     const panel = $('#sampler-panel');
     const btn = $('#btn-sampler');
     const setOpen = (open) => {
-      if (open) for (const id of ['video-panel', 'automix-panel']) $(`#${id}`).hidden = true;
+      if (open) $('#video-panel').hidden = true;
       panel.hidden = !open;
       btn.setAttribute('aria-expanded', String(open));
       btn.classList.toggle('active', open);
@@ -266,64 +267,148 @@ class App {
     this.closeSampler = () => setOpen(false);
   }
 
-  // ---------- AutoMix ----------
+  // ---------- AutoMix (vista en la librería) ----------
   bindAutoMix() {
     const am = this.automix;
-    const panel = $('#automix-panel');
-    const btn = $('#btn-automix');
-    const setOpen = (open) => {
-      if (open) {
-        $('#video-panel').hidden = true;
-        this.closeSampler();
-      }
-      panel.hidden = !open;
-      btn.setAttribute('aria-expanded', String(open));
-      if (open) render();
-    };
-    const fmt = (t) => (t ? `<b>${t.title || '—'}</b>${t.artist ? ` · ${t.artist}` : ''}` : '—');
-    const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-    const render = () => {
-      const st = am.snapshot();
-      btn.classList.toggle('active', st.on);
-      $('#am-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
-      $('#am-skip').disabled = !st.on || st.progress != null;
-      document.querySelectorAll('#am-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === am.cfg.style));
-      $('#am-len').value = am.cfg.len;
-      $('#am-len-out').textContent = `${am.cfg.len} s`;
-      $('#am-tempo').checked = am.cfg.matchTempo;
-      $('#am-analyze').checked = am.cfg.analyze;
-      $('#am-endless').checked = am.cfg.endless;
-      const lines = [];
-      if (st.on) {
-        lines.push(`Suena: ${fmt(st.cur)}`);
-        lines.push(`Sigue: ${st.next ? `${fmt(st.next)}${st.nextReady ? ' ✓' : ' …'}` : 'buscando en la radio…'}`);
-        if (Number.isFinite(st.rem)) lines.push(`Termina en ${Math.max(0, Math.round(st.rem))} s`);
-      } else lines.push('Detenido. Carga una pista y pulsa Iniciar, o usa “Radio” en la librería.');
-      if (st.note) lines.push(`<i>${esc(st.note)}</i>`);
-      $('#am-now').innerHTML = lines.join('<br>');
-      const bar = $('#am-bar');
-      bar.hidden = st.progress == null;
-      if (st.progress != null) bar.firstElementChild.style.width = `${Math.round(st.progress * 100)}%`;
-      $('#am-queue').innerHTML = st.queue.slice(0, 8).map((t, i) => `<li><span class="n">${i + 1}</span><span class="t" title="${esc(t.title)}">${esc(t.title)} <small>${esc(t.artist)}</small></span><button class="icon-btn" data-rm="${i}" aria-label="Quitar de la cola"><svg class="ic"><use href="#i-close"/></svg></button></li>`).join('');
-    };
-    am.subscribe(() => !panel.hidden && render());
-    setInterval(() => !panel.hidden && am.on && render(), 500);
-    btn.addEventListener('click', () => setOpen(panel.hidden));
-    $('#am-close').addEventListener('click', () => setOpen(false));
-    $('#btn-video').addEventListener('click', () => (panel.hidden = true));
-    document.addEventListener('keydown', (e) => e.key === 'Escape' && !panel.hidden && setOpen(false));
-    $('#am-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
-    $('#am-skip').addEventListener('click', () => am.skip());
-    $('#am-clear').addEventListener('click', () => am.clear());
-    $('#am-style').addEventListener('click', (e) => e.target.dataset.v && am.setCfg({ style: e.target.dataset.v }));
-    $('#am-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
-    $('#am-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
-    $('#am-analyze').addEventListener('change', (e) => am.setCfg({ analyze: e.target.checked }));
-    $('#am-endless').addEventListener('change', (e) => am.setCfg({ endless: e.target.checked }));
-    $('#am-queue').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-rm]');
-      if (b) am.remove(Number(b.dataset.rm));
+    const view = $('#am-view');
+    $('#btn-automix').addEventListener('click', () => this.library.show('automix'));
+    am.subscribe(() => !view.hidden && this.renderAutoMix());
+    setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
+    $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#amv-mix').addEventListener('click', () => am.mixNow());
+    $('#amv-clear').addEventListener('click', () => am.clear());
+    $('#amv-fill').addEventListener('click', () => {
+      am.failUntil = 0;
+      am.ensureQueue(true);
     });
+    $('#amv-style').addEventListener('click', (e) => e.target.dataset.v && am.setCfg({ style: e.target.dataset.v }));
+    $('#amv-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
+    $('#amv-local').addEventListener('change', (e) => am.setCfg({ preferLocal: e.target.checked }));
+    $('#amv-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
+    $('#amv-points').addEventListener('change', (e) => am.setCfg({ optimalPoints: e.target.checked }));
+    $('#amv-order').addEventListener('change', (e) => am.setCfg({ smartOrder: e.target.checked }));
+    $('#amv-endless').addEventListener('change', (e) => am.setCfg({ endless: e.target.checked }));
+
+    const list = $('#amv-list');
+    list.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-act]');
+      const li = e.target.closest('li[data-i]');
+      if (!b || !li) return;
+      const i = Number(li.dataset.i);
+      if (b.dataset.act === 'up') am.move(i, i - 1);
+      if (b.dataset.act === 'down') am.move(i, i + 1);
+      if (b.dataset.act === 'next') am.playNext(i);
+      if (b.dataset.act === 'rm') am.remove(i);
+    });
+    // Arrastrar para reordenar, o soltar una pista de la librería en la posición que se quiera.
+    let from = null;
+    list.addEventListener('dragstart', (e) => {
+      const li = e.target.closest('li[data-i]');
+      if (!li) return;
+      from = Number(li.dataset.i);
+      this.amDragging = true;
+      li.classList.add('dragging');
+      e.dataTransfer.setData('text/x-am-index', String(from));
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    list.addEventListener('dragend', () => {
+      from = null;
+      this.amDragging = false;
+      list.querySelectorAll('.dragging, .drop-before').forEach((x) => x.classList.remove('dragging', 'drop-before'));
+      this.renderAutoMix();
+    });
+    list.addEventListener('dragover', (e) => {
+      const li = e.target.closest('li[data-i]');
+      const ok = from != null || e.dataTransfer.types.includes('application/x-ytdj-track');
+      if (!ok) return;
+      e.preventDefault();
+      list.querySelectorAll('.drop-before').forEach((x) => x.classList.remove('drop-before'));
+      li?.classList.add('drop-before');
+    });
+    list.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const li = e.target.closest('li[data-i]');
+      const to = li ? Number(li.dataset.i) : am.queue.length;
+      const t = e.dataTransfer.getData('application/x-ytdj-track');
+      if (t) {
+        const track = JSON.parse(t);
+        if (!track.playlist) {
+          am.queue = am.queue.filter((x) => x.videoId !== track.videoId);
+          am.queue.splice(Math.min(to, am.queue.length), 0, track);
+          am.emit();
+        }
+      } else if (from != null) am.move(from, from < to ? to - 1 : to);
+      from = null;
+    });
+  }
+
+  renderAutoMix() {
+    const am = this.automix;
+    const st = am.snapshot();
+    const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const mmss = (sec) => (Number.isFinite(sec) && sec > 0 ? `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}` : '');
+    const badge = (t) => {
+      const p = t.prep;
+      if (t.local) return ['Archivo local', 'ready'];
+      if (p.state === 'ready') return [p.stream ? 'Streaming' : '✓ Lista · local', p.stream ? 'work' : 'ready'];
+      if (p.state === 'download') return [`Bajando ${Math.round((p.progress || 0) * 100)}%`, 'work'];
+      if (p.state === 'analyze') return ['Analizando…', 'work'];
+      if (p.state === 'queued') return ['En cola', 'work'];
+      if (p.state === 'error') return ['Falló', 'error'];
+      if (p.state === 'stream') return ['Streaming', ''];
+      return ['Pendiente', ''];
+    };
+    $('#btn-automix').classList.toggle('active', st.on);
+    $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
+    $('#amv-mix').disabled = !st.on || !!st.trans;
+    document.querySelectorAll('#amv-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
+    $('#amv-len').value = st.cfg.len;
+    $('#amv-len-out').textContent = `${st.cfg.len} s`;
+    $('#amv-local').checked = st.cfg.preferLocal;
+    $('#amv-tempo').checked = st.cfg.matchTempo;
+    $('#amv-points').checked = st.cfg.optimalPoints;
+    $('#amv-order').checked = st.cfg.smartOrder;
+    $('#amv-endless').checked = st.cfg.endless;
+    $('#amv-cur').textContent = st.cur ? st.cur.title || '—' : '—';
+    const planKinds = { outro: 'outro', rotura: 'rotura', final: 'final' };
+    $('#amv-cur-sub').textContent = st.cur
+      ? [st.cur.artist, `Deck ${st.curDeck}`, st.curInfo?.bpm ? `${st.curInfo.bpm.toFixed(1)} BPM` : '', st.curInfo?.camelot || '', st.plan && Number.isFinite(st.pos) ? `mezcla en ${mmss(Math.max(0, st.plan.exitAt - st.pos))} (${planKinds[st.plan.kind] || 'final'}, ${mmss(st.plan.exitAt)})` : Number.isFinite(st.rem) ? `termina en ${mmss(st.rem)}` : ''].filter(Boolean).join(' · ')
+      : 'Carga una pista y pulsa Iniciar, o usa “Radio” en la librería';
+    $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
+    $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
+    $('#amv-status').textContent = st.trans
+      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
+      : st.on ? (st.pendingMix ? 'Mezclará en cuanto la siguiente esté lista' : 'AutoMix activo') : 'Detenido';
+    $('#amv-bar-wrap').hidden = !st.trans;
+    if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;
+    $('#amv-note').textContent = st.note || '';
+
+    if (this.amDragging) return; // no reconstruir la lista mientras se arrastra
+    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}`).join('|') + `|${st.curInfo?.bpm}`;
+    const list = $('#amv-list');
+    if (list.dataset.sig === sig) return;
+    list.dataset.sig = sig;
+    list.innerHTML = st.queue.map((t, i) => {
+      const [label, cls] = badge(t);
+      const art = t.thumb ? `<img src="${esc(t.thumb)}" alt="" loading="lazy">` : '<div class="noart">♪</div>';
+      return `<li class="am-item${i === 0 ? ' head' : ''}" data-i="${i}" draggable="true">
+        <span class="am-grip" aria-hidden="true">⋮⋮</span><span class="am-num">${i + 1}</span>${art}
+        <div class="am-info"><b title="${esc(t.title)}">${esc(t.title)}${t.pinned ? '<span class="am-pin" title="Colocada por ti: no se reordena sola">📌 fija</span>' : ''}</b><small>${esc(t.artist)}</small></div>
+        <span class="am-meta">
+          <span class="bpm">${t.bpm ? t.bpm.toFixed(1) : '—'}</span>
+          ${t.camelot ? `<span class="kchip" style="--k:${camelotColor(t.camelot)}">${t.camelot}</span>` : '<span class="kchip">—</span>'}
+          <span class="am-energy" title="Energía ${t.energy ?? '—'}"><i style="width:${t.energy ?? 0}%"></i></span>
+          <span class="am-gap ${t.jump ? 'jump' : Math.abs(t.gapPct || 0) > 4 ? 'warn' : ''}" title="${t.jump ? 'Salto brusco de BPM: la mezcla será larga, con filtro y sin forzar el tempo' : 'Diferencia de BPM con lo que suena'}">${t.gapPct == null ? '' : `${t.gapPct > 0 ? '+' : ''}${t.gapPct.toFixed(1)} %${t.jump ? ' ⚠' : ''}`}</span>
+        </span>
+        <span class="am-badge ${cls}" title="${esc(t.prep.error || '')}">${label}</span>
+        <span class="am-dur">${mmss(t.duration)}</span>
+        <span class="am-actions">
+          <button data-act="next" class="ghost" title="Poner a continuación" aria-label="Poner a continuación">⤒</button>
+          <button data-act="up" class="ghost" title="Subir" aria-label="Subir"${i === 0 ? ' disabled' : ''}>▲</button>
+          <button data-act="down" class="ghost" title="Bajar" aria-label="Bajar"${i === st.queue.length - 1 ? ' disabled' : ''}>▼</button>
+          <button data-act="rm" class="ghost" title="Quitar de la cola" aria-label="Quitar de la cola">✕</button>
+        </span></li>`;
+    }).join('');
   }
 
   // ---------- pantalla de video ----------
@@ -366,10 +451,7 @@ class App {
     const panel = $('#video-panel');
     const btn = $('#btn-video');
     const setOpen = (open) => {
-      if (open) {
-        $('#automix-panel').hidden = true;
-        this.closeSampler();
-      }
+      if (open) this.closeSampler();
       panel.hidden = !open;
       btn.setAttribute('aria-expanded', String(open));
       if (open) this.refreshDisplays().then(() => this.renderVideoPanel());
@@ -502,10 +584,11 @@ class App {
       m: 'deckB.play', n: 'deckB.cue', p: 'deckB.sync', k: 'deckB.nudgeDown', l: 'deckB.nudgeUp',
       7: 'deckB.hotcue1', 8: 'deckB.hotcue2', 9: 'deckB.hotcue3', 0: 'deckB.hotcue4',
     };
-    const typing = (e) => e.target.matches('input[type=search], input:not([type]), textarea, select');
+    const typing = (e) => !!e.target.matches?.('input[type=search], input:not([type]), textarea, select');
     window.addEventListener('keydown', (e) => {
       if (/^F[1-8]$/.test(e.key) && !e.repeat && !typing(e)) return e.preventDefault(), this.sampler.key(e.key);
       if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'ArrowRight' && e.shiftKey) return e.preventDefault(), this.automix.mixNow();
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         this.xfader.value = Math.max(-1, Math.min(1, Number(this.xfader.value) + (e.key === 'ArrowLeft' ? -0.05 : 0.05)));
         this.applyXf();
@@ -578,7 +661,9 @@ class App {
     const s = this.settings;
     f.ytdlpPath.value = s.ytdlpPath || '';
     f.cookieSource.value = s.cookieSource;
-    f.keepAudio.checked = !!s.keepAudio;
+    f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
+    f.saveOnPlay.checked = s.saveOnPlay !== false;
+    f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
     f.autoAnalyzeCue.checked = !!s.autoAnalyzeCue;
     f.outputMode.value = s.output?.mode || 'split';
     f.pitchRange.value = String(s.pitchRange || 8);
@@ -634,7 +719,9 @@ class App {
       this.settings = await window.ytdj.settings.set({
         ytdlpPath: f.ytdlpPath.value.trim(),
         cookieSource: f.cookieSource.value,
-        keepAudio: f.keepAudio.checked,
+        saveOnAnalyze: f.saveOnAnalyze.checked,
+        saveOnPlay: f.saveOnPlay.checked,
+        libraryDir: f.libraryDir.value,
         autoAnalyzeCue: f.autoAnalyzeCue.checked,
         output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value },
         pitchRange: Number(f.pitchRange.value),
@@ -650,6 +737,11 @@ class App {
       if (prevYtdlp !== this.settings.ytdlpPath) this.checkTools();
     });
     $('#btn-open-cache').addEventListener('click', () => window.ytdj.analysis.openCache());
+    $('#btn-pick-library').addEventListener('click', async () => {
+      const dir = await window.ytdj.settings.pickDir();
+      if (dir) $('#settings form').libraryDir.value = dir;
+    });
+    $('#btn-open-library').addEventListener('click', () => window.ytdj.settings.openPath($('#settings form').libraryDir.value));
     $('#btn-install-tools').addEventListener('click', async () => {
       this.toast('Comprobando herramientas…');
       await window.ytdj.tools.install();

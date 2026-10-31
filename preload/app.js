@@ -56,6 +56,9 @@ contextBridge.exposeInMainWorld('ytdj', {
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (patch) => ipcRenderer.invoke('settings:set', patch),
+    pickDir: () => ipcRenderer.invoke('settings:pick-dir'),
+    libraryDir: () => ipcRenderer.invoke('settings:library-dir'),
+    openPath: (p) => ipcRenderer.invoke('path:open', p),
   },
   rec: {
     sources: () => ipcRenderer.invoke('rec:sources'),
