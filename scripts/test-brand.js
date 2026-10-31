@@ -18,7 +18,7 @@ tests.files = async () => {
   assert.match(pkg.description, /AlystechPY/);
   assert.strictEqual(pkg.build.appId, 'py.alystech.alyssdj');
   assert.match(pkg.build.copyright, /AlystechPY — Alejandro Ramírez/);
-  assert.strictEqual(pkg.build.win.publisherName, 'AlystechPY');
+  assert.ok(!('publisherName' in pkg.build.win), 'electron-builder 26 no admite win.publisherName (la firma lo definiría)');
   assert.strictEqual(pkg.build.linux.vendor, 'AlystechPY');
   assert.match(pkg.build.linux.maintainer, /Alejandro Ramírez/);
   assert.strictEqual(pkg.license, 'MIT');

@@ -7,12 +7,15 @@ module.exports = (win) => {
     const res = {};
     win.setContentSize(1600, 960);
     await wait(2500);
+    // el perfil de pantalla depende del tamaño real de la ventana (en CI puede ser pequeña): se fija a mano
+    await js(`await window.ytdj.settings.set({ layoutMode: 'normal' }); __app.settings.layoutMode = 'normal'; __app.applyLayout(); return 1`);
+    await wait(300);
     res.brand = await js(`const by=document.querySelector('.brand-by'); const tb=document.querySelector('.topbar'); return { normal: by.textContent, normalVisible: !!by.offsetParent, topbarOverflow: tb.scrollWidth > tb.clientWidth + 1 }`);
     res.about = await js(`document.getElementById('btn-help').click(); await new Promise(r=>setTimeout(r,300)); document.getElementById('btn-about').click(); await new Promise(r=>setTimeout(r,400)); const d=document.getElementById('about'); return { open: d.open, text: d.innerText, link: document.getElementById('about-link').textContent, img: document.querySelector('#about img').naturalWidth }`);
     fs.writeFileSync(path.join(out, 'about.png'), (await win.webContents.capturePage()).toPNG());
     await js(`document.getElementById('about-close').click(); document.getElementById('help-close').click(); return 1`);
-    win.setContentSize(1280, 700);
-    await wait(900);
+    await js(`await window.ytdj.settings.set({ layoutMode: 'compact' }); __app.settings.layoutMode = 'compact'; __app.applyLayout(); return 1`);
+    await wait(600);
     res.brand.compactVisible = await js(`return !!document.querySelector('.brand-by').offsetParent`);
     fs.writeFileSync(path.join(out, 'brand.json'), JSON.stringify(res));
     win.close();

@@ -56,8 +56,7 @@
         }
       ],
       "icon": "build/icon.png",
-      "artifactName": "AlyssDJ-Setup-${version}.${ext}",
-      "publisherName": "AlystechPY"
+      "artifactName": "AlyssDJ-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
