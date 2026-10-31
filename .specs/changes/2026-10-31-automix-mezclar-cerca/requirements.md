@@ -4,11 +4,12 @@ type: feature
 domains: [automix]
 paths: [renderer/mixplan.js, renderer/automix.js, renderer/app.js, scripts/test-mix-now.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 84c7abf8d060a2b5d17c0751f7960345d0c846d04983a35fcc14aae3795d6029
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-automix-mezclar-cerca
 

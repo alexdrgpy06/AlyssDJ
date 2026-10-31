@@ -203,4 +203,4 @@ function musicVideoTypeOf(json, videoId) {
   return first(mine || json, 'musicVideoType') || null;
 }
 
-module.exports = { musicVideoTypeOf, YtmLibrary, parseSongs, parsePlaylists, parseRadio };
+module.exports = { PAGE_CALL, musicVideoTypeOf, YtmLibrary, parseSongs, parsePlaylists, parseRadio };

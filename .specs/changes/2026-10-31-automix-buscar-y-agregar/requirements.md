@@ -4,11 +4,12 @@ type: feature
 domains: [automix, library]
 paths: [renderer/automix.js, renderer/mixplan.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, scripts/test-automix-add.js, docs/**]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 5078252991447b273ef965ca16e07cadd0a537d9a37a13417964069671c5558e
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-automix-buscar-y-agregar
 
@@ -26,7 +27,13 @@ WHEN la pista agregada ya está analizada THE SYSTEM SHALL insertarla en la posi
 WHEN se agrega o se quita una pista THE SYSTEM SHALL recalcular el orden de las no fijadas, sin mover la pista que suena ni la ya precargada.
 ### REQ-5: Sugerencias de qué sigue
 WHILE AutoMix tiene pistas THE SYSTEM SHALL mostrar hasta 6 sugerencias para continuar (de la radio de YouTube Music y de lo analizado en la librería) ordenadas por coste de transición desde el final de la cola, analizando en segundo plano las mejores, con «Agregar» en cada una.
-### REQ-6: Sin duplicados
+### REQ-6: Popularidad
+WHEN AutoMix llena la cola desde la radio de YouTube Music o genera sugerencias THE SYSTEM SHALL considerar la cantidad de reproducciones de cada candidata, junto con BPM, tonalidad, energía y estilo (misma radio, mismo artista, año cercano), de modo que entre candidatas de mezcla comparable gane la más popular.
+IF una candidata popular no encaja (salto de BPM mayor al 8% o tonalidad incompatible) THEN THE SYSTEM SHALL no ponerla por delante de una que sí encaja.
+### REQ-7: Ver y controlar la popularidad
+THE SYSTEM SHALL mostrar las reproducciones de cada resultado y sugerida («856 M»), obtenerlas de la búsqueda o de la ficha de la pista de YouTube Music sin bloquear la interfaz (de a 3 como máximo, con caché de 30 días) y ofrecer «Priorizar lo popular» (activado) con peso Poco, Medio o Mucho.
+
+### REQ-8: Sin duplicados
 THE SYSTEM SHALL no agregar una pista que ya esté en la cola ni la que suena, y avisarlo.
 
 ## Fuera de alcance

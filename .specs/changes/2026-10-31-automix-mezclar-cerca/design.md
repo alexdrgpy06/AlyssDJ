@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-automix-mezclar-cerca
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 1ab210294b57aef92754bf02366cc6f3905e8a82697a335fc2197ecb121326e4
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-automix-mezclar-cerca
 

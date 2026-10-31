@@ -4,11 +4,12 @@ type: feature
 domains: [install, ui]
 paths: [LICENSE, README.md, package.json, renderer/index.html, renderer/app.js, renderer/styles.css, docs/**, scripts/test-brand.js, main/main.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 43ddd7aaea661c69fb841cebf9924c597db5d0448f5591cd513e5b6046b44b44
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-marca-alystechpy
 

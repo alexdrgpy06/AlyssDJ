@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-marca-alystechpy
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: dabc7cade40fd653868c9eea1b5beb065ec454d7f8de4f102dd7fefc3347e8f2
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-marca-alystechpy
 
