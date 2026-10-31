@@ -25,3 +25,11 @@ Archivos del release: `AlyssDJ-<v>.AppImage`, `AlyssDJ-Setup-<v>.exe`, `AlyssDJ-
 Banner de actualización discreto sobre la barra superior; el mismo estilo oscuro de la app.
 
 ## Amendments
+
+## Domain deltas
+### install
+#### ADDED spec: Linux instalado como app y actualizaciones
+WHEN el usuario ejecuta scripts/install-linux.sh THE SYSTEM SHALL instalar el AppImage del último release en el HOME del usuario con entrada de menú, icono y comando alyssdj, sin sudo, y poder quitarlo con uninstall-linux.sh conservando sus datos.
+WHILE la app corre empaquetada THE SYSTEM SHALL buscar releases nuevos al arrancar y cada 6 horas, avisar y descargar solo con el permiso del usuario, sin reiniciar con un deck sonando; en macOS sin firma solo avisa con un enlace.
+#### ADDED design: updater y scripts
+`main/updater.js` (electron-updater con GitHub, inyectable), `renderer/update-ui.js` (aviso), `scripts/install-linux.sh` y `uninstall-linux.sh`; `release.yml` publica AppImage y latest*.yml.

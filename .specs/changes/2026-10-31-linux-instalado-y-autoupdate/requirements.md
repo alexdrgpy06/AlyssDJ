@@ -2,7 +2,7 @@
 change: 2026-10-31-linux-instalado-y-autoupdate
 type: feature
 domains: [install]
-paths: [main/settings.js, renderer/styles.css, renderer/update-ui.js, renderer/app.js, renderer/index.html, preload/app.js, scripts/**, .github/**, package-lock.json, package.json, build/**, scripts/install-linux.sh, scripts/uninstall-linux.sh, main/updater.js, main/main.js, renderer/app.js, renderer/index.html, preload/app.js, .github/workflows/release.yml, docs/**, README.md, scripts/test-updater.js]
+paths: [scripts/**, main/settings.js, renderer/styles.css, renderer/update-ui.js, renderer/app.js, renderer/index.html, preload/app.js, scripts/**, .github/**, package-lock.json, package.json, build/**, scripts/install-linux.sh, scripts/uninstall-linux.sh, main/updater.js, main/main.js, renderer/app.js, renderer/index.html, preload/app.js, .github/workflows/release.yml, docs/**, README.md, scripts/test-updater.js]
 commits: [25cece4]
 status: approved
 rev: 1
