@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-31-automix-mezclar-cerca
+last_change: 2026-10-31-automix-vista-video
 ---
 # automix · design
 
@@ -20,3 +20,7 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## planNearest
 
 `mixplan.planNearest` es pura; `AutoMix.mixNow` guarda un plan pendiente que `tick` inicia al llegar a la salida y la vista cuenta atrás con `snapshot().pendingMix`.
+
+## Vista de video (MiniStage)
+
+`body.am-stage` oculta `.console` y `.waves` sin sacarlos del DOM; `#stage` muestra dos teselas. `airWeights` usa fader² × crossfader (sin volumen general) y resalta ambas con mezcla en curso (> 0,15 en los dos).

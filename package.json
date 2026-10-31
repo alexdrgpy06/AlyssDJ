@@ -1,7 +1,7 @@
 {
   "name": "alyssdj",
   "productName": "AlyssDJ",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local — un software de AlystechPY, por Alejandro Ramírez",
   "main": "main/main.js",

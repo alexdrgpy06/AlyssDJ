@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-10-31-marca-alystechpy
+last_change: 2026-10-31-automix-vista-video
 ---
 # ui · design
 
@@ -16,3 +16,7 @@ last_change: 2026-10-31-marca-alystechpy
 ## Acerca de y marca
 
 Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (oculta en compacto) e identificador py.alystech.alyssdj.
+
+## Franja #stage
+
+Teselas 16:9 con borde del color del deck al aire (`.air`) y opacidad 0,6 en espera; asa de 32 px (`role=slider`, flechas y `[` `]`); por debajo de 520 px de ancho se apilan.
