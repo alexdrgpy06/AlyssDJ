@@ -2,8 +2,8 @@
 change: 2026-10-31-instaladores-win-mac
 type: feature
 domains: [install]
-paths: [main/main.js, .github/workflows/ci.yml, .github/workflows/release.yml, build/**, .gitignore, package-lock.json, scripts/packaged-selftest.js, scripts/test-installers.js, package.json, build/**, .github/workflows/release.yml, main/main.js, main/tools.js, docs/**, README.md, scripts/test-installers.js]
-commits: [5641f31, a3dcfa2]
+paths: [docs/**, main/main.js, main/main.js, .github/workflows/ci.yml, .github/workflows/release.yml, build/**, .gitignore, package-lock.json, scripts/packaged-selftest.js, scripts/test-installers.js, package.json, build/**, .github/workflows/release.yml, main/main.js, main/tools.js, docs/**, README.md, scripts/test-installers.js]
+commits: [5641f31, a3dcfa2, 9686331]
 status: approved
 rev: 1
 approved_rev: 1

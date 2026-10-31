@@ -2,8 +2,8 @@
 change: 2026-10-31-automix-cola-organizada
 type: feature
 domains: [automix]
-paths: [scripts/test-automix-view.js, scripts/test-mix-points.js, scripts/queue-order-selftest.js, renderer/automix.js, renderer/mixplan.js, renderer/index.html, renderer/styles.css, renderer/app.js, main/analyzer.js, scripts/test-queue-order.js]
-commits: [448917f]
+paths: [docs/**, main/main.js, scripts/test-automix-view.js, scripts/test-mix-points.js, scripts/queue-order-selftest.js, renderer/automix.js, renderer/mixplan.js, renderer/index.html, renderer/styles.css, renderer/app.js, main/analyzer.js, scripts/test-queue-order.js]
+commits: [448917f, 9686331]
 status: approved
 rev: 1
 approved_rev: 1
