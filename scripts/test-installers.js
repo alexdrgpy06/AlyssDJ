@@ -60,12 +60,12 @@ tests.packaged = async () => {
   const home = path.join(out, 'home');
   fs.mkdirSync(path.join(out, 'emptybin'), { recursive: true });
   fs.mkdirSync(home, { recursive: true });
-  const clean = { PATH: process.platform === 'win32' ? `${process.env.SystemRoot}\\system32;${process.env.SystemRoot}` : path.join(out, 'emptybin'), HOME: home, USERPROFILE: home };
+  const clean = { PATH: process.platform === 'win32' ? `${process.env.SystemRoot}\\system32;${process.env.SystemRoot}` : path.join(out, 'emptybin'), ...(process.platform === 'win32' ? {} : { HOME: home }) };
   const env = { ...process.env, ...clean, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'packaged-selftest.js'), YTDJ_USERDATA: path.join(out, 'data'), YTDJ_DOCS_MUSIC: music, YTDJ_SELFTEST_OUT: out };
   const args = process.platform === 'linux' && process.env.CI ? ['--no-sandbox'] : [];
   const r = spawnSync(exePath, args, { cwd: out, timeout: 400000, encoding: 'utf8', env });
   const f = path.join(out, 'packaged.json');
-  assert.ok(fs.existsSync(f), `la app empaquetada no produjo resultado:\n${(r.stderr || '').slice(-600)}`);
+  assert.ok(fs.existsSync(f), `la app empaquetada no produjo resultado:\n${(r.stderr || '').slice(-2500)}`);
   const res = JSON.parse(fs.readFileSync(f, 'utf8'));
   assert.strictEqual(res.packaged, true, 'corre empaquetada');
   assert.ok(res.tools?.ytdlp && res.tools?.ffmpeg, `REQ-3: se bajaron yt-dlp y ffmpeg a la carpeta de datos: ${JSON.stringify(res.tools)}`);

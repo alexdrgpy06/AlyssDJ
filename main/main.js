@@ -434,7 +434,14 @@ ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));
 // ---------- ajustes y herramientas ----------
 ipcMain.handle('settings:get', () => settings.get());
 // Carpeta donde se guardan las pistas de YouTube analizadas/reproducidas; forma parte de las carpetas de música.
-const libraryDir = () => settings.get().libraryDir || libSave.defaultLibraryDir(app.getPath('music'));
+const musicHome = () => {
+  try {
+    return app.getPath('music');
+  } catch {
+    return path.join(app.getPath('userData'), 'Music'); // sin carpeta de Música del sistema (perfil raro o entorno aislado)
+  }
+};
+const libraryDir = () => settings.get().libraryDir || libSave.defaultLibraryDir(musicHome());
 function syncMusicDirs() {
   const st = settings.get();
   if (st.saveOnAnalyze === false && st.saveOnPlay === false) return;
