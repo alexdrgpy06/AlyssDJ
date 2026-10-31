@@ -4,11 +4,12 @@ type: feature
 domains: [video, library]
 paths: [main/main.js, main/ytdlp.js, main/library-save.js, main/analyzer.js, main/ytm-library.js, preload/**, renderer/deck.js, renderer/app.js, renderer/video.html, renderer/video.js, renderer/index.html, renderer/styles.css, scripts/test-video-local.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 3cd4919a0fb72332342ebd0794a9be76d891bd34887c555a956c7d2e4e61e183
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-video-local
 

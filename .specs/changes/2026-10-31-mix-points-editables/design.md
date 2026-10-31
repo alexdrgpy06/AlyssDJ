@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-mix-points-editables
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: e67d51024b0ebcfd0bad7eba4cd91fbbf6faab275242b064ad6a9780ffa61cac
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-mix-points-editables
 

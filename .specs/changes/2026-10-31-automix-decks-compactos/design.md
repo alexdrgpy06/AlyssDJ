@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-automix-decks-compactos
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: c732716d8230609e315d0fbe7c04d0c010657e2776bfd871f3abb501d98d32ea
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-automix-decks-compactos
 

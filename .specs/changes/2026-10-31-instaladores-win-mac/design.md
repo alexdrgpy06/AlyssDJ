@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-instaladores-win-mac
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 53d406ecddeb3a1e4a1077a06e572574b5f620e849e779ffc318b14dd71e73e3
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-instaladores-win-mac
 

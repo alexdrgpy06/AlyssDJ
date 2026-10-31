@@ -72,6 +72,7 @@ export class Library {
 
   async show(tab, query) {
     this.tab = tab;
+    document.dispatchEvent(new CustomEvent('alyss:tab', { detail: tab }));
     document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     const isAm = tab === 'automix';
     document.getElementById('am-view').hidden = !isAm;

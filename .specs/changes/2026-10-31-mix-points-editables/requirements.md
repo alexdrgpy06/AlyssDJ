@@ -4,11 +4,12 @@ type: feature
 domains: [automix, library]
 paths: [renderer/automix.js, renderer/mixplan.js, renderer/deck.js, renderer/waveform.js, renderer/app.js, renderer/index.html, renderer/styles.css, main/analyzer.js, preload/app.js, main/main.js, scripts/test-mix-edit.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 4cff0b8af62b1c223532273168a79e0865e2c198412bb216488c115ae90bd7e3
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-mix-points-editables
 

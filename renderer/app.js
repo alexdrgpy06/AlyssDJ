@@ -4,6 +4,7 @@ import { Deck } from './deck.js';
 import { Library } from './library.js';
 import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
+import { watchLayout } from './layout.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 
@@ -44,6 +45,7 @@ class App {
 
     this.library = new Library(this);
     document.body.classList.toggle('no-mini', this.settings.miniVideo === false);
+    this.applyLayout = watchLayout(() => this.settings.layoutMode || 'auto');
     window.ytdj.deck.onFrame((id, url) => this.decks[id]?.onFrame(url));
     window.ytdj.local.onEvent((ev) => this.library.onLocalEvent(ev));
     window.ytdj.tools.onProgress((p) => this.onToolsProgress(p));
@@ -272,6 +274,7 @@ class App {
     const am = this.automix;
     const view = $('#am-view');
     $('#btn-automix').addEventListener('click', () => this.library.show('automix'));
+    document.addEventListener('alyss:tab', () => this.syncCompact());
     am.subscribe(() => !view.hidden && this.renderAutoMix());
     setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
     $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
@@ -342,6 +345,11 @@ class App {
     });
   }
 
+  // Con AutoMix activo (o su vista abierta) los decks se compactan para dejarle sitio a la lista.
+  syncCompact() {
+    document.body.classList.toggle('am-compact', this.automix.on || this.library?.tab === 'automix');
+  }
+
   renderAutoMix() {
     const am = this.automix;
     const st = am.snapshot();
@@ -359,6 +367,7 @@ class App {
       return ['Pendiente', ''];
     };
     $('#btn-automix').classList.toggle('active', st.on);
+    this.syncCompact();
     $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#amv-mix').disabled = !st.on || !!st.trans;
     document.querySelectorAll('#amv-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
@@ -661,6 +670,7 @@ class App {
     const s = this.settings;
     f.ytdlpPath.value = s.ytdlpPath || '';
     f.cookieSource.value = s.cookieSource;
+    f.layoutMode.value = s.layoutMode || 'auto';
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
     f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
@@ -726,12 +736,14 @@ class App {
         output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value },
         pitchRange: Number(f.pitchRange.value),
         crossfaderCurve: f.crossfaderCurve.value,
+        layoutMode: f.layoutMode.value,
         recordSource: f.recordSource.value,
         miniVideo: f.miniVideo.checked,
         autoAnalyzeLocal: f.autoAnalyzeLocal.checked,
       });
       document.body.classList.toggle('no-mini', !this.settings.miniVideo);
       this.eachDeck((d) => d.setMiniVideo(this.settings.miniVideo));
+      this.applyLayout?.();
       this.applyRouting();
       this.applyXf();
       if (prevYtdlp !== this.settings.ytdlpPath) this.checkTools();

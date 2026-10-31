@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-video-local
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: bbc37fec3f73d5596939929f95c1f36ebe3c0ecfea523e1ad06656fafb36e61b
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-video-local
 

@@ -4,11 +4,12 @@ type: feature
 domains: [install]
 paths: [package.json, build/**, .github/workflows/release.yml, main/main.js, main/tools.js, docs/**, README.md, scripts/test-installers.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: afa06a95fada963af185bb258da44fefd250469c0c2d81eeadcc0da030daffda
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-instaladores-win-mac
 

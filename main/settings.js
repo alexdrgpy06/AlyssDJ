@@ -15,6 +15,7 @@ const DEFAULTS = {
   autoAnalyzeCue: false,
   output: { mode: 'split', masterLabel: '', cueLabel: '' },
   crossfaderCurve: 'smooth',
+  layoutMode: 'auto', // auto | compact | normal | wide
   pitchRange: 8,
   musicDirs: [],
   autoAnalyzeLocal: true,

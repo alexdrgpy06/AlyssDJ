@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-automix-cola-organizada
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 303cb67aae3f305284d27a7adabb26d42ffe765d58b3231d1cd67c972afbcd8c
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-automix-cola-organizada
 

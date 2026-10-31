@@ -4,11 +4,12 @@ type: feature
 domains: [automix, ui]
 paths: [renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 466ea0c4b2d767aa37c4f1865ceb97f76215032fe2d43d2623810f9b6cca38df
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-automix-decks-compactos
 

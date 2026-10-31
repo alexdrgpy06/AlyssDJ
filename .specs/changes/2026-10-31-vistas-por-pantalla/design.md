@@ -1,10 +1,11 @@
 ---
 change: 2026-10-31-vistas-por-pantalla
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 320946c836bb7cd6d807b79ed893d5bf70b74bbe742d942ba4e472dcc4276eb3
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Design · 2026-10-31-vistas-por-pantalla
 

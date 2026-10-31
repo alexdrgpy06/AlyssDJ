@@ -497,3 +497,47 @@ fieldset { min-width: 0; }
 .am-gap.jump { color: var(--err); font-weight: 700; }
 .am-pin { color: var(--cue); font-size: 11px; margin-left: 6px; }
 .am-plan { color: var(--cue); }
+
+/* AutoMix activo: decks compactos (plato y portada pequeños, bancos de funciones colapsados, hot cues en una fila) */
+:is(body.am-compact, body[data-layout='compact']) .console { padding: 6px 10px; gap: 8px; }
+:is(body.am-compact, body[data-layout='compact']) .deck { gap: 3px; padding: 6px 10px; }
+:is(body.am-compact, body[data-layout='compact']) .deck-head { min-height: 0; }
+:is(body.am-compact, body[data-layout='compact']) .title { font-size: 13px; }
+:is(body.am-compact, body[data-layout='compact']) .badges { margin-top: 2px; }
+:is(body.am-compact, body[data-layout='compact']) .view-ytm, :is(body.am-compact, body[data-layout='compact']) .bank-tabs, :is(body.am-compact, body[data-layout='compact']) .pads .pane { display: none; }
+:is(body.am-compact, body[data-layout='compact']) .bpm { font-size: 20px; }
+:is(body.am-compact, body[data-layout='compact']) .sub { margin-top: 2px; }
+:is(body.am-compact, body[data-layout='compact']) canvas.overview { height: 24px; }
+:is(body.am-compact, body[data-layout='compact']) .deck-body { flex: none; height: 84px; grid-template-columns: 82px minmax(0, 1fr) 40px; gap: 8px; }
+:is(body.am-compact, body[data-layout='compact']) .platter { min-height: 0; max-height: 84px; }
+:is(body.am-compact, body[data-layout='compact']) .transport { flex-direction: row; flex-wrap: wrap; gap: 4px; align-content: center; justify-content: center; }
+:is(body.am-compact, body[data-layout='compact']) .transport button { width: 38px; height: 38px; font-size: 10px; }
+:is(body.am-compact, body[data-layout='compact']) .transport .sync { width: 80px; height: 22px; }
+:is(body.am-compact, body[data-layout='compact']) .transport .play .ic { width: 18px; height: 18px; }
+:is(body.am-compact, body[data-layout='compact']) .pitch .range, :is(body.am-compact, body[data-layout='compact']) .pitch .nudge-up, :is(body.am-compact, body[data-layout='compact']) .pitch .nudge-down { display: none; }
+:is(body.am-compact, body[data-layout='compact']) .hc { height: 24px; flex-direction: row; gap: 6px; justify-content: center; }
+:is(body.am-compact, body[data-layout='compact']) .hc small { display: none; }
+:is(body.am-compact, body[data-layout='compact']) .hc b { font-size: 12px; }
+:is(body.am-compact, body[data-layout='compact']) .mixer { padding: 6px 8px; gap: 4px; }
+body.am-compact .library { min-height: 40vh; }
+
+:is(body.am-compact, body[data-layout='compact']) .channels { gap: 4px; }
+:is(body.am-compact, body[data-layout='compact']) .ch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 2px; align-items: start; justify-items: center; }
+:is(body.am-compact, body[data-layout='compact']) .ch-head, :is(body.am-compact, body[data-layout='compact']) .ch .pfl, :is(body.am-compact, body[data-layout='compact']) .ch .fader-row { grid-column: 1 / -1; }
+:is(body.am-compact, body[data-layout='compact']) .ch-head { display: none; }
+:is(body.am-compact, body[data-layout='compact']) .ch .pfl { margin: 0; padding: 1px 12px; }
+:is(body.am-compact, body[data-layout='compact']) .knob svg { width: 26px; height: 26px; }
+:is(body.am-compact, body[data-layout='compact']) .fader-row { min-height: 40px; margin-top: 0; }
+:is(body.am-compact, body[data-layout='compact']) .vu { min-height: 36px; }
+:is(body.am-compact, body[data-layout='compact']) .master { gap: 2px; }
+:is(body.am-compact, body[data-layout='compact']) .master .vu { min-height: 40px; }
+:is(body.am-compact, body[data-layout='compact']) .wave-row { height: 44px; }
+:is(body.am-compact, body[data-layout='compact']) .console { align-items: start; }
+:is(body.am-compact, body[data-layout='compact']) input.vfader { min-height: 40px; flex: none; height: 44px; }
+:is(body.am-compact, body[data-layout='compact']) .fader-row { flex: none; min-height: 0; }
+
+/* Perfiles por tamaño de pantalla */
+body[data-layout='compact'] { grid-template-rows: 40px auto auto minmax(150px, 1fr); }
+body[data-layout='compact'] .legend, body[data-layout='compact'] .hint-long { display: none; }
+body[data-layout='compact'] .topbar .btn { padding-inline: 8px; }
+body[data-layout='wide'] { zoom: var(--ui-scale, 1.25); }

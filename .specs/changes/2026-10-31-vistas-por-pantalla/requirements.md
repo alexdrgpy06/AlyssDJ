@@ -4,11 +4,12 @@ type: feature
 domains: [ui]
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: f8e6bd9ee0f7486a7da8764e4366646d32b19cade2e301e717d1c0dcfff41568
+approved_by: Alejandro Ramirez
+approved_at: 2026-10-31
 ---
 # Requirements · 2026-10-31-vistas-por-pantalla
 
