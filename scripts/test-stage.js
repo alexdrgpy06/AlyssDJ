@@ -58,8 +58,6 @@ const live = (r) => {
     assert.strictEqual(s.vsrc, null);
   }
   assert.strictEqual(r.swapped2.label, 'Solo audio');
-  assert.strictEqual(r.noMini.kind, 'cover');
-  assert.strictEqual(r.noMini.label, '', 'miniatura desactivada: solo portada');
   console.log('stage live: OK');
 };
 

@@ -2,7 +2,6 @@ import { register } from './controls.js';
 import { makeKnob } from './knob.js';
 import { analysisWave, liveWave, recordLive, drawScroll, drawOverview } from './waveform.js';
 import { camelotColor } from './camelot.js';
-import { LocalVideo } from './localvideo.js';
 
 const fmt = (t) => {
   const s = Math.max(0, t || 0);
@@ -78,7 +77,6 @@ export class Deck {
     this.frameAt = 0;
     this.videoSrc = null; // video guardado de la pista (solo con video real) cuando suena desde archivo
     this.videoKey = null;
-    this.lvid = null;
     this.videoSyncAt = 0;
     this.fx = { on: false, type: 'echo', wet: 0.5, div: 0.75 };
     this.playedMs = 0;
@@ -167,7 +165,8 @@ export class Deck {
     this.frameAt = performance.now();
   }
 
-  setMiniVideo(on) {
+  // Los fotogramas del stream solo se capturan mientras la vista de video de AutoMix los muestra (cuesta CPU).
+  setFrames(on) {
     this.sendStream({ type: 'frames', on });
     if (!on) this.frameUrl = null;
   }
@@ -301,8 +300,6 @@ export class Deck {
     if (key !== this.track?.videoId) return; // cambió de pista mientras se consultaba
     this.videoSrc = src;
     this.videoKey = src ? key : null; // id de la pista a la que pertenece videoSrc
-    this.lvid ??= new LocalVideo(this.el.lvid);
-    this.lvid.setSource(src);
     window.ytdj.video.setDeckSource(this.id, src);
   }
 
@@ -311,7 +308,6 @@ export class Deck {
     if (!this.videoSrc || this.source !== 'local' || now - this.videoSyncAt < 250) return;
     this.videoSyncAt = now;
     const sync = { t: this.pos(), playing: !!this.st.playing, rate: this.st.rate || 1, at: now };
-    if (this.app.settings.miniVideo !== false) this.lvid?.apply(sync, now);
     window.ytdj.video.sync(this.id, { t: sync.t, playing: sync.playing, rate: sync.rate });
   }
 
@@ -636,8 +632,6 @@ export class Deck {
       vid: q('.vid'),
       rot: q('.vid .rot'),
       cover: q('.vid .cover'),
-      frame: q('.vid .frame'),
-      lvid: q('.vid .lvid'),
       pop: q('.vid .pop'),
       ring: q('.ring-fg'),
       plTime: q('.pl-time'),
@@ -673,7 +667,6 @@ export class Deck {
     const openVideo = () => !this.app.learning && this.app.openVideo(this.id);
     el.pop.addEventListener('click', (e) => (e.stopPropagation(), openVideo()));
     el.vid.addEventListener('dblclick', openVideo);
-    this.setMiniVideo(this.app.settings.miniVideo !== false);
     const P = `deck${this.id}`;
     const hold = (btn, id, fn) => {
       btn.addEventListener('pointerdown', (e) => !this.app.learning && e.button === 0 && fn(true));
@@ -880,15 +873,6 @@ export class Deck {
     setText(el.artist, t ? t.artist || '' : '—');
     const thumb = t ? t.thumb || generatedCover(t) : null;
     if (el.cover.getAttribute('src') !== thumb) thumb ? (el.cover.src = thumb) : el.cover.removeAttribute('src');
-    // Miniatura de video: solo si llegan fotogramas recientes del stream; si no (modo canción), portada.
-    const showFrame = this.source === 'stream' && this.frameUrl && performance.now() - this.frameAt < 1500;
-    if (showFrame) {
-      if (el.frame.getAttribute('src') !== this.frameUrl) el.frame.src = this.frameUrl;
-    } else if (el.frame.hasAttribute('src')) el.frame.removeAttribute('src');
-    el.frame.hidden = !showFrame;
-    const showLocalVideo = !!this.videoSrc && this.source === 'local' && this.app.settings.miniVideo !== false;
-    el.lvid.hidden = !showLocalVideo;
-    el.vid.classList.toggle('live', (!!showFrame || showLocalVideo) && this.st.playing);
     const eb = this.effBpm();
     setText(el.bpm, eb ? eb.toFixed(1) : '—');
     el.bpmBox.classList.toggle('est', !this.analysis?.bpm && !!this.tap);

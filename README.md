@@ -33,7 +33,7 @@ El análisis de una pista de YouTube se aplica también al stream: beatgrid, BPM
 
 ## Video
 
-Cada deck muestra una **miniatura** del video de YouTube Music (si la pista no tiene video, su portada). Con **Video** (arriba) o el botón de la miniatura se abre una **ventana de video** que puedes mover a otra pantalla o proyector:
+El plato de cada deck muestra la portada (el video no corre ahí para no gastar rendimiento). Con **Video** (arriba) o el botón del plato se abre una **ventana de video** con el video de YouTube Music que puedes mover a otra pantalla o proyector:
 
 - **Mostrar:** Auto (sigue al deck que está al aire), A, B o A | B.
 - **Pantalla:** eliges en cuál abrirla; **Completa** la pone a pantalla completa.
@@ -57,7 +57,7 @@ Pestaña **Playlists**: tus listas de YouTube Music (con la sesión iniciada). *
 1. **Iniciar sesión** con tu cuenta de YouTube Music Premium. Sin sesión hay anuncios.
 2. Busca, o usa *Me gusta*, *Playlists* o **Local** (*Añadir carpeta…*). Carga con **A**/**B**, arrastrando a un deck (también archivos del explorador) o con doble clic.
 3. En la librería, las pistas analizadas muestran su tonalidad con color Camelot y se resaltan las **compatibles** con el deck en juego (clave armónica y BPM dentro de ±6 %).
-4. **Ajustes:** salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader, miniatura de video y carpetas de música.
+4. **Ajustes:** salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader y carpetas de música.
 
 **Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista; si la pista de YouTube tiene video, se ve ahí (sin girar). Doble clic en el plato abre la ventana de video.
 

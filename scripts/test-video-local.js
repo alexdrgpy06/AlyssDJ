@@ -89,15 +89,10 @@ tests.e2e = async () => {
   for (const k of ['mini', 'afterSeek', 'paused', 'pitched', 'vwin', 'noVideo']) assert.ok(!r[k]?.__err, `${k}: ${JSON.stringify(r[k])}`);
   assert.match(r.src || '', /^app:\/\/ui\/localvideo\//, 'REQ-3: hay video guardado para la pista');
   assert.strictEqual(r.srcNone, null, 'REQ-4: sin video guardado, no hay fuente');
-  // REQ-3: miniatura sincronizada (deriva ≤ 0,3 s, con margen por el intervalo de 250 ms), pausa y velocidad
-  const near = (x, tol, msg) => assert.ok(Math.abs(x.t - x.pos) <= tol, `${msg}: video ${x.t.toFixed(2)} vs deck ${x.pos.toFixed(2)}`);
-  assert.strictEqual(r.mini.hidden, false, 'se ve el video en la miniatura');
-  assert.ok(r.mini.playing && !r.mini.paused, 'suena y el video también');
-  near(r.mini, 0.35, 'reproduciendo');
-  near(r.afterSeek, 0.6, 'tras saltar');
-  assert.ok(r.paused.paused && !r.paused.playing, 'pausa: el video se detiene');
-  near(r.paused, 0.2, 'en pausa');
-  assert.ok(Math.abs(r.pitched.rate - 1.08) < 0.01, `velocidad ${r.pitched.rate}`);
+  // El plato no lleva video (pesa demasiado): solo se conoce a qué pista pertenece el video y se ve en la ventana
+  assert.strictEqual(r.mini.platterVideo, false, 'el plato no tiene video ni fotogramas');
+  assert.strictEqual(r.mini.key, r.mini.id, 'el video pertenece a la pista cargada');
+  assert.ok(r.mini.playing && Math.abs(r.pitched.rate - 1.08) < 0.01, `velocidad ${r.pitched.rate}`);
   // ventana de video
   assert.ok(r.hasWin, 'se abrió la ventana de video');
   assert.strictEqual(r.vwin.display, 'block', 'la ventana muestra el video local del deck A');
@@ -107,10 +102,9 @@ tests.e2e = async () => {
   assert.ok(!r.vwin.paused);
   assert.strictEqual(r.streamVisible, false, 'la vista del stream de A queda oculta');
   // REQ-4: pista sin video: portada y mosaico fuera
-  assert.strictEqual(r.noVideo.hidden, true);
   assert.strictEqual(r.noVideo.src, null);
   assert.strictEqual(r.vwinNone, 'none');
-  console.log('video-local e2e: OK', JSON.stringify({ drift: [r.mini, r.afterSeek, r.paused].map((x) => Math.round((x.t - x.pos) * 100) / 100), rate: r.pitched.rate }));
+  console.log('video-local e2e: OK', JSON.stringify({ rate: r.pitched.rate }));
 };
 
 // Con YouTube Music de verdad (necesita internet): un video musical oficial y una pista de solo audio.

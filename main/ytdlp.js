@@ -163,4 +163,29 @@ function downloadVideo({ bin, videoId, dir, extraArgs = [], onProgress, maxHeigh
   });
 }
 
-module.exports = { downloadVideo, findYtdlp, setManagedDirs, cookieArgs, runtime, isFormatError, withFormatRetry, FORMAT_ERROR, download, downloadToLibrary };
+// YouTube a veces pide "confirmar que no eres un bot" y rechaza las descargas sin sesión. Insistir lo alarga:
+// tras el primer rechazo se dejan de lanzar descargas unos minutos (el deck sigue sonando por streaming).
+const BOT_RE = /not a bot|confirm you.?re not a bot|Sign in to confirm/i;
+const BOT_COOLDOWN_MS = 10 * 60 * 1000;
+const BOT_ERROR = 'YouTube pidió comprobar que no eres un bot y bloqueó las descargas un rato. Sigue sonando por streaming; se reintentará en unos minutos. Si se repite, en Ajustes → yt-dlp elige «Usar cookies de» tu navegador.';
+const isBotError = (msg) => BOT_RE.test(String(msg));
+let botUntil = 0;
+const botBlocked = (now = Date.now()) => now < botUntil;
+const resetBot = () => (botUntil = 0);
+
+function guarded(fn) {
+  return (...a) => {
+    if (botBlocked()) return Promise.reject(new Error(BOT_ERROR));
+    return fn(...a).catch((e) => {
+      if (!isBotError(e.message)) throw e;
+      botUntil = Date.now() + BOT_COOLDOWN_MS;
+      throw new Error(BOT_ERROR);
+    });
+  };
+}
+
+module.exports = {
+  downloadVideo: guarded(downloadVideo), download: guarded(download), downloadToLibrary: guarded(downloadToLibrary),
+  findYtdlp, setManagedDirs, cookieArgs, runtime, isFormatError, withFormatRetry, FORMAT_ERROR,
+  isBotError, botBlocked, resetBot, BOT_ERROR, BOT_COOLDOWN_MS,
+};

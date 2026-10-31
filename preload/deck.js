@@ -44,6 +44,8 @@ let loadedId = null; // video_id que reporta el reproductor de YT Music
 let videoCssKey = null;
 let videoPref = false; // preferir el video musical (cambia el modo de reproducción de YT Music)
 let videoPrefDone = null; // videoId para el que ya se aplicó la preferencia
+let videoSwitchUntil = 0; // hasta cuándo es válido que YT Music pase a la versión en video (tras pulsar su botón)
+let videoAltId = null; // id de esa versión en video, una vez vista
 let frameTimer = null;
 let lastFrameKey = '';
 let hadFrame = false;
@@ -95,6 +97,8 @@ const adapter = {
   async load(cmd, eng) {
     expected = { videoId: cmd.videoId, startAt: cmd.startAt || 0, play: !!cmd.play };
     meta = { videoId: cmd.videoId, title: '', author: '', ready: false };
+    videoSwitchUntil = 0;
+    videoAltId = null;
     settling = true;
     loadedId = null;
     const ok = await playerCall(`p.loadVideoById(${JSON.stringify(cmd.videoId)}, ${Number(cmd.startAt) || 0}); return true;`);
@@ -137,7 +141,10 @@ const adapter = {
         loadedId = d.id;
         // YT Music avanzó solo a otra canción (autoplay/cola): volver a la pista del deck
         // (salvo que se haya pedido la versión en video, que tiene otro id).
-        if (d.id && expected && d.id !== expected.videoId && !settling && !videoPref) {
+        // Con «preferir video» solo vale el cambio a la versión en video que pidió el propio deck (una vez, y pronto).
+        const isVideoSwitch = videoPref && (videoAltId === d.id || (!videoAltId && performance.now() < videoSwitchUntil));
+        if (isVideoSwitch && d.id !== expected?.videoId) videoAltId = d.id;
+        if (d.id && expected && d.id !== expected.videoId && !settling && !isVideoSwitch) {
           v.pause();
           adapter.load({ videoId: expected.videoId, startAt: 0, play: false });
           return;
@@ -155,7 +162,10 @@ function preferVideo() {
   const btn = toggle && toggle.querySelector('.video-button');
   if (!toggle || !btn || toggle.hasAttribute('toggle-disabled')) return;
   videoPrefDone = expected.videoId;
-  if (btn.getAttribute('aria-pressed') !== 'true') btn.click();
+  if (btn.getAttribute('aria-pressed') !== 'true') {
+    videoSwitchUntil = performance.now() + 8000;
+    btn.click();
+  }
 }
 
 // "¿Sigues ahí?" y similares pausan la reproducción tras un rato sin interacción.
@@ -172,6 +182,7 @@ function boot() {
     if (cmd.type === 'videoPref') {
       videoPref = !!cmd.on;
       videoPrefDone = null;
+      videoAltId = null;
       if (!videoPref) document.querySelector('ytmusic-av-toggle .song-button')?.click();
       else preferVideo();
       return;

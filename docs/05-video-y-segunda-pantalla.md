@@ -1,12 +1,12 @@
 # 5. Video y segunda pantalla
 
-## Miniatura en el deck
+## El plato no lleva video
 
-Si la pista de YouTube Music tiene video, el **centro del plato** lo muestra en vivo (sin girar). Si no, es la portada, y gira con la pista.
+El centro del plato muestra siempre la **portada**, que gira con la pista. El video no se reproduce ahí porque pesa demasiado: se ve en la **ventana de video** (abajo) o en la **vista de video de AutoMix**.
 
 ![Plato con portada](img/02-deck.png)
 
-Se puede quitar en **Ajustes → Decks → Mostrar miniatura de video**.
+El doble clic en el plato, su botón de ventana y **Video** (arriba) abren la ventana de video.
 
 ## Ventana de video
 

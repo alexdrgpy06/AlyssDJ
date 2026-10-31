@@ -48,7 +48,6 @@ class App {
     this.applyXf();
 
     this.library = new Library(this);
-    document.body.classList.toggle('no-mini', this.settings.miniVideo === false);
     this.initUpdates();
     this.applyLayout = watchLayout(() => this.settings.layoutMode || 'auto');
     window.ytdj.deck.onFrame((id, url) => this.decks[id]?.onFrame(url));
@@ -402,6 +401,7 @@ class App {
     if (!this.stage) return;
     const active = this.stage.on && this.library?.tab === 'automix';
     document.body.classList.toggle('am-stage', active);
+    if (active !== this.stage.active) this.eachDeck((d) => d.setFrames(active));
     this.stage.setActive(active);
     const b = $('#amv-stage');
     b.setAttribute('aria-pressed', String(this.stage.on));
@@ -774,7 +774,6 @@ class App {
     f.outputMode.value = s.output?.mode || 'split';
     f.pitchRange.value = String(s.pitchRange || 8);
     f.crossfaderCurve.value = s.crossfaderCurve || 'smooth';
-    f.miniVideo.checked = s.miniVideo !== false;
     f.autoAnalyzeLocal.checked = s.autoAnalyzeLocal !== false;
     this.renderMusicDirs();
     const outs = await this.listOutputs();
@@ -837,11 +836,8 @@ class App {
         crossfaderCurve: f.crossfaderCurve.value,
         layoutMode: f.layoutMode.value,
         recordSource: f.recordSource.value,
-        miniVideo: f.miniVideo.checked,
         autoAnalyzeLocal: f.autoAnalyzeLocal.checked,
       });
-      document.body.classList.toggle('no-mini', !this.settings.miniVideo);
-      this.eachDeck((d) => d.setMiniVideo(this.settings.miniVideo));
       this.applyLayout?.();
       this.applyRouting();
       this.applyXf();

@@ -21,7 +21,6 @@ const DEFAULTS = {
   pitchRange: 8,
   musicDirs: [],
   autoAnalyzeLocal: true,
-  miniVideo: true,
   videoPref: false,
   recordSource: '',
   // Guardar en la librería local lo que se analiza o reproduce (el audio ya se descargó).

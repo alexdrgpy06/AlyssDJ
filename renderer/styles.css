@@ -215,11 +215,9 @@ canvas.overview { width: 100%; height: 38px; background: var(--inset); border: 1
 .vid:has(.cover[src]) .deck-letter { display: none; }
 .vid .pop { position: absolute; right: 12%; bottom: 12%; z-index: 3; padding: 3px; border-radius: 5px; background: #000b; border-color: #ffffff22; color: #fff; opacity: 0; transition: opacity .15s var(--ease); }
 .vid:hover .pop, .vid .pop:focus-visible { opacity: 1; }
-.vid.live::before { content: ''; position: absolute; left: 50%; top: 9%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--play); box-shadow: 0 0 6px var(--play); z-index: 3; }
 .pl-info { position: absolute; left: 50%; bottom: 4.5%; transform: translateX(-50%); z-index: 3; display: flex; align-items: baseline; gap: 6px; padding: 1px 9px; border-radius: 99px; background: #000b; font-family: var(--mono); pointer-events: none; }
 .pl-time { font-size: 12px; font-weight: 600; }
 .pl-bpm { display: none; }
-body.no-mini .vid .frame { display: none; }
 
 .pitch { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pitch button { width: 34px; padding: 3px 0; }
@@ -562,8 +560,6 @@ dialog#mixedit { width: min(1100px, 94vw); }
 .me-list .acts { display: flex; gap: 2px; }
 .me-list .acts button { padding: 2px 6px; min-width: 28px; min-height: 28px; }
 
-.vid .lvid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; background: #05070b; }
-.vid .lvid[hidden] { display: none; }
 
 /* Aviso de actualización */
 .update-banner { position: fixed; top: 52px; right: 12px; z-index: 50; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: var(--raised); border: 1px solid var(--a); border-radius: 10px; box-shadow: 0 10px 30px #000a; font-size: 12.5px; }

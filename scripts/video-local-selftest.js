@@ -28,7 +28,7 @@ module.exports = (win, decks) => {
     // cargar y reproducir en el deck A
     await js(`const A=__app.decks.A; await A.load(${JSON.stringify(rows[0])}); A.seek(20); A.togglePlay(); return 1`);
     await wait(3000);
-    const probe = `const A=__app.decks.A; const v=A.el.lvid; return { src: A.videoSrc, hidden: v.hidden, t: v.currentTime, pos: A.pos(), paused: v.paused, rate: v.playbackRate, ready: v.readyState, playing: A.st.playing }`;
+    const probe = `const A=__app.decks.A; return { src: A.videoSrc, key: A.videoKey, id: A.track?.videoId, platterVideo: !!A.el.vid.querySelector('video, .frame'), pos: A.pos(), rate: A.st.rate, playing: A.st.playing }`;
     res.mini = await js(probe);
     fs.writeFileSync(path.join(out, 'video-mini.png'), (await win.webContents.capturePage()).toPNG());
     // salto: el video sigue al deck

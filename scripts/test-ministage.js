@@ -5,16 +5,15 @@ import assert from 'assert';
 import { pickMedia, airWeights, clampWidth, MIN_W, MAX_W } from '../renderer/ministage.js';
 
 // REQ-2: solo el video de la pista cargada
-const base = { trackId: 'abc', videoKey: 'abc', videoSrc: 'app://ui/localvideo/abc', source: 'local', miniVideo: true };
+const base = { trackId: 'abc', videoKey: 'abc', videoSrc: 'app://ui/localvideo/abc', source: 'local' };
 assert.deepStrictEqual(pickMedia(base), { kind: 'video', src: base.videoSrc });
 assert.deepStrictEqual(pickMedia({ ...base, trackId: 'xyz' }), { kind: 'cover', label: 'Solo audio' }, 'video de otra pista');
 assert.deepStrictEqual(pickMedia({ ...base, videoKey: null }), { kind: 'cover', label: 'Solo audio' }, 'sin resolver aún');
 assert.deepStrictEqual(pickMedia({ ...base, trackId: null }), { kind: 'cover' });
-// REQ-5: sin video o con la miniatura desactivada
+// REQ-5: sin video
 assert.deepStrictEqual(pickMedia({ ...base, videoSrc: null }), { kind: 'cover', label: 'Solo audio' });
-assert.deepStrictEqual(pickMedia({ ...base, miniVideo: false }), { kind: 'cover' });
 // stream: fotogramas recientes o portada
-const st = { trackId: 'abc', source: 'stream', frameUrl: 'blob:f', frameAgeMs: 200, miniVideo: true };
+const st = { trackId: 'abc', source: 'stream', frameUrl: 'blob:f', frameAgeMs: 200 };
 assert.deepStrictEqual(pickMedia(st), { kind: 'frame', src: 'blob:f' });
 assert.deepStrictEqual(pickMedia({ ...st, frameAgeMs: 3000 }), { kind: 'cover' });
 assert.deepStrictEqual(pickMedia({ ...st, videoKey: 'otra', videoSrc: 'x' }), { kind: 'frame', src: 'blob:f' });

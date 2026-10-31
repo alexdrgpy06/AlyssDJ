@@ -10,8 +10,8 @@ const AIR_MIX = 0.15; // por encima de esto en ambos decks hay una mezcla en cur
 export const clampWidth = (px) => Math.max(MIN_W, Math.min(MAX_W, Math.round(Number(px) || 320)));
 
 // Qué enseña la miniatura de un deck. El video solo sale si corresponde a la pista cargada (videoKey === trackId).
-export function pickMedia({ trackId, videoKey, videoSrc, source, frameUrl, frameAgeMs = Infinity, miniVideo = true }) {
-  if (!trackId || miniVideo === false) return { kind: 'cover' };
+export function pickMedia({ trackId, videoKey, videoSrc, source, frameUrl, frameAgeMs = Infinity }) {
+  if (!trackId) return { kind: 'cover' };
   if (source === 'local') {
     return videoSrc && videoKey === trackId ? { kind: 'video', src: videoSrc } : { kind: 'cover', label: 'Solo audio' };
   }
@@ -121,7 +121,7 @@ export class MiniStage {
     const tr = d.track;
     const media = pickMedia({
       trackId: tr?.videoId, videoKey: d.videoKey, videoSrc: d.videoSrc, source: d.source,
-      frameUrl: d.frameUrl, frameAgeMs: now - d.frameAt, miniVideo: this.app.settings.miniVideo,
+      frameUrl: d.frameUrl, frameAgeMs: now - d.frameAt,
     });
     t.kind = media.kind;
     t.lv.setSource(media.kind === 'video' ? media.src : null);

@@ -105,7 +105,7 @@ Con la pestaña **AutoMix** abierta, **Vista de video** (o la tecla **V**) ocult
 - **Quién suena.** La miniatura del deck al aire lleva un borde de su color y la del que espera se atenúa; durante una mezcla se resaltan las dos.
 - **Tamaño.** Arrastra el asa de la esquina inferior derecha (o usa las flechas sobre ella, o **[** y **]**): de 160 a 560 px por miniatura, siempre en 16:9. Se recuerda el tamaño y si la vista estaba activa.
 - **Doble clic** en una miniatura abre la ventana de video de ese deck (para otra pantalla o proyector).
-- Fuera de la pestaña AutoMix, la consola vuelve completa. Si desactivas «Mostrar miniatura de video» en Ajustes, solo se ven portadas.
+- Fuera de la pestaña AutoMix, la consola vuelve completa.
 
 ## Buscar y agregar desde la propia vista
 

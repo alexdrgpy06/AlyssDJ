@@ -41,12 +41,7 @@ module.exports = (win) => {
     res.swapped = await js(tile('A'));
     await wait(1200);
     res.swapped2 = await js(tile('A'));
-    // 4) miniatura desactivada en ajustes → portadas
-    await js(`__app.settings.miniVideo = false; return 1`);
-    await wait(300);
-    res.noMini = await js(tile('B'));
-    await js(`__app.settings.miniVideo = true; return 1`);
-    // 5) tamaño: teclado en el asa, atajos [ ], límites y persistencia
+    // 4) tamaño: teclado en el asa, atajos [ ], límites y persistencia
     res.size = {};
     await js(`__app.stage.setWidth(320); return 1`);
     await js(`const g=document.querySelector('.stage-grip'); g.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})); return 1`);
@@ -61,11 +56,11 @@ module.exports = (win) => {
     res.size.drag = await js(`const g=document.querySelector('.stage-grip'); const r=g.getBoundingClientRect(); const x=r.left+5, y=r.top+5; const ev=(t,cx)=>g.dispatchEvent(new PointerEvent(t,{clientX:cx,clientY:y,pointerId:1,bubbles:true})); try{g.setPointerCapture=()=>{};}catch{} ev('pointerdown',x); ev('pointermove',x+60); ev('pointerup',x+60); return __app.stage.width`);
     res.size.ratio = await js(tile('A'));
     res.stored = await js(`return localStorage.getItem('alyssdj.stage')`);
-    // 6) doble clic abre la ventana de video de ese deck
+    // 5) doble clic abre la ventana de video de ese deck
     await js(`document.querySelector('.tile[data-deck="B"]').dispatchEvent(new MouseEvent('dblclick',{bubbles:true})); return 1`);
     await wait(2500);
     res.videoWin = BrowserWindow.getAllWindows().some((w) => !w.isDestroyed() && w.getTitle().includes('Video'));
-    // 7) fuera de la pestaña AutoMix o apagada, la consola vuelve entera y los decks conservan su estado
+    // 6) fuera de la pestaña AutoMix o apagada, la consola vuelve entera y los decks conservan su estado
     const posBefore = await js(`return __app.decks.B.pos()`);
     await js(`__app.library.show('search'); await new Promise(r=>setTimeout(r,500)); return 1`);
     res.otherTab = await js(`return { cls: document.body.className, display: getComputedStyle(document.querySelector('.console')).display, stageHidden: document.getElementById('stage').hidden, t: __app.decks.B.track?.videoId }`);
