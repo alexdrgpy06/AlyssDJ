@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('ytdj', {
     cancel: (id) => ipcRenderer.invoke('analysis:cancel', id),
     get: (id) => ipcRenderer.invoke('analysis:get', id),
     list: () => ipcRenderer.invoke('analysis:list'),
+    setMixEdit: (id, edit) => ipcRenderer.invoke('analysis:mixedit', id, edit),
     setMeta: (id, patch) => ipcRenderer.invoke('analysis:set-meta', id, patch),
     removeAudio: (id) => ipcRenderer.invoke('analysis:remove-audio', id),
     openCache: () => ipcRenderer.invoke('analysis:open-cache'),

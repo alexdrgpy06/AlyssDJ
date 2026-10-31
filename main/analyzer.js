@@ -3,6 +3,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const mixedit = require('./mixedit');
 const { Worker } = require('worker_threads');
 const ytdlp = require('./ytdlp');
 const L = require('./library-save');
@@ -35,10 +36,19 @@ class Analyzer {
       const a = JSON.parse(fs.readFileSync(this.jsonPath(id), 'utf8'));
       const audio = this.audioFile(id);
       const saved = a.saved && fs.existsSync(a.saved.path) ? a.saved : undefined; // si el usuario borró el archivo, deja de contar como guardada
-      return { ...a, saved, audio: audio ? path.basename(audio) : null };
+      const mixEdit = mixedit.read(this.cacheDir, id) || undefined;
+      return { ...a, saved, audio: audio ? path.basename(audio) : null, mixEdit };
     } catch {
       return null;
     }
+  }
+
+  // Edición manual de los puntos de mezcla (null = volver al cálculo automático). Avisa a la interfaz.
+  setMixEdit(id, edit) {
+    const a = this.get(id);
+    const saved = mixedit.write(this.cacheDir, id, edit, a?.duration || 0);
+    this.emit({ id, stage: 'mixedit', mixEdit: saved });
+    return saved;
   }
 
   list() {

@@ -5,6 +5,7 @@ import { Library } from './library.js';
 import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
 import { watchLayout } from './layout.js';
+import { MixEditor } from './mixeditor.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 
@@ -54,6 +55,7 @@ class App {
     this.sampler = new Sampler(this);
     this.bindSampler();
     this.automix = new AutoMix(this);
+    this.mixEditor = new MixEditor(this);
     this.bindAutoMix();
     this.videoMode = 'auto';
     this.videoState = await window.ytdj.video.state();
@@ -304,6 +306,7 @@ class App {
       if (b.dataset.act === 'down') am.move(i, i + 1);
       if (b.dataset.act === 'next') am.playNext(i);
       if (b.dataset.act === 'rm') am.remove(i);
+      if (b.dataset.act === 'edit') this.editQueuePoints(i);
     });
     // Arrastrar para reordenar, o soltar una pista de la librería en la posición que se quiera.
     let from = null;
@@ -350,6 +353,25 @@ class App {
   // Con AutoMix activo (o su vista abierta) los decks se compactan para dejarle sitio a la lista.
   syncCompact() {
     document.body.classList.toggle('am-compact', this.automix.on || this.library?.tab === 'automix');
+  }
+
+  // Abre el editor de una pista de la cola (la siguiente de la lista es la de la prueba de mezcla).
+  editQueuePoints(i) {
+    const am = this.automix;
+    const t = am.queue[i];
+    const ana = am.ana.get(t?.videoId);
+    if (!ana) return this.toast('Esta pista aún no está analizada; espera a que termine.', true);
+    const nt = am.queue[i + 1];
+    this.mixEditor.open(t, ana, nt && am.ana.get(nt.videoId) ? { track: nt, analysis: am.ana.get(nt.videoId) } : null);
+  }
+
+  // Desde un deck: la siguiente de la cola de AutoMix (si la hay) es la de la prueba.
+  editDeckPoints(deck) {
+    const am = this.automix;
+    const nt = am.queue[0];
+    const nana = nt && am.ana.get(nt.videoId);
+    if (!deck.track) return this.toast('Carga una pista en el deck.', true);
+    this.mixEditor.open(deck.track, deck.analysis || am.ana.get(deck.track.videoId), nana ? { track: nt, analysis: nana } : null);
   }
 
   renderAutoMix() {
@@ -418,6 +440,7 @@ class App {
         <span class="am-badge ${cls}" title="${esc(t.prep.error || '')}">${label}</span>
         <span class="am-dur">${mmss(t.duration)}</span>
         <span class="am-actions">
+          <button data-act="edit" class="ghost" title="Editar los puntos de mezcla" aria-label="Editar los puntos de mezcla">✎</button>
           <button data-act="next" class="ghost" title="Poner a continuación" aria-label="Poner a continuación">⤒</button>
           <button data-act="up" class="ghost" title="Subir" aria-label="Subir"${i === 0 ? ' disabled' : ''}>▲</button>
           <button data-act="down" class="ghost" title="Bajar" aria-label="Bajar"${i === st.queue.length - 1 ? ' disabled' : ''}>▼</button>

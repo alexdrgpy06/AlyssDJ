@@ -324,8 +324,13 @@ export class Deck {
 
   onAnalysisEvent(ev) {
     if (ev.id !== this.track?.videoId) return;
+    if (ev.stage === 'mixedit') {
+      if (this.analysis) this.analysis.mixEdit = ev.mixEdit || undefined;
+      return;
+    }
     if (ev.stage === 'done') {
       this.analyzing = null;
+      if (ev.analysis && !ev.analysis.mixEdit && this.analysis?.mixEdit) ev.analysis.mixEdit = this.analysis.mixEdit; // reanalizar no borra lo editado
       this.setAnalysis(ev.analysis);
     } else if (ev.stage === 'error' || ev.stage === 'cancelled') {
       this.analyzing = null;
@@ -626,6 +631,7 @@ export class Deck {
       analyze: q('.analyze'),
       srcBtns: [...root.querySelectorAll('.source button')],
       viewYtm: q('.view-ytm'),
+      mixPoints: q('.mix-points'),
       scroll: document.getElementById(`scroll-${this.id}`),
       spin: q('.platter .spin'),
       platter: q('.platter'),
@@ -702,6 +708,7 @@ export class Deck {
     });
     this.setBank('loop');
     el.viewYtm.addEventListener('click', () => this.app.toggleYtmView(this.id));
+    el.mixPoints.addEventListener('click', () => this.app.editDeckPoints(this));
 
     el.pitchFader.addEventListener('input', () => {
       this.syncLock = false;

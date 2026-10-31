@@ -400,6 +400,7 @@ ipcMain.handle('analysis:request', (_e, id, opts) => analyzer.request(id, opts))
 ipcMain.handle('analysis:cancel', (_e, id) => analyzer.cancel(id));
 ipcMain.handle('analysis:get', (_e, id) => analyzer.get(id));
 ipcMain.handle('analysis:list', () => analyzer.list());
+ipcMain.handle('analysis:mixedit', (_e, id, edit) => analyzer.setMixEdit(id, edit));
 ipcMain.handle('analysis:set-meta', (_e, id, patch) => analyzer.setMeta(id, patch));
 ipcMain.handle('analysis:remove-audio', (_e, id) => analyzer.removeAudio(id));
 ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));

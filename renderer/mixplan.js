@@ -194,14 +194,16 @@ export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } 
     seconds = Math.min(len * 1.5, 48);
   } else if (!gap) warnings.push('sin BPM: fundido simple');
   const wantBeats = Math.max(MIN_BEATS, Math.round(seconds / beat / 4) * 4);
-  const enterAt = Math.max(0, next?.mix?.mixIn ?? next?.offset ?? 0);
+  const enterAt = Math.max(0, next?.mixEdit?.in ?? next?.mix?.mixIn ?? next?.offset ?? 0);
 
   const endPlan = () => {
     const sec = Math.min(seconds, Math.max(2, dur - pos - 1));
     return { exitAt: Math.max(pos, dur - sec - 1.2), enterAt, beats: Math.round(sec / beat), seconds: sec, style, tempo, warnings, kind: 'final' };
   };
-  const cands = cur.mix?.mixOut;
-  if (!optimal || !cands?.length || !cur.bpm) return endPlan();
+  // Con puntos de salida editados se usan solo esos, en el orden de preferencia del usuario (la primera que aún esté por delante).
+  const edited = cur.mixEdit?.outs?.length ? cur.mixEdit.outs.map((o) => ({ t: o.t, kind: 'edit' })) : null;
+  const cands = edited || cur.mix?.mixOut;
+  if ((!optimal && !edited) || !cands?.length || !cur.bpm) return endPlan();
   for (const c of cands) {
     if (c.t < pos - 0.25) continue; // esa salida ya pasó
     const avail = dur - c.t;

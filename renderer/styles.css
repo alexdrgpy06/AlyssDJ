@@ -544,3 +544,20 @@ body[data-layout='wide'] { zoom: var(--ui-scale, 1.25); }
 
 .am-q { font-size: 9px; letter-spacing: .08em; color: var(--faint); }
 .am-q.good { color: var(--ok); } .am-q.ok { color: var(--warn); } .am-q.poor { color: var(--err); }
+
+/* Editor de puntos de mezcla */
+dialog#mixedit { width: min(1100px, 94vw); }
+.mixedit { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.mixedit header { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.mixedit h2 { margin: 0; font-size: 16px; }
+.mixedit small { color: var(--dim); }
+#me-wave { width: 100%; height: 150px; background: var(--inset); border: 1px solid var(--line); border-radius: 6px; cursor: crosshair; touch-action: none; display: block; }
+.me-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.me-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.me-list li { display: grid; grid-template-columns: 12px 80px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+.me-list li.sel { border-color: var(--accent, var(--a)); }
+.me-list .dot { width: 10px; height: 10px; border-radius: 50%; }
+.me-list .dot.in { background: #3ddc84; } .me-list .dot.out { background: #ff4d6d; }
+.me-list .t { font-family: var(--mono); }
+.me-list .acts { display: flex; gap: 2px; }
+.me-list .acts button { padding: 2px 6px; min-width: 28px; min-height: 28px; }

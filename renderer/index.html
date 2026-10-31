@@ -101,6 +101,7 @@
                 <button data-src="local" data-tip="Reproduce el archivo (local o bajado con yt-dlp)">LOCAL</button>
               </div>
               <button class="btn sm analyze" data-tip="Descargar con yt-dlp y analizar BPM, beatgrid, tonalidad y forma de onda"><svg class="ic"><use href="#i-bars"/></svg><span>Analizar</span></button>
+              <button class="btn ghost sm mix-points" data-tip="Ver y editar los puntos de entrada y salida de mezcla de esta pista">Puntos</button>
               <button class="btn ghost sm view-ytm" data-tip="Mostrar la página de YouTube Music de este deck (para iniciar sesión o depurar)">YTM</button>
             </div>
           </div>
@@ -270,6 +271,24 @@
 
   <div class="ytm-float" id="ytm-float-A" hidden><header>YouTube Music · Deck A <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
   <div class="ytm-float" id="ytm-float-B" hidden><header>YouTube Music · Deck B <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
+
+
+  <dialog id="mixedit" aria-labelledby="me-title">
+    <div class="mixedit">
+      <header><div><h2 id="me-title">Puntos de mezcla</h2><small id="me-meta"></small></div><button class="icon-btn" id="me-close" type="button" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header>
+      <canvas id="me-wave"></canvas>
+      <p class="hint" id="me-hint"></p>
+      <div class="me-bar">
+        <button class="btn sm" id="me-setin" type="button" title="Pone la entrada en la línea blanca">Entrada aquí</button>
+        <button class="btn sm" id="me-add" type="button" title="Añade una salida en la línea blanca (también doble clic o clic derecho sobre la onda)">＋ Salida aquí</button>
+        <label class="check compact" title="Mayús al arrastrar ajusta a frases de 16 beats"><input type="checkbox" id="me-free" /> Posición libre (sin ajustar a beats)</label>
+        <span class="spacer"></span>
+        <button class="btn sm" id="me-preview" type="button"><svg class="ic"><use href="#i-headphones"/></svg><span>Probar la mezcla</span></button>
+        <button class="btn ghost sm" id="me-reset" type="button">Restaurar automático</button>
+      </div>
+      <ol class="me-list" id="me-list" aria-label="Puntos de mezcla"></ol>
+    </div>
+  </dialog>
 
   <dialog id="settings">
     <form method="dialog" class="settings">

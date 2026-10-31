@@ -234,7 +234,14 @@ export class AutoMix {
   }
 
   onAnalysis(ev) {
+    if (ev.stage === 'mixedit') {
+      const a = this.ana.get(ev.id);
+      if (a) a.mixEdit = ev.mixEdit || undefined;
+      this.emit();
+      return;
+    }
     if (ev.stage === 'done' && ev.analysis) {
+      if (!ev.analysis.mixEdit && this.ana.get(ev.id)?.mixEdit) ev.analysis.mixEdit = this.ana.get(ev.id).mixEdit;
       this.ana.set(ev.id, ev.analysis);
       if (this.queue.some((t) => t.videoId === ev.id)) this.reorder({ force: true });
       this.emit(); // la vista muestra BPM, tonalidad y energía en cuanto llegan
