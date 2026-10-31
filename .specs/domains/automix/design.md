@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-31-automix-cola-organizada
+last_change: 2026-10-31-automix-mezclar-cerca
 ---
 # automix · design
 
@@ -16,3 +16,7 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## orderChain
 
 `mixplan.orderChain` es exacto hasta 8 pistas libres y voraz con mejora local (intercambio e inserción, 120 ms) más allá; `AutoMix.prepareAhead` analiza toda la cola; `reorganizeNow` y `undoReorder` dan el control manual.
+
+## planNearest
+
+`mixplan.planNearest` es pura; `AutoMix.mixNow` guarda un plan pendiente que `tick` inicia al llegar a la salida y la vista cuenta atrás con `snapshot().pendingMix`.

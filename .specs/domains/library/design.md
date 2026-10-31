@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-10-31-video-local
+last_change: 2026-10-31-automix-buscar-y-agregar
 ---
 # library · design
 
@@ -16,3 +16,7 @@ last_change: 2026-10-31-video-local
 ## .video y sincronización
 
 El video va a `<librería>/.video/<id>.mp4` (oculto para el índice); el protocolo `localvideo/` lo sirve; `LocalVideo.apply` corrige deriva mayor de 80 ms; la ventana de video carga `video.html` con una página por deck local.
+
+## popularidad y sugeridas
+
+`ytm-library.parsePlays/popularity` (endpoint player, caché de 30 días), `mixplan.rankCandidates/bestInsertion`, `AutoMix.addSmart/suggestions/analyzeSuggestions` y `renderer/automix-add.js`.

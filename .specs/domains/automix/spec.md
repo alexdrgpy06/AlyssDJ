@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-31-mix-points-editables
+last_change: 2026-10-31-automix-buscar-y-agregar
 ---
 # automix · spec
 
@@ -28,3 +28,11 @@ WHEN se añade una pista a la cola de AutoMix THE SYSTEM SHALL analizarla sin es
 ## puntos de mezcla editables
 
 WHEN el usuario edita la entrada o las salidas (hasta 6) de una pista THE SYSTEM SHALL guardarlas aparte y hacer que AutoMix use solo las editadas, en su orden de preferencia, también tras reanalizar.
+
+## Mezclar ahora busca lo más cercano
+
+WHEN el usuario pulsa «Mezclar ahora» THE SYSTEM SHALL elegir como salida el punto más cercano por delante (punto de la pista, editado o límite de frase de 8 beats, a lo sumo 12 s), entrar en la siguiente por su punto de entrada con el tempo igualado, durar compases enteros y poder cancelarse con otra pulsación.
+
+## buscar y agregar desde AutoMix con popularidad
+
+WHEN el usuario busca y agrega desde la vista de AutoMix THE SYSTEM SHALL colocar la pista en el hueco de menor coste de la cadena (o analizarla y moverla al llegar su análisis) y sugerir qué sigue según BPM, tonalidad, energía, estilo y popularidad, sin anteponer nunca una popular que no encaje.
