@@ -2,8 +2,8 @@
 change: 2026-10-31-mix-points-editables
 type: feature
 domains: [automix, library]
-paths: [renderer/automix.js, renderer/mixplan.js, renderer/deck.js, renderer/waveform.js, renderer/app.js, renderer/index.html, renderer/styles.css, main/analyzer.js, preload/app.js, main/main.js, scripts/test-mix-edit.js]
-commits: []
+paths: [docs/img/**, main/mixedit.js, renderer/mixeditor.js, renderer/mixpreview.js, scripts/mix-edit-selftest.js, renderer/deck.js, renderer/automix.js, renderer/mixplan.js, renderer/deck.js, renderer/waveform.js, renderer/app.js, renderer/index.html, renderer/styles.css, main/analyzer.js, preload/app.js, main/main.js, scripts/test-mix-edit.js]
+commits: [411f9a7]
 status: approved
 rev: 1
 approved_rev: 1
