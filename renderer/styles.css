@@ -468,7 +468,7 @@ fieldset { min-width: 0; }
 .am-len output { font-family: var(--mono); min-width: 38px; }
 .am-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .am-list:empty::after { content: 'La cola está vacía: la radio de YouTube Music la irá llenando, o añade pistas con + en la librería.'; color: var(--faint); padding: 14px 4px; }
-.am-item { display: grid; grid-template-columns: 18px 26px 34px minmax(0, 1fr) 236px 128px 46px auto; gap: 10px; align-items: center; padding: 4px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.am-item { display: grid; grid-template-columns: 18px 26px 34px minmax(0, 1fr) 290px 128px 46px auto; gap: 10px; align-items: center; padding: 4px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
 .am-item.head { border-color: #6a5420; background: #17140a; }
 .am-item.drop-before { box-shadow: 0 -3px 0 0 var(--a); }
 .am-item.dragging { opacity: .4; }
@@ -541,3 +541,6 @@ body[data-layout='compact'] { grid-template-rows: 40px auto auto minmax(150px, 1
 body[data-layout='compact'] .legend, body[data-layout='compact'] .hint-long { display: none; }
 body[data-layout='compact'] .topbar .btn { padding-inline: 8px; }
 body[data-layout='wide'] { zoom: var(--ui-scale, 1.25); }
+
+.am-q { font-size: 9px; letter-spacing: .08em; color: var(--faint); }
+.am-q.good { color: var(--ok); } .am-q.ok { color: var(--warn); } .am-q.poor { color: var(--err); }

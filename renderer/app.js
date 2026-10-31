@@ -290,6 +290,8 @@ class App {
     $('#amv-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
     $('#amv-points').addEventListener('change', (e) => am.setCfg({ optimalPoints: e.target.checked }));
     $('#amv-order').addEventListener('change', (e) => am.setCfg({ smartOrder: e.target.checked }));
+    $('#amv-reorder').addEventListener('click', () => am.reorganizeNow());
+    $('#amv-undo').addEventListener('click', () => am.undoReorder());
     $('#amv-endless').addEventListener('change', (e) => am.setCfg({ endless: e.target.checked }));
 
     const list = $('#amv-list');
@@ -377,6 +379,9 @@ class App {
     $('#amv-tempo').checked = st.cfg.matchTempo;
     $('#amv-points').checked = st.cfg.optimalPoints;
     $('#amv-order').checked = st.cfg.smartOrder;
+    $('#amv-undo').disabled = !st.chain.canUndo;
+    $('#amv-reorder').disabled = st.queue.length < 2;
+    $('#amv-quality').textContent = st.queue.length ? `${st.chain.analyzed}/${st.queue.length} analizadas${st.chain.analyzed > 1 ? ` · transiciones ${st.chain.total / Math.max(1, st.chain.analyzed) < 6 ? 'muy buenas' : st.chain.total / Math.max(1, st.chain.analyzed) < 14 ? 'aceptables' : 'flojas'}` : ''}` : '';
     $('#amv-endless').checked = st.cfg.endless;
     $('#amv-cur').textContent = st.cur ? st.cur.title || '—' : '—';
     const planKinds = { outro: 'outro', rotura: 'rotura', final: 'final' };
@@ -393,7 +398,7 @@ class App {
     $('#amv-note').textContent = st.note || '';
 
     if (this.amDragging) return; // no reconstruir la lista mientras se arrastra
-    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}`).join('|') + `|${st.curInfo?.bpm}`;
+    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}:${t.cost}`).join('|') + `|${st.curInfo?.bpm}`;
     const list = $('#amv-list');
     if (list.dataset.sig === sig) return;
     list.dataset.sig = sig;
@@ -407,6 +412,7 @@ class App {
           <span class="bpm">${t.bpm ? t.bpm.toFixed(1) : '—'}</span>
           ${t.camelot ? `<span class="kchip" style="--k:${camelotColor(t.camelot)}">${t.camelot}</span>` : '<span class="kchip">—</span>'}
           <span class="am-energy" title="Energía ${t.energy ?? '—'}"><i style="width:${t.energy ?? 0}%"></i></span>
+          <span class="am-q ${t.cost == null ? '' : t.cost < 6 ? 'good' : t.cost < 14 ? 'ok' : 'poor'}" title="Calidad de la transición desde la anterior (BPM, tonalidad y energía): ${t.cost == null ? 'sin analizar' : `${t.cost < 6 ? 'muy buena' : t.cost < 14 ? 'aceptable' : 'floja'} · coste ${t.cost}`}">${t.cost == null ? '·' : t.cost < 6 ? '●●●' : t.cost < 14 ? '●●○' : '●○○'}</span>
           <span class="am-gap ${t.jump ? 'jump' : Math.abs(t.gapPct || 0) > 4 ? 'warn' : ''}" title="${t.jump ? 'Salto brusco de BPM: la mezcla será larga, con filtro y sin forzar el tempo' : 'Diferencia de BPM con lo que suena'}">${t.gapPct == null ? '' : `${t.gapPct > 0 ? '+' : ''}${t.gapPct.toFixed(1)} %${t.jump ? ' ⚠' : ''}`}</span>
         </span>
         <span class="am-badge ${cls}" title="${esc(t.prep.error || '')}">${label}</span>

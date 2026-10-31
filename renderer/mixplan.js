@@ -59,6 +59,123 @@ export function pickNext({ cur, queue, isReady, analysisOf, pinned = new Set() }
   return { queue: out, scores: Object.fromEntries(ready.map((r) => [r.t.videoId, r.s])) };
 }
 
+// Coste de pasar de `a` a `b` dentro de una cadena: la puntuación de la transición más una penalización cuadrática
+// para que el BPM cambie poco a poco (dos saltos del 4% mejor que uno del 8%). Sin análisis de alguna de las dos: 0.
+const SMOOTH = 200;
+export function edgeCost(a, b) {
+  if (!a?.bpm || !b?.bpm) return 0;
+  const g = bpmGap(a.bpm, b.bpm);
+  return scoreTransition(a, b) + (g ? SMOOTH * g.gap * g.gap : 0);
+}
+
+// Ordena la cola como una cadena que parte de `cur` y minimiza el coste total de las transiciones. `pinned` (lo que el
+// usuario colocó a mano) es ancla: no se mueve y la cadena se ordena alrededor. Las pistas sin análisis (`analysisOf` sin BPM)
+// quedan al final de los huecos libres, en su orden. Exacto hasta 8 pistas libres; más allá, voraz + mejora local con
+// presupuesto de tiempo. No muta la entrada. Devuelve { queue, cost, scores (coste de llegar a cada pista), moved }.
+export function orderChain({ cur, queue, analysisOf, pinned = new Set(), budgetMs = 120 }) {
+  const n = queue.length;
+  const ana = queue.map((t) => analysisOf(t) || null);
+  const hasA = (i) => !!ana[i]?.bpm;
+  const slots = []; // posiciones no fijadas
+  for (let i = 0; i < n; i++) if (!pinned.has(queue[i].videoId)) slots.push(i);
+  const ready = slots.filter((i) => hasA(i)); // índices originales de pistas libres con análisis
+  const rest = slots.filter((i) => !hasA(i));
+  const base = queue.map((_, i) => i); // base[pos] = índice original que ocupa pos
+  const R = ready.length;
+  const C = Array.from({ length: n }, () => new Float64Array(n));
+  for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) C[a][b] = a === b ? 0 : edgeCost(ana[a], ana[b]);
+  const C0 = new Float64Array(n);
+  for (let b = 0; b < n; b++) C0[b] = cur?.bpm ? edgeCost(cur, ana[b]) : 0;
+  const total = (seq) => {
+    let c = seq.length ? C0[seq[0]] : 0;
+    for (let k = 1; k < seq.length; k++) c += C[seq[k - 1]][seq[k]];
+    return c;
+  };
+  const place = (order) => {
+    // order: índices originales (libres con análisis) en el orden que ocuparán los primeros R huecos libres
+    const seq = base.slice();
+    slots.forEach((pos, k) => (seq[pos] = k < R ? order[k] : rest[k - R]));
+    return seq;
+  };
+  const t0 = performance.now();
+  let best = ready.slice();
+  let bestSeq = place(best);
+  let bestCost = total(bestSeq);
+  if (R >= 2) {
+    if (R <= 8) {
+      // exacto: todas las permutaciones con poda por coste parcial
+      const used = new Array(R).fill(false);
+      const cur_ = [];
+      const dfs = (k) => {
+        if (k === R) {
+          const c = total(place(cur_));
+          if (c < bestCost - 1e-9) ((bestCost = c), (best = cur_.slice()));
+          return;
+        }
+        for (let j = 0; j < R; j++) {
+          if (used[j]) continue;
+          used[j] = true;
+          cur_.push(ready[j]);
+          // poda: el coste de lo ya colocado (hasta el primer ancla) no puede superar el mejor
+          if (partial(cur_) < bestCost) dfs(k + 1);
+          cur_.pop();
+          used[j] = false;
+        }
+      };
+      const partial = (ord) => {
+        const seq = place(ord.concat(ready.filter((x) => !ord.includes(x))));
+        const lim = slots[ord.length - 1];
+        let c = C0[seq[0]];
+        for (let p = 1; p <= lim; p++) c += C[seq[p - 1]][seq[p]];
+        return c;
+      };
+      dfs(0);
+    } else {
+      // voraz: en cada hueco, la pista con menor coste desde la anterior
+      const left = new Set(ready);
+      const ord = [];
+      let prev = -1;
+      for (let k = 0; k < R; k++) {
+        let pick = -1;
+        let pc = Infinity;
+        for (const j of left) {
+          const c = prev < 0 ? C0[j] : C[prev][j];
+          if (c < pc) ((pc = c), (pick = j));
+        }
+        ord.push(pick);
+        left.delete(pick);
+        prev = pick;
+      }
+      best = ord;
+      bestCost = total(place(best));
+      // mejora local: intercambios e inserciones mientras mejore y haya tiempo
+      let improved = true;
+      while (improved && performance.now() - t0 < budgetMs) {
+        improved = false;
+        for (let i = 0; i < R && performance.now() - t0 < budgetMs; i++) {
+          for (let j = i + 1; j < R; j++) {
+            const sw = best.slice();
+            [sw[i], sw[j]] = [sw[j], sw[i]];
+            let c = total(place(sw));
+            if (c < bestCost - 1e-9) ((best = sw), (bestCost = c), (improved = true));
+            const ins = best.slice();
+            ins.splice(j, 0, ins.splice(i, 1)[0]);
+            c = total(place(ins));
+            if (c < bestCost - 1e-9) ((best = ins), (bestCost = c), (improved = true));
+          }
+        }
+      }
+    }
+    bestSeq = place(best);
+  }
+  const out = bestSeq.map((i) => queue[i]);
+  const scores = {};
+  bestSeq.forEach((i, k) => {
+    scores[queue[i].videoId] = Math.round((k === 0 ? C0[i] : C[bestSeq[k - 1]][i]) * 100) / 100;
+  });
+  return { queue: out, cost: Math.round(bestCost * 100) / 100, scores, moved: out.some((t, k) => t.videoId !== queue[k].videoId) };
+}
+
 // Plan de la transición entre `cur` (suena, en `pos`) y `next`.
 //   cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), optimal, style }.
 export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } = {}) {

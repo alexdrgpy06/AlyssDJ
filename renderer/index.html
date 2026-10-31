@@ -254,7 +254,10 @@
         <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
         <label class="check compact" title="Descarga sin sesión, analiza y reproduce el archivo: sin anuncios y con BPM"><input type="checkbox" id="amv-local" /> Analizar y usar archivo (evita anuncios)</label>
         <label class="check compact" title="Sale por el mejor punto de la pista (frase al empezar el outro o una rotura), no necesariamente al final"><input type="checkbox" id="amv-points" /> Mezclar en puntos óptimos</label>
-        <label class="check compact" title="Pone primero la pista que mejor encaja por BPM, tonalidad y energía; lo que tú colocas no se mueve"><input type="checkbox" id="amv-order" /> Ordenar por compatibilidad</label>
+        <label class="check compact" title="Mantiene toda la cola ordenada como una cadena (BPM suave, tonalidad, energía); lo que tú colocas no se mueve"><input type="checkbox" id="amv-order" /> Orden automático</label>
+        <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar ahora</button>
+        <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
+        <span class="am-sub" id="amv-quality" aria-live="polite"></span>
         <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
         <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
         <span class="spacer"></span>

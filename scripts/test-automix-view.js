@@ -104,13 +104,13 @@ tests.prepare = async () => {
   playing(am, A, T, 'CUR', 100);
   const yt = ['y1', 'y2', 'y3', 'y4'].map((id) => T(id));
   am.queue = [...yt];
-  // se piden las 3 primeras con save:true (descarga sin sesión + análisis + guardado), no la cuarta
+  // se analiza TODA la cola, de a 2 a la vez y en orden, con save:true (descarga sin sesión + análisis + guardado)
   am.prepareAhead();
   await sleep(10);
-  assert.deepStrictEqual(requests.map((r) => r[0]), ['y1', 'y2', 'y3']);
+  assert.deepStrictEqual(requests.map((r) => r[0]), ['y1', 'y2']);
   assert.ok(requests.every((r) => r[1].save === true));
   assert.strictEqual(am.prepOf(yt[0]).state, 'queued');
-  assert.strictEqual(am.prepOf(yt[3]).state, 'idle');
+  assert.strictEqual(am.prepOf(yt[2]).state, 'idle', 'máximo 2 en paralelo');
   // estados por pista a partir de los eventos del analizador
   const ev = (e) => listeners.forEach((l) => l(e));
   ev({ id: 'y1', stage: 'download', progress: 0.42 });
@@ -120,6 +120,11 @@ tests.prepare = async () => {
   ev({ id: 'y2', stage: 'error', error: 'This video is unavailable' });
   assert.strictEqual(am.prepOf(yt[1]).state, 'error');
   assert.match(am.prepOf(yt[1]).error, /unavailable/);
+  // al liberarse un hueco entra la siguiente de la cola, no más de 2 activas
+  am.prepareAhead();
+  await sleep(10);
+  assert.deepStrictEqual(requests.map((r) => r[0]), ['y1', 'y2', 'y3']);
+  assert.strictEqual(am.prepOf(yt[3]).state, 'idle');
   // una pista ya guardada está lista al instante
   store.y9 = { saved: { path: '/x', localId: 'L1' } };
   am.queue = [T('y9')];

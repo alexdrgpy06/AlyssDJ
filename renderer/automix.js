@@ -1,7 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
-import { planTransition, pickNext, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { planTransition, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -121,6 +121,7 @@ export class AutoMix {
   add(track) {
     if (!track?.videoId || this.queue.some((t) => t.videoId === track.videoId)) return;
     this.queue.push(track);
+    this.prepareAhead();
     this.emit();
   }
   insertNext(track) {
@@ -198,20 +199,32 @@ export class AutoMix {
   prepOf(track) {
     if (track.local) return { state: 'ready' };
     if (!this.cfg.preferLocal) return { state: 'stream' };
-    return this.prep.get(track.videoId) || { state: 'idle' };
+    const p = this.prep.get(track.videoId);
+    return !p || p.state === 'checking' ? { state: 'idle' } : p;
   }
 
-  // Pide analizar y guardar las próximas pistas de YouTube; las que ya están guardadas quedan listas al instante.
-  prepareAhead(n = 3) {
-    for (const t of this.queue.slice(0, 6)) this.loadAna(t);
+  // Analiza y guarda TODA la cola (no solo las próximas), de a 2 a la vez y en el orden de la cola.
+  // Las pistas ya guardadas quedan listas al instante y no ocupan uno de los 2 puestos.
+  prepareAhead(n = Infinity, maxParallel = 2) {
+    for (const t of this.queue) this.loadAna(t);
     if (!this.cfg.preferLocal) return;
-    for (const t of this.queue.slice(0, n)) {
+    for (const t of this.queue) {
       if (t.local || this.prep.has(t.videoId)) continue;
-      this.prep.set(t.videoId, { state: 'queued' });
+      this.prep.set(t.videoId, { state: 'checking' });
       window.ytdj.analysis.get(t.videoId).then((a) => {
-        if (a?.saved) return this.setPrep(t.videoId, { state: 'ready' });
-        window.ytdj.analysis.request(t.videoId, { meta: { title: t.title, artist: t.artist, thumb: t.thumb, trackDuration: t.duration }, save: true });
+        if (this.prep.get(t.videoId)?.state !== 'checking') return;
+        this.setPrep(t.videoId, a?.saved ? { state: 'ready' } : { state: 'idle' });
+        this.prepareAhead(n, maxParallel);
       });
+    }
+    const busy = () => [...this.prep.values()].filter((p) => ['queued', 'download', 'analyze'].includes(p.state)).length;
+    let started = 0;
+    for (const t of this.queue) {
+      if (started >= n || busy() >= maxParallel) break;
+      if (this.prep.get(t.videoId)?.state !== 'idle') continue;
+      started++;
+      this.prep.set(t.videoId, { state: 'queued' });
+      window.ytdj.analysis.request(t.videoId, { meta: { title: t.title, artist: t.artist, thumb: t.thumb, trackDuration: t.duration }, save: true });
     }
   }
 
@@ -223,6 +236,7 @@ export class AutoMix {
   onAnalysis(ev) {
     if (ev.stage === 'done' && ev.analysis) {
       this.ana.set(ev.id, ev.analysis);
+      if (this.queue.some((t) => t.videoId === ev.id)) this.reorder({ force: true });
       this.emit(); // la vista muestra BPM, tonalidad y energía en cuanto llegan
     }
     if (!this.prep.has(ev.id)) return;
@@ -259,19 +273,49 @@ export class AutoMix {
     window.ytdj.analysis.request(t.videoId, { meta: { title: t.title, artist: t.artist, thumb: t.thumb, trackDuration: t.duration }, ...(t.local ? { file, force: true } : { reuse: file, force: true }) });
   }
 
-  // Ordena la cola por compatibilidad con lo que suena (BPM, tonalidad, energía), respetando lo fijado a mano.
-  reorder() {
-    if (!this.cfg.smartOrder || !this.cur || this.trans || this.queue.length < 2) return;
+  // Ordena la cola como una cadena (BPM suave, tonalidad, energía) a partir de lo que suena, respetando lo fijado a mano
+  // y la pista que ya se está precargando. Con `manual` ignora el interruptor y la regla de «al menos 3 analizadas».
+  reorder({ force = false, manual = false } = {}) {
+    if (this.queue.length < 2 || this.trans) return false;
+    if (!manual && !this.cfg.smartOrder) return false;
     const now = performance.now();
-    if (now - this.lastReorder < 1500) return;
+    if (!force && !manual && now - this.lastReorder < 1500) return false;
     this.lastReorder = now;
-    const curAna = { ...(this.cur.analysis || this.ana.get(this.cur.track?.videoId) || {}) };
-    if (!curAna.bpm) return;
-    const r = pickNext({ cur: curAna, queue: this.queue, isReady: (t) => this.isReady(t), analysisOf: (t) => this.ana.get(t.videoId), pinned: this.pinned });
-    if (r.queue.some((t, i) => t.videoId !== this.queue[i].videoId)) {
-      this.queue = r.queue;
-      this.emit();
-    }
+    const curAna = this.cur ? { ...(this.cur.analysis || this.ana.get(this.cur.track?.videoId) || {}) } : null;
+    const analysisOf = (t) => this.ana.get(t.videoId);
+    const analyzed = this.queue.filter((t) => analysisOf(t)?.bpm).length;
+    if (!manual && analyzed < 3) return false;
+    const pins = new Set(manual ? [] : this.pinned); // «Reorganizar ahora» suelta lo fijado por reordenar a mano
+    const head = this.queue[0];
+    const other = this.cur ? this.app.other(this.cur) : null;
+    if (head && (this.loadingNext || other?.track?.videoId === head.videoId)) pins.add(head.videoId); // ya se está preparando para sonar
+    const r = orderChain({ cur: curAna?.bpm ? curAna : null, queue: this.queue, analysisOf, pinned: pins });
+    this.chain = { cost: r.cost, scores: r.scores };
+    if (!r.moved) return false;
+    this.undoStack = this.queue.slice();
+    this.queue = r.queue;
+    this.emit();
+    return true;
+  }
+
+  // Botón «Reorganizar ahora»: ordena aunque el interruptor esté apagado y suelta lo que el orden manual había fijado.
+  reorganizeNow() {
+    const moved = this.reorder({ manual: true });
+    if (!moved) this.note = 'La cola ya está en el mejor orden que encuentro.';
+    this.emit();
+    return moved;
+  }
+
+  undoReorder() {
+    if (!this.undoStack) return false;
+    const ids = new Set(this.queue.map((t) => t.videoId));
+    const prev = this.undoStack.filter((t) => ids.has(t.videoId));
+    const extra = this.queue.filter((t) => !prev.some((p) => p.videoId === t.videoId));
+    this.queue = [...prev, ...extra];
+    this.undoStack = null;
+    for (const t of this.queue) this.pinned.add(t.videoId); // lo que se deshace queda como lo dejó el usuario
+    this.emit();
+    return true;
   }
 
   // ---------- bucle ----------
@@ -458,10 +502,14 @@ export class AutoMix {
     const next = this.cur ? this.app.other(this.cur) : null;
     const t = this.trans;
     const curAna = this.cur?.analysis || this.ana.get(this.cur?.track?.videoId) || null;
+    let prevAna = curAna;
     const items = this.queue.map((tr) => {
       const a = tr.local || this.ana.get(tr.videoId) ? this.ana.get(tr.videoId) : null;
       const g = bpmGap(curAna?.bpm, a?.bpm);
+      const cost = prevAna?.bpm && a?.bpm ? edgeCost(prevAna, a) : null;
+      prevAna = a?.bpm ? a : prevAna;
       return {
+        cost: cost == null ? null : Math.round(cost * 10) / 10,
         ...tr,
         prep: this.prepOf(tr),
         bpm: a?.bpm || null,
@@ -480,6 +528,7 @@ export class AutoMix {
       next: this.queue[0] || null,
       nextReady: !!next && this.ready(next, this.queue[0]),
       queue: items,
+      chain: { canUndo: !!this.undoStack, total: items.reduce((x, i) => x + (i.cost || 0), 0), analyzed: items.filter((i) => i.bpm).length },
       plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
       pos: this.cur ? posOf(this.cur) : null,
       trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, len: t.len, warnings: t.warnings } : null,

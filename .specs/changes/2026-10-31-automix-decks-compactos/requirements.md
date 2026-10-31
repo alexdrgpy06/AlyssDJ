@@ -2,8 +2,8 @@
 change: 2026-10-31-automix-decks-compactos
 type: feature
 domains: [automix, ui]
-paths: [renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-commits: []
+paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
+commits: [f94acb3]
 status: approved
 rev: 1
 approved_rev: 1
