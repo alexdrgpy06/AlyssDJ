@@ -46,4 +46,19 @@ Persistencia: `localStorage['alyssdj.stage'] = {"on":bool,"w":number}`.
 - Asa de tamaño: 16×16 px con área táctil de 32×32, cursor `nwse-resize`, `aria-label="Cambiar tamaño de las miniaturas"`; el botón «Vista» tiene `aria-pressed`.
 - Con `am-stage` activo también se aplica el compacto de AutoMix a la biblioteca para que la cola tenga todo el alto restante.
 
+## Domain deltas
+### automix
+#### ADDED spec: Vista de video sin decks grandes
+WHEN el usuario activa «Vista de video» en la pestaña AutoMix THE SYSTEM SHALL ocultar los decks y el mezclador, mostrar una miniatura por deck con título, tiempo restante y progreso, y resaltar el deck al aire; al desactivarla o salir de la pestaña SHALL restaurar la consola sin perder el estado de los decks.
+#### ADDED design: Vista de video (MiniStage)
+`body.am-stage` oculta `.console` y `.waves` sin sacarlos del DOM; `#stage` muestra dos teselas. `airWeights` usa fader² × crossfader (sin volumen general) y resalta ambas con mezcla en curso (> 0,15 en los dos).
+### video
+#### ADDED spec: Miniatura de video correcta y redimensionable
+WHILE una miniatura de la vista de video muestra video THE SYSTEM SHALL reproducir solo el video cuyo id coincide con la pista cargada en el deck, sincronizado con el audio; IF no coincide o la pista no tiene video real THEN SHALL mostrar su portada («Solo audio»). El ancho de cada miniatura SHALL poder cambiarse entre 160 y 560 px en 16:9 y recordarse; el doble clic abre la ventana de video del deck.
+#### ADDED design: videoKey y pickMedia
+El deck guarda `videoKey` (id de la pista a la que pertenece `videoSrc`) y lo vacía al cargar otra pista; `pickMedia` (renderer/ministage.js) solo devuelve `video` si `videoKey === trackId` y el deck suena desde archivo. Tamaño y estado se guardan en `localStorage['alyssdj.stage']`.
+### ui
+#### ADDED design: Franja #stage
+Teselas 16:9 con borde del color del deck al aire (`.air`) y opacidad 0,6 en espera; asa de 32 px (`role=slider`, flechas y `[` `]`); por debajo de 520 px de ancho se apilan.
+
 ## Amendments

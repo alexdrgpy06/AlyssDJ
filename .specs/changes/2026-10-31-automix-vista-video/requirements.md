@@ -2,8 +2,8 @@
 change: 2026-10-31-automix-vista-video
 type: feature
 domains: [automix, video, ui]
-paths: [renderer/**, scripts/**]
-commits: []
+paths: [renderer/**, scripts/**, .github/**, docs/**]
+commits: [e8cf479]
 status: approved
 rev: 1
 approved_rev: 1
