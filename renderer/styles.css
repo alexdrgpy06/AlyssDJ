@@ -431,7 +431,8 @@ menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
 #search-form { flex: 0 1 280px; }
 .settings label { grid-template-columns: 170px minmax(0, 1fr); }
 .settings select, .settings input:not([type='checkbox']) { width: 100%; min-width: 0; }
-.settings, dialog { overflow-x: hidden; }
+.settings { overflow-x: hidden; }
+dialog { overflow: hidden; } /* un solo desplazamiento: el de .settings */
 .hint code { word-break: break-all; }
 dialog { width: 620px; }
 @media (max-width: 1560px) { .legend { display: none; } }
