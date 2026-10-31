@@ -426,6 +426,8 @@ class App {
     this.syncCompact();
     $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#amv-mix').disabled = !st.on || !!st.trans;
+    $('#amv-mix').classList.toggle('on', !!st.pendingMix);
+    $('#amv-mix-label').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
     document.querySelectorAll('#amv-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
     $('#amv-len').value = st.cfg.len;
     $('#amv-len-out').textContent = `${st.cfg.len} s`;
@@ -446,7 +448,7 @@ class App {
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     $('#amv-status').textContent = st.trans
       ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
-      : st.on ? (st.pendingMix ? 'Mezclará en cuanto la siguiente esté lista' : 'AutoMix activo') : 'Detenido';
+      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}` : 'Mezclará en cuanto la siguiente esté lista') : 'AutoMix activo') : 'Detenido';
     $('#amv-bar-wrap').hidden = !st.trans;
     if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;
     $('#amv-note').textContent = st.note || '';

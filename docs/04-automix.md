@@ -109,5 +109,5 @@ Con **✎** en una fila de la cola, o **Puntos** en un deck, se abre el editor d
 ## Consejos
 
 - Si pausas el deck a mano o cargas otra pista, AutoMix espera; **Detener AutoMix** lo apaga.
-- Para una mezcla **más rápida**, baja la duración; para pasar a otra pista ya, **Mezclar ahora**.
+- Para una mezcla **más rápida**, baja la duración; para pasar a otra pista ya, **Mezclar ahora** (Mayús + →): no corta a mitad de un compás, sino que busca la **salida más cercana** (un punto de la pista o un límite de frase de 8 beats, a lo sumo 12 s después), entra en la siguiente por su punto de entrada con el tempo igualado y dura compases enteros. La vista cuenta atrás («Mezclando en 3,2 s · salida en frase»); otra pulsación la **cancela**. Sin BPM en alguna de las dos hace un fundido corto de inmediato.
 - Si la radio no devuelve nada (YouTube Music aún cargando o sin red), la vista lo avisa y reintenta a los pocos segundos.

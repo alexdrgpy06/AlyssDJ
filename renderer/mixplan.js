@@ -176,6 +176,42 @@ export function orderChain({ cur, queue, analysisOf, pinned = new Set(), budgetM
   return { queue: out, cost: Math.round(bestCost * 100) / 100, scores, moved: out.some((t, k) => t.videoId !== queue[k].videoId) };
 }
 
+// «Mezclar ahora»: la salida más cercana por delante (no inmediata a mitad de un compás) y la entrada de la siguiente.
+// Candidatos de salida: los puntos de la pista (editados por el usuario o automáticos) y los límites de frase de 8 beats de su
+// rejilla; gana el de menor tiempo ≥ pos + minLead que no obligue a esperar más de maxWait. La duración va en compases enteros
+// (mínimo 4 beats) y nunca pasa del final. Sin BPM en alguna de las dos: fundido corto ahora mismo. Pura: no muta nada.
+export function planNearest(cur, next, { pos = 0, len = 16, minLead = 1, maxWait = 12 } = {}) {
+  const enterAt = Math.max(0, next?.mixEdit?.in ?? next?.mix?.mixIn ?? next?.offset ?? 0);
+  const dur = cur?.duration || 0;
+  const now = (why) => ({ exitAt: pos, enterAt, beats: 0, seconds: Math.min(len, 4), style: null, tempo: false, warnings: [why], kind: 'now', waitS: 0 });
+  if (!cur?.bpm || !next?.bpm) return now('sin BPM: fundido corto');
+  const beat = 60 / cur.bpm;
+  const off = (cur.offset || 0) + (cur.gridShift || 0);
+  const gap = bpmGap(cur.bpm, next.bpm);
+  const jump = !!gap && gap.gap > MAX_BPM_GAP;
+  const wantSeconds = jump ? Math.min(len * 1.5, 48) : len;
+  const wantBeats = Math.max(4, Math.round(wantSeconds / beat / 4) * 4);
+  const fits = (t) => t >= pos + minLead && t - pos <= maxWait && Math.floor((dur - t - 1) / beat / 4) * 4 >= 4;
+  const cands = [];
+  const marks = cur.mixEdit?.outs?.length ? cur.mixEdit.outs.map((o) => ({ t: o.t, kind: 'edit' })) : (cur.mix?.mixOut || []).map((c) => ({ t: c.t, kind: c.kind || 'auto' }));
+  for (const m of marks) if (fits(m.t)) cands.push(m);
+  // límites de frase (8 beats) y, si no hay nada, de compás (4 beats)
+  for (const step of [8, 4]) {
+    const k0 = Math.ceil((pos + minLead - off) / (step * beat));
+    for (let k = k0; k < k0 + 3; k++) {
+      const t = off + k * step * beat;
+      if (fits(t)) cands.push({ t, kind: step === 8 ? 'phrase' : 'bar' });
+    }
+    if (cands.length) break;
+  }
+  if (!cands.length) return now('sin salida cercana con espacio: fundido corto');
+  cands.sort((a, b) => a.t - b.t);
+  const c = cands[0];
+  const beats = Math.min(wantBeats, Math.floor((dur - c.t - 1) / beat / 4) * 4);
+  const warnings = jump ? [`salto de BPM ${gap.ratio > 1 ? '−' : '+'}${Math.round(gap.gap * 100)} %`] : [];
+  return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style: jump ? 'filter' : null, tempo: !!gap && !jump, warnings, kind: c.kind, waitS: c.t - pos };
+}
+
 // Plan de la transición entre `cur` (suena, en `pos`) y `next`.
 //   cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), optimal, style }.
 export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } = {}) {

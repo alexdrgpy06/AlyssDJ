@@ -1,7 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
-import { planTransition, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { planTransition, planNearest, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -358,15 +358,20 @@ export class AutoMix {
     const head = this.queue[0];
     // Solo se precarga la cabeza cuando está lista (así el deck abre el archivo local y no el stream).
     if (head && this.isReady(head) && !this.loadingNext && !next.st.playing && next.track?.videoId !== head.videoId) this.preload(next);
-    if (!cur.st.playing || !head) return; // pausado a mano o sin siguiente
-    const rem = cur.remaining();
-    if (this.pendingMix) {
+    // «Mezclar ahora»: espera a la siguiente lista, elige la salida más cercana y arranca al llegar a ella.
+    if (this.pendingMix && head) {
       if (this.ready(next, head)) {
-        this.pendingMix = false;
-        this.startTransition(cur, next, this.makePlan(cur, next, head, { quick: true }));
+        const pm = this.pendingMix;
+        if (!pm.plan) pm.plan = this.makeNearestPlan(cur, next, head);
+        if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {
+          this.pendingMix = false;
+          this.startTransition(cur, next, pm.plan);
+        } else this.emit(); // la cuenta atrás de la vista
       }
       return;
     }
+    if (!cur.st.playing || !head) return; // pausado a mano o sin siguiente
+    const rem = cur.remaining();
     // Plan: mejor punto de salida de la pista que suena (alineado a una frase), no necesariamente el final.
     this.plan = this.makePlan(cur, next, head);
     if (posOf(cur) < this.plan.exitAt - 0.05) return this.resetWait();
@@ -381,6 +386,14 @@ export class AutoMix {
   }
 
   // Plan de la transición con los análisis de las dos pistas (los del deck si ya están cargados).
+  // Plan de «Mezclar ahora»: la salida y la entrada más cercanas (frase de 8 beats, punto de la pista o editado).
+  makeNearestPlan(cur, next, head) {
+    const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
+    curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
+    const nextAna = (next.track?.videoId === head.videoId && next.analysis) || this.ana.get(head.videoId) || {};
+    return planNearest(curAna, nextAna, { pos: posOf(cur), len: this.cfg.len });
+  }
+
   makePlan(cur, next, head, { quick = false } = {}) {
     const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
     curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
@@ -413,10 +426,17 @@ export class AutoMix {
   // "Mezclar ahora": pasa ya a la siguiente pista lista; si aún no hay ninguna, se mezcla en cuanto la haya.
   mixNow() {
     if (!this.on || this.trans || !this.cur) return;
+    if (this.pendingMix) return this.cancelMix(); // una segunda pulsación cancela
     const idx = this.queue.findIndex((t) => this.isReady(t));
     if (idx > 0) this.move(idx, 0);
     if (idx < 0) this.app.toast('La siguiente pista todavía se está preparando; se mezclará en cuanto esté lista.');
-    this.pendingMix = true;
+    this.pendingMix = { plan: null };
+    this.emit();
+  }
+
+  cancelMix() {
+    this.pendingMix = false;
+    this.note = 'Mezcla cancelada';
     this.emit();
   }
 
@@ -541,7 +561,7 @@ export class AutoMix {
       trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, len: t.len, warnings: t.warnings } : null,
       progress: t ? Math.min(1, (performance.now() - t.t0) / 1000 / t.len) : null,
       rem: this.cur ? this.cur.remaining() : null,
-      pendingMix: this.pendingMix,
+      pendingMix: this.pendingMix ? { ready: !!this.pendingMix.plan, kind: this.pendingMix.plan?.kind || null, waitS: this.pendingMix.plan && this.cur ? Math.max(0, this.pendingMix.plan.exitAt - posOf(this.cur)) : null, seconds: this.pendingMix.plan?.seconds ?? null } : null,
       cfg: { ...this.cfg },
       note: this.note,
     };
