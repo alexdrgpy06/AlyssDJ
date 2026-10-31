@@ -40,6 +40,7 @@ jobs:
           for m in popularity insert engine; do node --experimental-default-type=module scripts/test-automix-add.js $m; done
           for m in plan engine; do node --experimental-default-type=module scripts/test-mix-now.js $m; done
           node scripts/test-layouts.js unit
+          node --experimental-default-type=module scripts/test-ministage.js
           node scripts/test-video-local.js detect
           for m in chain prepare; do node --experimental-default-type=module scripts/test-queue-order.js $m; done
           node --experimental-default-type=module scripts/test-mix-edit.js store

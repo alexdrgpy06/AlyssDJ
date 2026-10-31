@@ -95,6 +95,18 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 
 ![Decks compactos](img/31-automix-decks-compactos.png)
 
+## Vista de video (sin decks grandes)
+
+Con la pestaña **AutoMix** abierta, **Vista de video** (o la tecla **V**) oculta los decks y el mezclador y deja una miniatura por deck encima de la cola, para que esta ocupe casi toda la pantalla. El audio no se interrumpe: los decks siguen ahí, solo escondidos.
+
+![Vista de video de AutoMix](img/37-automix-vista-video.png)
+
+- **Siempre el video correcto.** Cada miniatura solo reproduce el video de la pista cargada en ese deck, sincronizado con el audio (posición, pausa y velocidad). Si cambia la pista, el video anterior desaparece al instante; una pista sin video musical de verdad (solo portada) muestra la portada con la etiqueta «Solo audio».
+- **Quién suena.** La miniatura del deck al aire lleva un borde de su color y la del que espera se atenúa; durante una mezcla se resaltan las dos.
+- **Tamaño.** Arrastra el asa de la esquina inferior derecha (o usa las flechas sobre ella, o **[** y **]**): de 160 a 560 px por miniatura, siempre en 16:9. Se recuerda el tamaño y si la vista estaba activa.
+- **Doble clic** en una miniatura abre la ventana de video de ese deck (para otra pantalla o proyector).
+- Fuera de la pestaña AutoMix, la consola vuelve completa. Si desactivas «Mostrar miniatura de video» en Ajustes, solo se ven portadas.
+
 ## Buscar y agregar desde la propia vista
 
 ![Buscar para agregar](img/35-automix-buscar.png)

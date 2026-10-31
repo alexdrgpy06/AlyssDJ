@@ -77,6 +77,7 @@ export class Deck {
     this.frameUrl = null;
     this.frameAt = 0;
     this.videoSrc = null; // video guardado de la pista (solo con video real) cuando suena desde archivo
+    this.videoKey = null;
     this.lvid = null;
     this.videoSyncAt = 0;
     this.fx = { on: false, type: 'echo', wet: 0.5, div: 0.75 };
@@ -268,6 +269,8 @@ export class Deck {
     this.wantPlay = play;
     this.broadcast({ type: 'loop' });
     this.frameUrl = null;
+    this.videoSrc = null; // el video del deck anterior no vale para esta pista hasta que refreshVideo lo resuelva
+    this.videoKey = null;
     this.playedMs = 0;
     this.logged = false;
     this.streamPlayedMs = 0;
@@ -297,6 +300,7 @@ export class Deck {
     if (key && this.source === 'local') src = await window.ytdj.video.localSrc(key);
     if (key !== this.track?.videoId) return; // cambió de pista mientras se consultaba
     this.videoSrc = src;
+    this.videoKey = src ? key : null; // id de la pista a la que pertenece videoSrc
     this.lvid ??= new LocalVideo(this.el.lvid);
     this.lvid.setSource(src);
     window.ytdj.video.setDeckSource(this.id, src);

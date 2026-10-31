@@ -10,6 +10,7 @@ import { renderUpdate } from './update-ui.js';
 import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
+import { MiniStage } from './ministage.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -59,6 +60,7 @@ class App {
     this.bindSampler();
     this.automix = new AutoMix(this);
     this.mixEditor = new MixEditor(this);
+    this.stage = new MiniStage(this);
     this.bindAutoMix();
     this.videoMode = 'auto';
     this.videoState = await window.ytdj.video.state();
@@ -89,6 +91,7 @@ class App {
     const vuMaster = $('#vu-master i');
     const loop = () => {
       this.eachDeck((d) => d.render());
+      this.stage.tick(performance.now());
       let m = 0;
       this.eachDeck((d) => (m = Math.max(m, d.st.playing ? Math.min(1, d.st.level || 0) * Math.min(1, d.channelGain() * 1.4) : 0)));
       vuMaster.style.height = `${Math.round(m * 100)}%`;
@@ -290,6 +293,7 @@ class App {
     am.subscribe(() => !view.hidden && this.renderAutoMix());
     setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
     $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#amv-stage').addEventListener('click', () => this.stage.setOn(!this.stage.on));
     $('#amv-mix').addEventListener('click', () => am.mixNow());
     $('#amv-clear').addEventListener('click', () => am.clear());
     $('#amv-fill').addEventListener('click', () => {
@@ -390,6 +394,18 @@ class App {
   // Con AutoMix activo (o su vista abierta) los decks se compactan para dejarle sitio a la lista.
   syncCompact() {
     document.body.classList.toggle('am-compact', this.automix.on || this.library?.tab === 'automix');
+    this.syncStage();
+  }
+
+  // La vista de video solo se ve en la pestaña AutoMix; fuera de ella la consola vuelve entera.
+  syncStage() {
+    if (!this.stage) return;
+    const active = this.stage.on && this.library?.tab === 'automix';
+    document.body.classList.toggle('am-stage', active);
+    this.stage.setActive(active);
+    const b = $('#amv-stage');
+    b.setAttribute('aria-pressed', String(this.stage.on));
+    b.classList.toggle('on', this.stage.on);
   }
 
   // Abre el editor de una pista de la cola (la siguiente de la lista es la de la prueba de mezcla).
@@ -671,6 +687,10 @@ class App {
       if (/^F[1-8]$/.test(e.key) && !e.repeat && !typing(e)) return e.preventDefault(), this.sampler.key(e.key);
       if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'ArrowRight' && e.shiftKey) return e.preventDefault(), this.automix.mixNow();
+      if (this.library.tab === 'automix' && !e.repeat) {
+        if (e.key === 'v' || e.key === 'V') return e.preventDefault(), this.stage.setOn(!this.stage.on);
+        if (this.stage.active && (e.key === '[' || e.key === ']')) return e.preventDefault(), this.stage.setWidth(this.stage.width + (e.key === ']' ? 20 : -20));
+      }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         this.xfader.value = Math.max(-1, Math.min(1, Number(this.xfader.value) + (e.key === 'ArrowLeft' ? -0.05 : 0.05)));
         this.applyXf();
