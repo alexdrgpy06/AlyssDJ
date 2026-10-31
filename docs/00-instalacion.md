@@ -63,6 +63,17 @@ La primera ejecución de `bin/yt-dlp` y `bin/ffmpeg` puede pedir confirmación e
 
 ## Linux
 
+### Como app instalada (recomendado)
+
+```bash
+git clone https://github.com/alexdrgpy06/AlyssDJ.git && cd AlyssDJ
+bash scripts/install-linux.sh
+```
+
+Instala para tu usuario (sin sudo) el AppImage del último release en `~/.local/opt/AlyssDJ`, una entrada **AlyssDJ** en el menú de aplicaciones con su icono y el comando `alyssdj`. Si aún no hay un release con AppImage, construye uno desde el clon (`--build`). Se actualiza sola (con tu permiso). Para quitarla: `bash scripts/uninstall-linux.sh` (conserva tus ajustes y tu librería; `--purge` borra los ajustes).
+
+### Desde el código
+
 ```bash
 sudo pacman -S nodejs npm git        # Arch / CachyOS
 sudo apt install nodejs npm git      # Debian / Ubuntu (Node 22 o más nuevo: usa nodesource o nvm)
@@ -71,6 +82,12 @@ npm install && npm start
 ```
 
 Si ya tienes `ffmpeg` o `yt-dlp` en el sistema, los usa. En Wayland el sistema ignora la posición de la ventana de video: elige la pantalla en el selector y usa «Completa».
+
+## Actualizaciones automáticas
+
+La app **instalada** (instalador de Windows, AppImage de Linux) busca versiones nuevas al abrirse y cada 6 horas, consultando solo los releases públicos de GitHub. Si hay una, avisa con el número y las notas, y **tú eliges**: «Descargar e instalar», «Más tarde» u «Omitir esta versión». Nunca descarga sin preguntar y no se reinicia con música sonando (espera a que pares los decks o cierres la app). Se desactiva en Ajustes → «Buscar actualizaciones automáticamente».
+
+En **macOS** la app no está firmada, así que no puede instalarse sola: solo avisa de la versión nueva con un enlace a su página de descarga.
 
 ## Si algo falla
 
