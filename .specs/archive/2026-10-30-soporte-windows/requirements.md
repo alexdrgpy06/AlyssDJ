@@ -2,8 +2,8 @@
 change: 2026-10-30-soporte-windows
 type: feature
 domains: [install, platform]
-paths: [main/tools.js, main/auth-import.js, scripts/setup.js, package.json, .github/**, docs/**, README.md, scripts/test-*.js]
-commits: []
+paths: [main/main.js, main/tools.js, main/auth-import.js, scripts/setup.js, package.json, .github/**, docs/**, README.md, scripts/test-*.js]
+commits: [e576bd9]
 status: approved
 rev: 1
 approved_rev: 1
