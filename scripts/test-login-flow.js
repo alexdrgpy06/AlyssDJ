@@ -9,7 +9,7 @@ const { spawnSync } = require('child_process');
 
 const root = path.join(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-login-'));
-const r = spawnSync(path.join(root, 'node_modules/.bin/electron'), ['.'], {
+const r = spawnSync(require('electron'), ['.'], {
   cwd: root,
   timeout: 120000,
   encoding: 'utf8',

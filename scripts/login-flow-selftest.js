@@ -17,7 +17,7 @@ module.exports = (win) => {
     try {
       await wait(2500);
       // REQ-1 y REQ-5: el diálogo se abre y lista navegadores
-      res.dialog = await js(`document.getElementById('btn-login').click(); await new Promise(r=>setTimeout(r,500)); const d=document.getElementById('login'); return { open: d.open, options: [...document.getElementById('login-browser').options].map(o=>o.textContent), hasImport: !!document.getElementById('login-import'), hasDirect: !!document.getElementById('login-direct') }`);
+      res.dialog = await js(`const d=document.getElementById('login'); for (let i=0;i<40 && !d.open;i++){ document.getElementById('btn-login').click(); await new Promise(r=>setTimeout(r,500)); } return { open: d.open, options: [...document.getElementById('login-browser').options].map(o=>o.textContent), hasImport: !!document.getElementById('login-import'), hasDirect: !!document.getElementById('login-direct') }`);
       const found = authImport.detectBrowsers();
       res.detectedInMain = found.map((b) => `${b.id}:${b.found}`);
       if (process.env.YTDJ_LOGIN_SHOT) fs.writeFileSync(path.join(process.env.YTDJ_LOGIN_SHOT), (await wc.capturePage()).toPNG());
