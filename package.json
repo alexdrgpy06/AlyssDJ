@@ -8,13 +8,10 @@
   "scripts": {
     "postinstall": "node scripts/setup.js --soft",
     "setup": "node scripts/setup.js",
-    "start": "node scripts/setup.js --soft --no-npm && electron .",
+    "start": "node scripts/setup.js --soft && electron .",
     "analyze": "node main/analyze-cli.js"
   },
   "devDependencies": {
     "electron": "45.2.0"
-  },
-  "optionalDependencies": {
-    "ffmpeg-static": "^5.2.0"
   }
 }

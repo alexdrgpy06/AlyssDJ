@@ -8,21 +8,43 @@ const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
 
+// Rutas de perfil relativas al HOME, por plataforma (yt-dlp lee las cookies de ahí).
 const BROWSERS = [
-  { id: 'firefox', label: 'Firefox', dirs: ['.mozilla/firefox', '.config/mozilla/firefox', '.var/app/org.mozilla.firefox/.mozilla/firefox', '.var/app/org.mozilla.firefox/config/mozilla/firefox', 'snap/firefox/common/.mozilla/firefox'] },
-  { id: 'chrome', label: 'Google Chrome', dirs: ['.config/google-chrome', '.var/app/com.google.Chrome/config/google-chrome'] },
-  { id: 'chromium', label: 'Chromium', dirs: ['.config/chromium', '.var/app/org.chromium.Chromium/config/chromium', 'snap/chromium/common/chromium'] },
-  { id: 'brave', label: 'Brave', dirs: ['.config/BraveSoftware/Brave-Browser'] },
-  { id: 'edge', label: 'Microsoft Edge', dirs: ['.config/microsoft-edge'] },
-  { id: 'vivaldi', label: 'Vivaldi', dirs: ['.config/vivaldi'] },
-  { id: 'opera', label: 'Opera', dirs: ['.config/opera'] },
+  { id: 'firefox', label: 'Firefox', dirs: {
+    linux: ['.mozilla/firefox', '.config/mozilla/firefox', '.var/app/org.mozilla.firefox/.mozilla/firefox', '.var/app/org.mozilla.firefox/config/mozilla/firefox', 'snap/firefox/common/.mozilla/firefox'],
+    win32: ['AppData/Roaming/Mozilla/Firefox'],
+    darwin: ['Library/Application Support/Firefox'] } },
+  { id: 'chrome', label: 'Google Chrome', dirs: {
+    linux: ['.config/google-chrome', '.var/app/com.google.Chrome/config/google-chrome'],
+    win32: ['AppData/Local/Google/Chrome/User Data'],
+    darwin: ['Library/Application Support/Google/Chrome'] } },
+  { id: 'chromium', label: 'Chromium', dirs: {
+    linux: ['.config/chromium', '.var/app/org.chromium.Chromium/config/chromium', 'snap/chromium/common/chromium'],
+    win32: ['AppData/Local/Chromium/User Data'],
+    darwin: ['Library/Application Support/Chromium'] } },
+  { id: 'brave', label: 'Brave', dirs: {
+    linux: ['.config/BraveSoftware/Brave-Browser'],
+    win32: ['AppData/Local/BraveSoftware/Brave-Browser/User Data'],
+    darwin: ['Library/Application Support/BraveSoftware/Brave-Browser'] } },
+  { id: 'edge', label: 'Microsoft Edge', dirs: {
+    linux: ['.config/microsoft-edge'],
+    win32: ['AppData/Local/Microsoft/Edge/User Data'],
+    darwin: ['Library/Application Support/Microsoft Edge'] } },
+  { id: 'vivaldi', label: 'Vivaldi', dirs: {
+    linux: ['.config/vivaldi'],
+    win32: ['AppData/Local/Vivaldi/User Data'],
+    darwin: ['Library/Application Support/Vivaldi'] } },
+  { id: 'opera', label: 'Opera', dirs: {
+    linux: ['.config/opera'],
+    win32: ['AppData/Roaming/Opera Software/Opera Stable'],
+    darwin: ['Library/Application Support/com.operasoftware.Opera'] } },
 ];
 const PUBLIC_URL = 'https://www.youtube.com/watch?v=jNQXAC9IVRw'; // vídeo público: solo sirve para que yt-dlp cargue y guarde el jar
 const SESSION_COOKIES = /^(__Secure-3PAPISID|SAPISID|__Secure-1PAPISID)$/;
 const SESSION_DAYS = 14; // las cookies "de sesión" del navegador se guardan unos días para que sobrevivan a cerrar la app
 
-function detectBrowsers(home = os.homedir()) {
-  const found = BROWSERS.filter((b) => b.dirs.some((d) => fs.existsSync(path.join(home, d)))).map(({ id, label }) => ({ id, label, found: true }));
+function detectBrowsers(home = os.homedir(), platform = process.platform) {
+  const found = BROWSERS.filter((b) => (b.dirs[platform] || b.dirs.linux).some((d) => fs.existsSync(path.join(home, d)))).map(({ id, label }) => ({ id, label, found: true }));
   return found.length ? found : BROWSERS.map(({ id, label }) => ({ id, label, found: false }));
 }
 

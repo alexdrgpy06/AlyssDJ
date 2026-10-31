@@ -1,0 +1,47 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar (Electron, yt-dlp y ffmpeg)
+        run: npm install
+      - name: Herramientas descargadas
+        run: |
+          ls bin
+          node -e "require('./main/tools').findFfmpeg('', ['bin']).then(r => { if (!r) process.exit(1); console.log(r.bin, r.version) })"
+          node -e "require('./main/tools').findYtdlp(['bin']).then(r => { if (!r) process.exit(1); console.log(r.bin, r.version) })"
+      - name: Pruebas rápidas
+        run: |
+          node scripts/test-platform.js ffmpeg
+          node scripts/test-platform.js browsers
+          node scripts/test-platform.js ci
+          node scripts/test-auth-import.js
+          node scripts/test-ytdlp-sin-sesion.js settings
+          node scripts/test-ytdlp-sin-sesion.js args
+          node scripts/test-save-library.js settings
+          for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
+          for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
+      - name: Arranque de la app (Linux, pantalla virtual)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y xvfb
+          xvfb-run -a node scripts/test-login-flow.js
+      - name: Arranque de la app (Windows y macOS)
+        if: runner.os != 'Linux'
+        run: node scripts/test-login-flow.js

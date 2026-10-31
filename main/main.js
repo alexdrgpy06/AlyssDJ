@@ -428,7 +428,7 @@ ipcMain.handle('path:open', (_e, p) => shell.openPath(p));
 ipcMain.handle('tools:check', async () => {
   const st = settings.get();
   const yt = await ytdlp.findYtdlp(st.ytdlpPath);
-  const ff = await tools.findFfmpeg(st.ffmpegPath);
+  const ff = await tools.findFfmpeg(st.ffmpegPath, toolDirs);
   return { ytdlp: yt, ffmpeg: ff, ffmpegHint: ff ? '' : tools.installHint() };
 });
 
@@ -438,8 +438,13 @@ function ensureTools() {
   if (ensuring) return ensuring;
   ensuring = (async () => {
     const st = settings.get();
-    const ff = await tools.findFfmpeg(st.ffmpegPath);
-    if (ff) ffmpegBin = ff.bin;
+    try {
+      const ff = await tools.ensureFfmpeg({ dirs: toolDirs, configured: st.ffmpegPath });
+      ffmpegBin = ff.bin;
+      if (ff.installed) send('tools:progress', { stage: 'installed', version: ff.version });
+    } catch (e) {
+      send('tools:progress', { stage: 'error', error: e.message });
+    }
     try {
       const r = await tools.ensureYtdlp({
         dirs: toolDirs,

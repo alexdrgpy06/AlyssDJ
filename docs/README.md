@@ -4,6 +4,7 @@
 
 | Guía | Qué cubre |
 |---|---|
+| [0. Instalación](00-instalacion.md) | Windows, macOS y Linux, con lo que está verificado y lo que no |
 | [1. Primeros pasos](01-primeros-pasos.md) | Instalar, iniciar sesión, cargar música y mezclar tu primera transición |
 | [2. Decks y mezclador](02-decks-y-mezclador.md) | Plato, cue, hot cues, loops, beat jump, roll, sync, rejilla, EQ y efectos |
 | [3. Librería y playlists](03-libreria-y-playlists.md) | Buscar, música local, importar playlists, historial, orden y pistas compatibles |

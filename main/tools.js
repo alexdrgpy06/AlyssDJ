@@ -3,6 +3,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const zlib = require('zlib');
 const https = require('https');
 const { execFile } = require('child_process');
 
@@ -49,7 +51,7 @@ async function findYtdlp(dirs = [], configured = '') {
     configured,
     ...dirs.map((d) => path.join(d, BIN_NAME)),
     'yt-dlp',
-    path.join(process.env.HOME || '', '.local/bin/yt-dlp'),
+    path.join(os.homedir(), '.local/bin/yt-dlp'),
   ].filter(Boolean);
   for (const bin of candidates) {
     if (path.isAbsolute(bin) && !fs.existsSync(bin)) continue;
@@ -94,18 +96,53 @@ async function maybeUpdate(bin, dirs) {
   return probe(bin);
 }
 
-// ffmpeg: el del sistema, el configurado o el que trae el paquete opcional ffmpeg-static.
-async function findFfmpeg(configured = '') {
-  const candidates = [configured, 'ffmpeg'].filter(Boolean);
+// ffmpeg estático (mismos binarios que usa el paquete ffmpeg-static): un .gz con un único ejecutable por plataforma.
+const FFMPEG_TAG = 'b6.1.1';
+const FFMPEG_BIN = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+function ffmpegUrl(platform = process.platform, arch = process.arch) {
+  const ok = { win32: ['x64'], linux: ['x64', 'arm64'], darwin: ['x64', 'arm64'] }[platform];
+  if (!ok || !ok.includes(arch)) return null;
+  return `https://github.com/eugeneware/ffmpeg-static/releases/download/${FFMPEG_TAG}/ffmpeg-${platform}-${arch}.gz`;
+}
+
+// ffmpeg: el configurado, el de bin/ (descargado por nosotros), el del sistema o el del paquete opcional ffmpeg-static.
+async function findFfmpeg(configured = '', dirs = []) {
+  const candidates = [configured, ...dirs.map((d) => path.join(d, FFMPEG_BIN)), 'ffmpeg'].filter(Boolean);
   try {
     const p = require('ffmpeg-static');
     if (p) candidates.push(p);
   } catch {}
   for (const bin of candidates) {
+    if (path.isAbsolute(bin) && !fs.existsSync(bin)) continue;
     const v = await probe(bin, ['-version']);
     if (v) return { bin, version: v };
   }
   return null;
+}
+
+async function ensureFfmpeg({ dirs, configured = '', onProgress, log = () => {}, url = ffmpegUrl() }) {
+  const found = await findFfmpeg(configured, dirs);
+  if (found) return { ...found, installed: false };
+  if (!url) throw new Error(`Sin ffmpeg estático para ${process.platform}-${process.arch}. ${installHint()}`);
+  let lastErr;
+  for (const dir of dirs) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      const target = path.join(dir, FFMPEG_BIN);
+      log(`Descargando ffmpeg → ${target}`);
+      await download(url, target + '.gz.part', onProgress);
+      fs.writeFileSync(target + '.part', zlib.gunzipSync(fs.readFileSync(target + '.gz.part')));
+      fs.rmSync(target + '.gz.part', { force: true });
+      fs.renameSync(target + '.part', target);
+      fs.chmodSync(target, 0o755);
+      const version = await probe(target, ['-version']);
+      if (!version) throw new Error('El ffmpeg descargado no se pudo ejecutar');
+      return { bin: target, version, installed: true };
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw new Error(`${lastErr?.message || 'No se pudo instalar ffmpeg'}. ${installHint()}`);
 }
 
 function installHint() {
@@ -114,4 +151,4 @@ function installHint() {
   return 'Instálalo con: winget install ffmpeg';
 }
 
-module.exports = { ensureYtdlp, findYtdlp, findFfmpeg, maybeUpdate, installHint, BIN_NAME };
+module.exports = { ensureYtdlp, findYtdlp, findFfmpeg, ensureFfmpeg, ffmpegUrl, maybeUpdate, installHint, BIN_NAME };

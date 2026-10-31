@@ -24,8 +24,11 @@ module.exports = (win) => {
 
       // REQ-4: si yt-dlp no encuentra el perfil, el mensaje es comprensible y no toca la sesión.
       // Se usa un yt-dlp de mentira: la prueba nunca debe leer un navegador real.
-      const stub = path.join(out, 'fake-ytdlp.sh');
-      fs.writeFileSync(stub, '#!/bin/sh\n[ "$1" = "--version" ] && { echo 0.0.0-test; exit 0; }\necho "ERROR: could not find firefox cookies database in /nada" >&2\nexit 1\n', { mode: 0o755 });
+      const win = process.platform === 'win32';
+      const stub = path.join(out, win ? 'fake-ytdlp.cmd' : 'fake-ytdlp.sh');
+      fs.writeFileSync(stub, win
+        ? '@echo off\r\nif "%1"=="--version" (echo 0.0.0-test& exit /b 0)\r\necho ERROR: could not find firefox cookies database in nada 1>&2\r\nexit /b 1\r\n'
+        : '#!/bin/sh\n[ "$1" = "--version" ] && { echo 0.0.0-test; exit 0; }\necho "ERROR: could not find firefox cookies database in /nada" >&2\nexit 1\n', { mode: 0o755 });
       await js(`await window.ytdj.settings.set({ ytdlpPath: ${JSON.stringify(stub)} }); return 1`);
       res.errorPath = await js(`const sel=document.getElementById('login-browser'); sel.innerHTML='<option value="firefox">x</option>'; document.getElementById('login-import').click(); for (let i=0;i<40;i++){ await new Promise(r=>setTimeout(r,250)); const m=document.getElementById('login-msg'); if (m.classList.contains('err')) return { text: m.textContent, kind: 'err' }; } return { text: document.getElementById('login-msg').textContent, kind: 'none' }`);
       res.statusAfterError = await js('return await window.ytdj.auth.status()');

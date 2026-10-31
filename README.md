@@ -1,20 +1,20 @@
 # AlyssDJ
 
-> **Guías con capturas:** [docs/](docs/README.md) · [Comparativa con Rekordbox, djay y Mixxx](docs/COMPARATIVA.md)
+> **Instalar en Windows, macOS y Linux:** [docs/00-instalacion.md](docs/00-instalacion.md) · **Guías con capturas:** [docs/](docs/README.md) · [Comparativa con Rekordbox, djay y Mixxx](docs/COMPARATIVA.md)
 
 DJ de dos decks con **YouTube Music Premium** y **tu música local**, con análisis de BPM, tonalidad y beatgrid.
 
 ## Instalación
 
 ```bash
-npm install     # instala Electron y, solo, lo que falte (yt-dlp y, si no hay, ffmpeg)
+npm install     # instala Electron y, solo, lo que falte (yt-dlp y ffmpeg)
 npm start
 ```
 
 `scripts/setup.js` corre en `npm install` (postinstall), antes de cada `npm start` y la app lo repite al abrirse:
 
 - **yt-dlp:** si no hay uno utilizable, descarga el binario oficial de GitHub a `bin/` (o a la carpeta de datos de la app). Si es el propio y tiene más de 14 días, se actualiza solo, porque YouTube lo rompe seguido.
-- **ffmpeg:** usa el del sistema; si no existe, prueba el paquete `ffmpeg-static`. Si tampoco, avisa cómo instalarlo (en CachyOS: `sudo pacman -S ffmpeg`).
+- **ffmpeg:** usa el del sistema; si no existe, descarga un ffmpeg estático a `bin/` (Windows x64, macOS y Linux). Si tampoco puede, avisa cómo instalarlo (Windows: `winget install Gyan.FFmpeg`).
 - Ajustes → **Instalar / actualizar herramientas** repite la comprobación a mano. `npm run setup` hace lo mismo desde la terminal.
 
 ## Fuentes de audio
@@ -77,3 +77,7 @@ YTDJ_SELFTEST=1 YTDJ_USERDATA=/tmp/alyss-test npm start   # autoprueba en silenc
 - **Segunda pantalla en Wayland:** el compositor puede ignorar la posición pedida a la ventana; funciona bien en X11/XWayland y la pantalla completa va en la pantalla donde esté la ventana.
 - **Precisión:** los loops y cues del stream se aplican por software cada 5 ms, no con precisión de muestra. En archivos locales es igual de exacto.
 - **Términos de servicio:** controlar la web de YouTube Music está en zona gris, y descargar con yt-dlp va contra ellos; por eso nunca ocurre sin que lo pidas.
+
+## Licencia
+
+MIT © 2026 Alejandro Ramirez. Ver [LICENSE](LICENSE).
