@@ -12,7 +12,7 @@ const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-save-'));
 const tests = {};
 
 tests.settings = async () => {
-  assert.strictEqual(L.defaultLibraryDir('/home/u/Música'), '/home/u/Música/AlyssDJ/YouTube');
+  assert.strictEqual(L.defaultLibraryDir('/home/u/Música'), path.join('/home/u/Música', 'AlyssDJ', 'YouTube'));
   assert.deepStrictEqual(L.withLibraryDir(['/a'], '/lib'), ['/a', '/lib']);
   assert.deepStrictEqual(L.withLibraryDir(['/a', '/lib'], '/lib'), ['/a', '/lib'], 'no se duplica');
   assert.deepStrictEqual(L.withLibraryDir(undefined, '/lib'), ['/lib']);
