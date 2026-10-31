@@ -3,7 +3,7 @@ change: 2026-10-31-deck-sin-pista-en-silencio
 type: fix
 domains: [video]
 paths: [preload/deck.js, scripts/**, .github/**]
-commits: []
+commits: [777e9bc]
 status: approved
 rev: 1
 approved_rev: 1

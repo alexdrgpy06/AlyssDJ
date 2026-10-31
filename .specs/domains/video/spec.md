@@ -1,7 +1,7 @@
 ---
 domain: video
 paths: [docs/**, main/main.js, main/settings.js, preload/video-window.js, renderer/localvideo.js, renderer/video.html, renderer/video.js, scripts/video-live-selftest.js, scripts/video-local-selftest.js, main/ytm-library.js, main/analyzer.js, main/main.js, main/ytdlp.js, main/library-save.js, main/analyzer.js, main/ytm-library.js, preload/**, renderer/deck.js, renderer/app.js, renderer/video.html, renderer/video.js, renderer/index.html, renderer/styles.css, scripts/test-video-local.js]
-last_change: 2026-10-31-arreglos-bot-y-pista-equivocada
+last_change: 2026-10-31-deck-sin-pista-en-silencio
 ---
 # video · spec
 
@@ -16,3 +16,7 @@ WHILE una miniatura de la vista de video muestra video THE SYSTEM SHALL reproduc
 ## Sin video en el plato y pista correcta en el stream
 
 THE SYSTEM SHALL mostrar solo la portada en el plato y ofrecer el video en la ventana de video y en la vista de AutoMix; WHILE el stream reproduce una pista distinta de la cargada THE SYSTEM SHALL volver a la del deck, salvo el cambio a la versión en video pedido por el propio deck (una vez, 8 s).
+
+## Deck vacío en silencio
+
+WHILE un deck de streaming no tiene pista cargada THE SYSTEM SHALL mantener en pausa y silenciado el reproductor de YouTube Music de ese deck.
