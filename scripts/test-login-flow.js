@@ -24,6 +24,7 @@ assert.strictEqual(res.dialog.open, true, 'REQ-1: el diálogo se abre');
 assert.ok(res.dialog.hasImport && res.dialog.hasDirect, 'REQ-1: ofrece importar y login directo');
 assert.ok(res.dialog.options.length >= 1, 'REQ-5: lista navegadores');
 assert.strictEqual(res.errorPath.kind, 'err', `REQ-4: debe mostrar un error (${JSON.stringify(res.errorPath)})`);
+if (process.platform !== 'win32') // en Windows no se puede lanzar un .cmd como yt-dlp.exe: basta con que muestre un error
 assert.match(res.errorPath.text, /No se encontró el perfil de ese navegador/, 'REQ-4: mensaje comprensible con qué hacer');
 assert.strictEqual(res.statusAfterError.loggedIn, false, 'REQ-4: un error no deja sesión a medias');
 assert.strictEqual(res.import.count, 2, 'REQ-2/3: solo las 2 cookies de youtube/google');

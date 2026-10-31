@@ -68,11 +68,10 @@ tests.args = async () => {
   assert.deepStrictEqual(calls, ['audio'], 'otros errores no se reintentan');
   // los argumentos que se pasan de verdad a yt-dlp: stub que registra su línea de comandos
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-stub-'));
-  const win = process.platform === 'win32';
-  const stub = path.join(dir, win ? 'yt-dlp.cmd' : 'yt-dlp');
-  fs.writeFileSync(stub, win
-    ? `@echo off\r\necho %* > "${dir}\\args.txt"\r\necho ERROR: nada 1>&2\r\nexit /b 1\r\n`
-    : `#!/bin/sh\necho "$@" > ${dir}/args.txt\necho "ERROR: nada" >&2\nexit 1\n`, { mode: 0o755 });
+  // En Windows no se puede lanzar un script como si fuera yt-dlp.exe (Node bloquea .cmd sin shell): solo se prueba en Linux/macOS.
+  if (process.platform === 'win32') return;
+  const stub = path.join(dir, 'yt-dlp');
+  fs.writeFileSync(stub, `#!/bin/sh\necho "$@" > ${dir}/args.txt\necho "ERROR: nada" >&2\nexit 1\n`, { mode: 0o755 });
   await assert.rejects(Y.downloadToLibrary({ bin: stub, videoId: 'TOueemiIVYU', dir: path.join(dir, 'lib'), extraArgs: Y.cookieArgs({ cookieSource: 'none' }) }));
   const line = fs.readFileSync(path.join(dir, 'args.txt'), 'utf8');
   assert.ok(line.includes('--js-runtimes') && line.includes('bestaudio/best'), line);
