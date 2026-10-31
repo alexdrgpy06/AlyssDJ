@@ -24,3 +24,17 @@ approved_at: 2026-10-30
 Sin cambios de interfaz.
 
 ## Amendments
+
+## Domain deltas
+### install
+#### ADDED spec: herramientas externas descargadas
+WHEN no hay ffmpeg utilizable THE SYSTEM SHALL descargar un ffmpeg estático a `bin/` en Windows x64, Linux x64/arm64 y macOS x64/arm64, al instalar y al arrancar.
+IF la descarga falla THEN THE SYSTEM SHALL mostrar el comando de instalación manual de la plataforma sin impedir que la app abra.
+#### ADDED design: ensureFfmpeg
+`tools.ensureFfmpeg` baja `ffmpeg-<plataforma>-<arq>.gz` (eugeneware/ffmpeg-static b6.1.1), lo descomprime con `zlib` y lo deja en `bin/`; `findFfmpeg` busca configurado, `bin/`, sistema.
+### platform
+#### ADDED spec: soporte multiplataforma
+WHEN se detectan navegadores THE SYSTEM SHALL usar las rutas de perfil de la plataforma actual (Linux, Windows, macOS).
+WHEN se hace push o pull request THE SYSTEM SHALL ejecutar en CI las pruebas rápidas y el arranque de la app en ubuntu, windows y macos.
+#### ADDED design: CI y límites
+`.github/workflows/ci.yml` (matriz de tres sistemas, `shell: bash`); la grabación de la mezcla sigue solo en Linux y las pruebas con stubs de shell se omiten en Windows.

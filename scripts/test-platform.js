@@ -76,7 +76,7 @@ tests.publico = async () => {
   const files = execSync('git ls-files', { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
   const bad = /(ghp_[A-Za-z0-9]{20,}|github_pat_|AIza[0-9A-Za-z_-]{30}|BEGIN (RSA |EC )?PRIVATE KEY)/;
   for (const f of files) {
-    if (/\.(png|jpg|mp3|woff2?)$/.test(f)) continue;
+    if (/\.(png|jpg|mp3|woff2?)$/.test(f) || f === 'scripts/test-platform.js') continue;
     assert.ok(!bad.test(fs.readFileSync(path.join(root, f), 'utf8')), `posible secreto en ${f}`);
     assert.ok(!/\/home\/alex/.test(fs.readFileSync(path.join(root, f), 'utf8')) || f.startsWith('.specs/'), `ruta personal en ${f}`);
   }
