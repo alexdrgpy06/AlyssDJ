@@ -86,6 +86,26 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 
 ![Vista durante la mezcla](img/23-automix-vista-mezclando.png)
 
+## Cola analizada y ordenada
+
+- **Toda la cola se analiza sola** en cuanto se añade (de a 2 a la vez y en orden); cada fila muestra su estado, BPM, tonalidad y la **calidad de la transición** desde la anterior (●●● muy buena, ●●○ aceptable, ●○○ floja).
+- Con **Orden automático**, las pistas analizadas se ordenan como una **cadena**: parte de lo que suena y busca el BPM más gradual, tonalidades compatibles y energía continua en toda la cola, no solo la siguiente. Lo que fijas a mano 📌 y la pista que ya se está preparando no se mueven.
+- **Reorganizar ahora** ordena aunque el interruptor esté apagado; **Deshacer** vuelve al orden anterior.
+- Mientras AutoMix está activo, los **decks se compactan** solos para dejar espacio a la lista (plato pequeño, bancos de funciones ocultos, mezclador reducido) y vuelven a su tamaño al detenerlo.
+
+![Decks compactos](img/31-automix-decks-compactos.png)
+
+## Editar los puntos de mezcla
+
+Con **✎** en una fila de la cola, o **Puntos** en un deck, se abre el editor de la pista (debe estar analizada):
+
+![Editor de puntos de mezcla](img/33-editor-puntos-editado.png)
+
+- Las líneas discontinuas son los puntos **automáticos** (entrada en verde, salidas en rojo con su puntuación). Al mover, añadir o borrar uno, pasan a ser **los tuyos** y AutoMix usa solo esos.
+- **Doble clic** (o clic derecho) en la onda añade una salida; **arrastra** una línea para moverla (se ajusta a beats; **Mayús** a frases de 16 beats; o marca «Posición libre»). **Supr** borra la seleccionada. Hasta **6 salidas** y una entrada.
+- El **orden** de la lista es tu preferencia: AutoMix sale por la primera que aún esté por delante.
+- **Probar la mezcla** reproduce el final de la pista y la entrada de la siguiente (por auriculares si hay salida cue); necesita ambas guardadas como archivo local. **Restaurar automático** descarta tus cambios. Lo editado se conserva aunque la pista se reanalice.
+
 ## Consejos
 
 - Si pausas el deck a mano o cargas otra pista, AutoMix espera; **Detener AutoMix** lo apaga.

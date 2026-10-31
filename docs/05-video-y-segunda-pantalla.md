@@ -31,4 +31,5 @@ El video es **el mismo reproductor** que suena en el deck: la ventana solo lo mu
 
 - Sin Premium, YouTube Music intercala anuncios y el deck lo indica ("anuncio").
 - En **Wayland** el sistema puede ignorar la posición que pedimos a la ventana; con X11/XWayland funciona. La pantalla completa siempre va en la pantalla donde esté la ventana: arrástrala allí y pulsa **Completa**.
-- Las pistas locales no tienen video (solo portada).
+- **Video guardado:** al guardar una pista de YouTube que tiene **video musical de verdad** (no las de solo portada), AlyssDJ descarga también su video (sin audio, hasta 480p/720p/1080p según Ajustes, preferiblemente H.264) a una carpeta oculta de la librería. Cuando el deck suena desde el archivo, la miniatura y la ventana de video usan ese video, sincronizado con el audio (posición, pausa y velocidad). Se puede desactivar en Ajustes → «Guardar también el video…».
+- Las pistas sin video real (y los archivos locales propios) muestran su portada.

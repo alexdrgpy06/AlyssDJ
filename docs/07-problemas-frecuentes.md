@@ -20,3 +20,9 @@
 | La rueda del ratón no hace zoom | Es **Ctrl + rueda** sobre la onda. Sin Ctrl, y en pausa, la rueda busca fino |
 | AutoMix no mezcla a tempo con pistas de YouTube | La pista debe estar **✓ Lista · local** en la cola (descargada, analizada y guardada). Con *Analizar y usar archivo* activado se hace sola; si una **Falló**, quítala o ponla al final |
 | Quiero ver los errores | Arranca con `YTDJ_DEVTOOLS=1 npm start` |
+
+## La interfaz se ve apretada o muy pequeña
+
+El diseño se adapta solo al tamaño de la ventana: **compacto** (menos de 1280 de ancho o 780 de alto), **normal** y **amplio** (1920 o más, escala la interfaz). Puedes forzar uno en Ajustes → «Diseño de la interfaz».
+
+![Compacto 1366×768](img/30-layout-1366x768.png)

@@ -23,3 +23,10 @@ Artefactos: `AlyssDJ-Setup-<versión>.exe`, `AlyssDJ-<versión>-<arch>.dmg`.
 Sin cambios de interfaz.
 
 ## Amendments
+
+## Domain deltas
+### install
+#### ADDED spec: instaladores de Windows y macOS
+WHEN se publica una etiqueta v* THE SYSTEM SHALL construir y adjuntar a la Release un instalador .exe de Windows y un .dmg de macOS (Intel y Apple Silicon) sin firmar, y comprobar en cada cambio que el paquete arranca, baja sus herramientas y analiza una pista.
+#### ADDED design: electron-builder
+`package.json > build` (sin asar), icono en `build/`, `release.yml` con matriz windows/macos y `test-installers.js packaged` en el CI; instalada, las herramientas van a la carpeta de datos del usuario.

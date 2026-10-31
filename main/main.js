@@ -514,7 +514,7 @@ ipcMain.handle('rec:start', wrap(async () => {
   const def = (await run('pactl', ['get-default-sink'])).trim();
   const source = settings.get().recordSource || (def && `${def}.monitor`);
   if (!source) throw new Error('No se encontró la salida de audio a grabar (¿está pactl/PipeWire disponible?)');
-  const dir = path.join(app.getPath('music'), 'AlyssDJ');
+  const dir = path.join(musicHome(), 'AlyssDJ');
   fs.mkdirSync(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
   const file = path.join(dir, `mix-${stamp}.mp3`);

@@ -23,3 +23,10 @@ approved_at: 2026-10-31
 Controles nuevos en la cabecera de la vista de AutoMix; mismo estilo.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: cola analizada y ordenada como cadena
+WHEN se añade una pista a la cola de AutoMix THE SYSTEM SHALL analizarla sin esperar su turno, de a 2 como máximo, y ordenar las pistas analizadas como una cadena de coste mínimo (BPM gradual, tonalidad, energía) respetando lo fijado a mano y la pista ya precargada.
+#### ADDED design: orderChain
+`mixplan.orderChain` es exacto hasta 8 pistas libres y voraz con mejora local (intercambio e inserción, 120 ms) más allá; `AutoMix.prepareAhead` analiza toda la cola; `reorganizeNow` y `undoReorder` dan el control manual.

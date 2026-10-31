@@ -23,3 +23,11 @@ approved_at: 2026-10-31
 Sin controles nuevos salvo el ajuste en Ajustes; la ventana de video y la miniatura cambian de contenido.
 
 ## Amendments
+
+## Domain deltas
+### video
+#### ADDED spec: video local de pistas con video real
+WHEN se guarda una pista con video real (OMV/UGC) THE SYSTEM SHALL descargar también su video, sin audio y hasta la calidad elegida, y usarlo en la miniatura del deck y la ventana de video sincronizado con el audio local.
+### library
+#### ADDED design: .video y sincronización
+El video va a `<librería>/.video/<id>.mp4` (oculto para el índice); el protocolo `localvideo/` lo sirve; `LocalVideo.apply` corrige deriva mayor de 80 ms; la ventana de video carga `video.html` con una página por deck local.

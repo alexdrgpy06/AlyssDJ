@@ -22,3 +22,10 @@ approved_at: 2026-10-31
 Tres perfiles; se generan capturas de cada uno en `docs/img`.
 
 ## Amendments
+
+## Domain deltas
+### ui
+#### ADDED spec: perfiles por tamaño de pantalla
+WHEN cambia el tamaño de la ventana THE SYSTEM SHALL elegir el perfil compacto, normal o amplio según su tamaño, salvo que el usuario fije uno en Ajustes.
+#### ADDED design: layout.js
+`profileFor`, `scaleFor` y `resolve` son puros; `body[data-layout]` activa el CSS compacto (comparte reglas con `am-compact`) y el amplio escala con `zoom` según `--ui-scale`.

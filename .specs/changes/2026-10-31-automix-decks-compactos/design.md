@@ -22,3 +22,11 @@ Clase `am-compact` en `body`.
 Capturas antes/después en `docs/img`.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: decks compactos con AutoMix
+WHILE AutoMix está activo o su vista abierta THE SYSTEM SHALL mostrar los decks y el mezclador compactos y dar a la vista de AutoMix al menos el 40% de la altura de la ventana.
+### ui
+#### ADDED design: clase am-compact
+`body.am-compact` reduce plato, oculta los bancos de funciones y compacta el mezclador; se activa desde `syncCompact` con el evento `alyss:tab` y el estado de AutoMix.

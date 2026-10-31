@@ -23,3 +23,11 @@ approved_at: 2026-10-31
 Editor con onda a lo ancho, marcadores con tiradores de 44 px de alto, lista de puntos y acciones; mismo estilo oscuro de la app.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: puntos de mezcla editables
+WHEN el usuario edita la entrada o las salidas (hasta 6) de una pista THE SYSTEM SHALL guardarlas aparte y hacer que AutoMix use solo las editadas, en su orden de preferencia, también tras reanalizar.
+### library
+#### ADDED design: mixedit
+`main/mixedit.js` sanea y guarda `<id>.mixedit.json`; el analizador adjunta `mixEdit` y avisa con el evento `mixedit`; `renderer/mixeditor.js` y `mixpreview.js` dan el editor y la prueba de mezcla.
