@@ -7,6 +7,9 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+// ffmpeg: el que baja AlyssDJ a bin/ si existe; si no, el del sistema.
+const bundled = path.join(__dirname, '..', 'bin', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+const FFMPEG = fs.existsSync(bundled) ? bundled : 'ffmpeg';
 const out = path.resolve(process.argv[2] || path.join(os.tmpdir(), 'alyssdj-demo'));
 fs.mkdirSync(out, { recursive: true });
 const SR = 44100;
@@ -71,9 +74,9 @@ for (const t of TRACKS) {
   const cover = path.join(out, `${t.title}.jpg`);
   const mp3 = path.join(out, `${t.title}.mp3`);
   wav(tmp, render(t, 110));
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', `color=c=${t.hue}:s=600x600`, '-vf',
+  execFileSync(FFMPEG, ['-v', 'error', '-y', '-f', 'lavfi', '-i', `color=c=${t.hue}:s=600x600`, '-vf',
     "geq=r='r(X,Y)+90*sin(X/55+Y/90)':g='g(X,Y)+70*sin(Y/45)':b='b(X,Y)+110*cos((X+Y)/70)'", '-frames:v', '1', cover]);
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', tmp, '-i', cover, '-map', '0', '-map', '1', '-c:a', 'libmp3lame', '-b:a', '160k',
+  execFileSync(FFMPEG, ['-v', 'error', '-y', '-i', tmp, '-i', cover, '-map', '0', '-map', '1', '-c:a', 'libmp3lame', '-b:a', '160k',
     '-id3v2_version', '3', '-metadata', `title=${t.title}`, '-metadata', 'artist=AlyssDJ Demo', '-metadata', `album=Demo Set (${t.bpm} BPM)`, mp3]);
   fs.rmSync(tmp);
   fs.rmSync(cover);
