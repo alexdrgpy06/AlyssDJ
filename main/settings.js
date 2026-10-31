@@ -15,6 +15,8 @@ const DEFAULTS = {
   autoAnalyzeCue: false,
   output: { mode: 'split', masterLabel: '', cueLabel: '' },
   crossfaderCurve: 'smooth',
+  autoUpdate: true, // buscar versiones nuevas al arrancar y cada 6 h (solo app instalada)
+  skipUpdate: '', // versión que el usuario eligió omitir
   layoutMode: 'auto', // auto | compact | normal | wide
   pitchRange: 8,
   musicDirs: [],

@@ -1,0 +1,22 @@
+---
+change: 2026-10-31-automix-mezclar-cerca
+status: draft
+rev: 1
+approved_rev: null
+approved_hash: null
+approved_by: null
+---
+# Design · 2026-10-31-automix-mezclar-cerca
+
+## Enfoque
+- `mixplan.planNearest(cur, next, { pos, len, minLead = 1, maxWait = 12 })` (pura): candidatos de salida = `mixEdit.outs` o `mix.mixOut` ∪ múltiplos de 8 beats de la rejilla (`offset + k·8·beat`); elige el de menor `t ≥ pos + minLead` con `t − pos ≤ maxWait` y espacio suficiente; duración = `floor(min(len, dur − t − 1) / beat / 4) · 4` beats (mínimo 4); entrada = `mixEdit.in ?? mix.mixIn ?? offset`. Sin BPM → `{ exitAt: pos, seconds: min(len, 4), kind: 'now' }`.
+- `AutoMix.mixNow` guarda `this.pendingMix = { plan }` y `tick` inicia la transición cuando `posOf(cur) ≥ plan.exitAt − 0.02` y la siguiente está lista; la vista muestra la cuenta atrás con `snapshot().pendingMix`.
+- Pruebas: `scripts/test-mix-now.js` (puras: elección de la salida más cercana con candidatos y rejilla, compases enteros, sin BPM, límites de espera) y con el motor simulado (inicio en la posición prevista).
+
+## Contratos
+`planNearest -> { exitAt, enterAt, beats, seconds, kind: 'edit'|'auto'|'phrase'|'now', waitS }`.
+
+## Visual Spec
+Texto de cuenta atrás en la barra de estado de AutoMix y botón «Cancelar» junto a «Mezclar ahora».
+
+## Amendments

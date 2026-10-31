@@ -15,6 +15,17 @@ contextBridge.exposeInMainWorld('ytdj', {
     onFrame: on('deck:frame'),
     onReady: on('deck:ready'),
   },
+  update: {
+    state: () => ipcRenderer.invoke('update:state'),
+    check: () => ipcRenderer.invoke('update:check'),
+    download: () => ipcRenderer.invoke('update:download'),
+    install: () => ipcRenderer.invoke('update:install'),
+    skip: () => ipcRenderer.invoke('update:skip'),
+    later: () => ipcRenderer.invoke('update:later'),
+    openRelease: (url) => ipcRenderer.invoke('update:open-release', url),
+    onState: on('update:state'),
+    setPlaying: (p) => ipcRenderer.send('app:playing', p),
+  },
   video: {
     open: (opts) => ipcRenderer.invoke('video:open', opts),
     close: () => ipcRenderer.invoke('video:close'),

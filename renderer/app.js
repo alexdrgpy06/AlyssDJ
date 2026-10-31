@@ -6,6 +6,7 @@ import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
 import { watchLayout } from './layout.js';
 import { MixEditor } from './mixeditor.js';
+import { renderUpdate } from './update-ui.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 
@@ -46,6 +47,7 @@ class App {
 
     this.library = new Library(this);
     document.body.classList.toggle('no-mini', this.settings.miniVideo === false);
+    this.initUpdates();
     this.applyLayout = watchLayout(() => this.settings.layoutMode || 'auto');
     window.ytdj.deck.onFrame((id, url) => this.decks[id]?.onFrame(url));
     window.ytdj.local.onEvent((ev) => this.library.onLocalEvent(ev));
@@ -348,6 +350,29 @@ class App {
       } else if (from != null) am.move(from, from < to ? to - 1 : to);
       from = null;
     });
+  }
+
+  // ---------- actualizaciones ----------
+  initUpdates() {
+    const ui = (st) => renderUpdate(st, { toast: (m, e) => this.toast(m, e) });
+    window.ytdj.update.onState(ui);
+    window.ytdj.update.state().then(ui);
+    $('#upd-go').addEventListener('click', async () => {
+      const st = await window.ytdj.update.state();
+      if (st.stage === 'available') return st.mode === 'notify' ? window.ytdj.update.openRelease(st.url) : window.ytdj.update.download();
+      if (st.stage === 'downloaded') {
+        const r = await window.ytdj.update.install();
+        if (r && !r.ok && r.reason === 'playing') this.toast('Detén los decks para instalar la actualización (o se instalará al cerrar la app).', true);
+      }
+    });
+    $('#upd-later').addEventListener('click', () => window.ytdj.update.later());
+    $('#upd-skip').addEventListener('click', () => window.ytdj.update.skip());
+    // El proceso principal no reinicia con música sonando: se le informa si algún deck suena.
+    let last = null;
+    setInterval(() => {
+      const p = this.decks.A.st.playing || this.decks.B.st.playing;
+      if (p !== last) window.ytdj.update.setPlaying((last = p));
+    }, 1000);
   }
 
   // Con AutoMix activo (o su vista abierta) los decks se compactan para dejarle sitio a la lista.
@@ -702,6 +727,7 @@ class App {
     f.layoutMode.value = s.layoutMode || 'auto';
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
+    f.autoUpdate.checked = s.autoUpdate !== false;
     f.saveVideo.checked = s.saveVideo !== false;
     f.videoMaxHeight.value = String(s.videoMaxHeight || 1080);
     f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
@@ -762,6 +788,7 @@ class App {
         cookieSource: f.cookieSource.value,
         saveOnAnalyze: f.saveOnAnalyze.checked,
         saveOnPlay: f.saveOnPlay.checked,
+        autoUpdate: f.autoUpdate.checked,
         saveVideo: f.saveVideo.checked,
         videoMaxHeight: Number(f.videoMaxHeight.value),
         libraryDir: f.libraryDir.value,
@@ -786,6 +813,7 @@ class App {
       const dir = await window.ytdj.settings.pickDir();
       if (dir) $('#settings form').libraryDir.value = dir;
     });
+    $('#btn-check-update').addEventListener('click', () => window.ytdj.update.check());
     $('#btn-open-library').addEventListener('click', () => window.ytdj.settings.openPath($('#settings form').libraryDir.value));
     $('#btn-install-tools').addEventListener('click', async () => {
       this.toast('Comprobando herramientas…');

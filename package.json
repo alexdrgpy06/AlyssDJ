@@ -11,7 +11,8 @@
     "start": "node scripts/setup.js --soft && electron .",
     "analyze": "node main/analyze-cli.js",
     "dist": "electron-builder --publish never",
-    "dist:dir": "electron-builder --dir --publish never"
+    "dist:dir": "electron-builder --dir --publish never",
+    "dist:linux": "electron-builder --linux AppImage --publish never"
   },
   "devDependencies": {
     "electron": "45.2.0",
@@ -79,17 +80,32 @@
     "linux": {
       "target": [
         {
-          "target": "dir",
+          "target": "AppImage",
           "arch": [
             "x64"
           ]
         }
       ],
       "icon": "build/icon.png",
-      "category": "AudioVideo"
+      "category": "AudioVideo",
+      "artifactName": "AlyssDJ-${version}.${ext}",
+      "synopsis": "DJ de dos decks con YouTube Music y música local",
+      "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local",
+      "maintainer": "Alejandro Ramirez",
+      "vendor": "AlystechPY"
     },
     "extraMetadata": {
       "main": "main/main.js"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "alexdrgpy06",
+      "repo": "AlyssDJ",
+      "releaseType": "release"
     }
-  }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "desktopName": "alyssdj.desktop"
 }

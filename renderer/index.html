@@ -83,6 +83,16 @@
     <label class="pop-field"><span class="lbl">Volumen</span><input type="range" id="sp-vol" min="0" max="1.2" step="0.01" value="0.8" aria-label="Volumen del sampler" /></label>
   </div>
 
+  <div class="update-banner" id="update-banner" role="status" aria-live="polite" hidden>
+    <span id="upd-text"></span>
+    <div class="upd-bar" id="upd-bar" hidden><i id="upd-fill"></i></div>
+    <span class="upd-actions">
+      <button class="btn sm primary" id="upd-go" type="button"></button>
+      <button class="btn ghost sm" id="upd-later" type="button">Más tarde</button>
+      <button class="btn ghost sm" id="upd-skip" type="button">Omitir esta versión</button>
+    </span>
+  </div>
+
   <section class="waves" aria-label="Formas de onda">
     <div class="wave-row" data-deck="A"><span class="wave-tag">A</span><canvas class="scroll" id="scroll-A"></canvas></div>
     <div class="wave-row" data-deck="B"><span class="wave-tag">B</span><canvas class="scroll" id="scroll-B"></canvas></div>
@@ -310,6 +320,8 @@
         <p class="hint">Tu sesión de YouTube Music se usa <b>solo para el streaming</b> de los decks. Las descargas de yt-dlp van sin sesión: así no se mezcla tu cuenta y evitan errores de “formato no disponible”.</p>
         <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
         <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
+        <label class="check"><input type="checkbox" name="autoUpdate" /><span>Buscar actualizaciones automáticamente <small>Solo en la app instalada: al abrirla y cada 6 horas, consulta los releases públicos de GitHub. Nunca descarga sin preguntarte.</small></span></label>
+        <div class="row-btns"><button type="button" class="btn" id="btn-check-update">Comprobar ahora</button><span class="hint" id="upd-status"></span></div>
         <label class="check"><input type="checkbox" name="saveVideo" /><span>Guardar también el video de las pistas que lo tengan <small>Solo videos musicales de verdad; las pistas de solo portada no descargan video. Se usa en la ventana de video y la miniatura del deck.</small></span></label>
         <label>Calidad máxima del video <select name="videoMaxHeight"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select></label>
         <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>

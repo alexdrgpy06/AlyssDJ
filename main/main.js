@@ -11,6 +11,7 @@ const ytdlp = require('./ytdlp');
 const tools = require('./tools');
 const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
+const { createUpdater } = require('./updater');
 const libSave = require('./library-save');
 
 const ROOT = path.join(__dirname, '..');
@@ -301,6 +302,17 @@ ipcMain.on('video:deck-source', (_e, id, src) => {
 ipcMain.on('video:sync', (_e, id, s) => {
   if (videoOpen() && localVideo[id]) videoWin.webContents.send('vwin:sync', id, s);
 });
+// ---------- actualizaciones ----------
+let updater = null;
+let anyPlaying = false;
+ipcMain.on('app:playing', (_e, playing) => (anyPlaying = !!playing));
+ipcMain.handle('update:state', () => updater?.state() || { stage: 'idle' });
+ipcMain.handle('update:check', () => updater?.check({ manual: true }));
+ipcMain.handle('update:download', () => updater?.download());
+ipcMain.handle('update:install', () => updater?.install());
+ipcMain.handle('update:skip', () => updater?.skip());
+ipcMain.handle('update:later', () => updater?.later());
+ipcMain.handle('update:open-release', (_e, url) => (/^https:\/\/github\.com\/alexdrgpy06\/AlyssDJ\/releases\//.test(String(url)) ? shell.openExternal(url) : null));
 ipcMain.handle('video:open', (_e, opts) => (openVideo(opts), videoState()));
 ipcMain.handle('video:close', () => { if (videoOpen()) videoWin.close(); return videoState(); });
 ipcMain.handle('video:state', videoState);
@@ -605,6 +617,10 @@ app.whenReady().then(() => {
 
   syncMusicDirs();
   win.webContents.once('did-finish-load', () => ensureTools());
+  if (app.isPackaged) {
+    updater = createUpdater({ autoUpdater: require('electron-updater').autoUpdater, settings, send: (ch, p) => send(ch, p), isPlaying: () => anyPlaying, platform: process.platform, isPackaged: true });
+    updater.start();
+  }
   if (process.env.YTDJ_DEVTOOLS) win.webContents.openDevTools({ mode: 'detach' });
   if (process.env.YTDJ_SELFTEST) require(process.env.YTDJ_SELFTEST_MODULE || './selftest')(win, decks);
 });
