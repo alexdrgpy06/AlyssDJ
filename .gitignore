@@ -3,3 +3,4 @@ bin/
 docs/demo-audio/
 *.part
 .DS_Store
+dist/

@@ -6,6 +6,8 @@ DJ de dos decks con **YouTube Music Premium** y **tu música local**, con análi
 
 ## Instalación
 
+Sin Node ni Git: descarga el instalador de Windows (`.exe`) o macOS (`.dmg`) desde [Releases](https://github.com/alexdrgpy06/AlyssDJ/releases) (no están firmados: ver [la guía](docs/00-instalacion.md#instaladores-sin-node-ni-git)). Desde el código:
+
 ```bash
 npm install     # instala Electron y, solo, lo que falte (yt-dlp y ffmpeg)
 npm start

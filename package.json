@@ -9,9 +9,87 @@
     "postinstall": "node scripts/setup.js --soft",
     "setup": "node scripts/setup.js",
     "start": "node scripts/setup.js --soft && electron .",
-    "analyze": "node main/analyze-cli.js"
+    "analyze": "node main/analyze-cli.js",
+    "dist": "electron-builder --publish never",
+    "dist:dir": "electron-builder --dir --publish never"
   },
   "devDependencies": {
-    "electron": "45.2.0"
+    "electron": "45.2.0",
+    "electron-builder": "^26.18.0"
+  },
+  "author": {
+    "name": "Alejandro Ramirez"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/alexdrgpy06/AlyssDJ",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexdrgpy06/AlyssDJ.git"
+  },
+  "build": {
+    "appId": "com.alejandroramirez.alyssdj",
+    "productName": "AlyssDJ",
+    "copyright": "Copyright © 2026 Alejandro Ramirez",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main/**",
+      "preload/**",
+      "renderer/**",
+      "shared/**",
+      "package.json",
+      "!**/*.md"
+    ],
+    "asar": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "AlyssDJ-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.music",
+      "artifactName": "AlyssDJ-${version}-${arch}.${ext}",
+      "identity": null
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo"
+    },
+    "extraMetadata": {
+      "main": "main/main.js"
+    }
   }
 }

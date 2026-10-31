@@ -557,7 +557,8 @@ app.whenReady().then(() => {
   setupSession(ytm);
 
   coversDir = path.join(app.getPath('userData'), 'covers');
-  toolDirs = [path.join(ROOT, 'bin'), path.join(app.getPath('userData'), 'bin')];
+  // Instalada, la carpeta de la app puede ser de solo lectura: yt-dlp y ffmpeg van a la carpeta de datos del usuario.
+  toolDirs = app.isPackaged ? [path.join(app.getPath('userData'), 'bin')] : [path.join(ROOT, 'bin'), path.join(app.getPath('userData'), 'bin')];
   ytdlp.setManagedDirs(toolDirs);
   localLib = new LocalLibrary({
     file: path.join(app.getPath('userData'), 'local-index.json'),

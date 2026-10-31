@@ -31,6 +31,8 @@ jobs:
           node scripts/test-platform.js ffmpeg
           node scripts/test-platform.js browsers
           node scripts/test-platform.js ci
+          node scripts/test-installers.js config
+          node scripts/test-installers.js workflow
           node scripts/test-auth-import.js
           node scripts/test-ytdlp-sin-sesion.js settings
           node scripts/test-ytdlp-sin-sesion.js args
@@ -47,3 +49,9 @@ jobs:
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: node scripts/test-login-flow.js
+      - name: Paquete de la app (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/test-installers.js packaged
+      - name: Paquete de la app (Windows y macOS)
+        if: runner.os != 'Linux'
+        run: node scripts/test-installers.js packaged

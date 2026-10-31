@@ -10,11 +10,24 @@ npm install
 npm start
 ```
 
+## Instaladores (sin Node ni Git)
+
+En la página de [Releases](https://github.com/alexdrgpy06/AlyssDJ/releases) se publican, al crear una versión, el **instalador de Windows** (`AlyssDJ-Setup-<versión>.exe`) y la **imagen de macOS** (`AlyssDJ-<versión>-arm64.dmg` para Apple Silicon y `-x64.dmg` para Intel). No hacen falta Node ni Git: la primera vez que se abre, la app descarga sola yt-dlp y ffmpeg a su carpeta de datos.
+
+Los instaladores **no están firmados** (la firma de código cuesta dinero y aún no la tengo), así que el sistema avisa:
+
+- **Windows (SmartScreen):** «Windows protegió su PC» → **Más información** → **Ejecutar de todas formas**.
+- **macOS (Gatekeeper):** «no se puede abrir porque no se puede verificar al desarrollador». Arrastra AlyssDJ a Aplicaciones, haz **clic derecho → Abrir → Abrir**; o en la terminal: `xattr -dr com.apple.quarantine /Applications/AlyssDJ.app`.
+
+Cada instalador se construye en GitHub Actions y el mismo flujo comprueba que el paquete arranca, descarga sus herramientas y analiza una pista; lo que no se ha probado es la instalación en sí con un usuario real.
+
 ## Qué está verificado
 
 | | Windows 10/11 (x64) | macOS (Intel / Apple Silicon) | Linux |
 |---|---|---|---|
 | Instalación y descarga de yt-dlp y ffmpeg | CI en GitHub Actions | CI en GitHub Actions | Probado a mano y en CI |
+| Paquete de la app (arranca y analiza una pista) | CI | CI | Probado a mano y en CI |
+| Instalador `.exe` / `.dmg` instalado por una persona | **Sin verificar** | **Sin verificar** | — |
 | Pruebas rápidas (análisis, AutoMix, cola, ajustes) | CI | CI | Probado a mano y en CI |
 | La app abre su ventana | CI | CI | Probado a mano y en CI |
 | Sonido, decks con YouTube Music, MIDI, segunda pantalla | **Sin verificar** | **Sin verificar** | Probado a mano |
