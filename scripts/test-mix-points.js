@@ -335,7 +335,12 @@ tests.engine = async () => {
     am.queue = [mk('far', 150, '8A'), mk('clash', 124, '3B'), mk('good', 124, '8A'), mk('okay', 125, '9A')];
     am.lastReorder = -Infinity;
     am.reorder();
-    assert.deepStrictEqual(am.queue.map((t) => t.videoId), ['good', 'okay', 'clash', 'far']);
+    // ahora se ordena como cadena (coste total mínimo), no solo por la mejor siguiente: lo mejor primero y el salto de BPM al final
+    {
+      const o = am.queue.map((t) => t.videoId);
+      assert.strictEqual(o[0], 'good');
+      assert.strictEqual(o[3], 'far');
+    }
     // lo colocado a mano no se mueve
     am.queue = [mk('far', 150, '8A'), mk('good', 124, '8A'), mk('clash', 124, '3B')];
     am.pinned = new Set(['far']);
