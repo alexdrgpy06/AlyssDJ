@@ -256,7 +256,7 @@ canvas.overview { width: 100%; height: 38px; background: var(--inset); border: 1
 .vid::after { content: ''; position: absolute; left: 50%; top: 50%; width: 9%; height: 9%; margin: -4.5% 0 0 -4.5%; border-radius: 50%; background: #05070b; box-shadow: 0 0 0 2px #ffffff22; z-index: 2; }
 .deck-letter { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15cqmin; font-weight: 800; color: var(--accent); opacity: .5; }
 .vid:has(.cover[src]) .deck-letter { display: none; }
-.vid .pop { position: absolute; right: 12%; bottom: 12%; z-index: 3; padding: 3px; border-radius: 5px; background: #000b; border-color: #ffffff22; color: #fff; opacity: 0; transition: opacity .15s var(--ease); }
+.vid .pop { position: absolute; right: 12%; bottom: 12%; z-index: 3; padding: 3px; min-width: var(--ctl-h); border-radius: 5px; background: #000b; border-color: #ffffff22; color: #fff; opacity: 0; transition: opacity .15s var(--ease); }
 .vid:hover .pop, .vid .pop:focus-visible { opacity: 1; }
 .pl-info { position: absolute; left: 50%; bottom: 4.5%; transform: translateX(-50%); z-index: 3; display: flex; align-items: baseline; gap: 6px; padding: 1px 9px; border-radius: 99px; background: #000b; font-family: var(--mono); pointer-events: none; }
 .pl-time { font-size: 12px; font-weight: 600; }
