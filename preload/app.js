@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('ytdj', {
     show: (which) => ipcRenderer.send('video:show', which),
     onState: on('video:state'),
     localSrc: (key) => ipcRenderer.invoke('video:local-src', key),
-    setDeckSource: (id, src) => ipcRenderer.send('video:deck-source', id, src),
+    setDeckMedia: (id, media) => ipcRenderer.send('video:deck-media', id, media),
     sync: (id, s) => ipcRenderer.send('video:sync', id, s),
   },
   auth: {

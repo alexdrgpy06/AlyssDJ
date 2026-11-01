@@ -144,6 +144,7 @@ export class Deck {
   applyState(s) {
     this.st = s;
     this.stAt = performance.now();
+    this.syncMedia();
     if (!this.track) return;
     if (!this.track.title && s.title) {
       this.track.title = s.title;
@@ -256,6 +257,7 @@ export class Deck {
     this.broadcast({ type: 'loop' });
     this.videoSrc = null; // el video del deck anterior no vale para esta pista hasta que refreshVideo lo resuelva
     this.videoKey = null;
+    this.syncMedia();
     this.playedMs = 0;
     this.logged = false;
     this.streamPlayedMs = 0;
@@ -286,7 +288,24 @@ export class Deck {
     if (key !== this.track?.videoId) return; // cambió de pista mientras se consultaba
     this.videoSrc = src;
     this.videoKey = src ? key : null; // id de la pista a la que pertenece videoSrc
-    window.ytdj.video.setDeckSource(this.id, src);
+    this.syncMedia();
+  }
+
+  // Qué ve la ventana de video de este deck: solo su propia pista (video local o streaming ya cargado), si no una pantalla negra.
+  videoMedia() {
+    const t = this.track;
+    if (!t) return { kind: 'none', label: 'Sin pista' };
+    const cover = t.thumb || null;
+    if (this.source === 'local') return this.videoSrc && this.videoKey === t.videoId ? { kind: 'local', src: this.videoSrc } : { kind: 'none', label: 'Sin video', cover };
+    return this.st.videoId === t.videoId && this.st.ready ? { kind: 'stream' } : { kind: 'none', label: 'Cargando…', cover };
+  }
+
+  syncMedia() {
+    const m = this.videoMedia();
+    const k = JSON.stringify(m);
+    if (k === this.mediaKey) return;
+    this.mediaKey = k;
+    window.ytdj.video.setDeckMedia(this.id, m);
   }
 
   // Mantiene el video sincronizado con el audio (miniatura aquí; ventana de video por el proceso principal).

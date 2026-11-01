@@ -38,7 +38,9 @@ let coversDir = '';
 let videoWin = null;
 let videoShow = 'A'; // 'A' | 'B' | 'split'
 let videoPageReady = false; // la página de la ventana de video ya cargó y escucha mensajes
-const localVideo = { A: null, B: null }; // src del video guardado de cada deck que suena desde archivo (o null)
+// Medio de cada deck en la ventana de video: { kind: 'stream' } | { kind: 'local', src } | { kind: 'none', label, cover }.
+// Sin pista propia (deck vacío o sin video) nunca se muestra la página de YouTube Music: se vería lo último que sonó.
+const deckMedia = { A: { kind: 'none', label: 'Sin pista' }, B: { kind: 'none', label: 'Sin pista' } };
 let libraryView = null;
 let analyzer = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
@@ -211,16 +213,18 @@ function layoutVideo() {
   for (const id of DECKS) {
     const v = decks[id].view;
     attach(id, videoWin);
-    if (rects[id] && localVideo[id]) {
-      // deck local con video guardado: lo muestra la página de la ventana y la vista del stream se oculta
-      tiles[id] = { ...rects[id], src: localVideo[id] };
-      v.setVisible(false);
-      deckCmd(id, { type: 'videoView', on: false });
-    } else if (rects[id]) {
+    const m = deckMedia[id];
+    if (!rects[id]) v.setVisible(false);
+    else if (m.kind === 'stream') {
       v.setBounds(rects[id]);
       v.setVisible(true);
       deckCmd(id, { type: 'videoView', on: true });
-    } else v.setVisible(false);
+    } else {
+      // video local guardado o pantalla sin video: lo dibuja la página de la ventana y la vista del stream se oculta
+      tiles[id] = { ...rects[id], ...(m.kind === 'local' ? { src: m.src } : { label: m.label, cover: m.cover || null }) };
+      v.setVisible(false);
+      deckCmd(id, { type: 'videoView', on: false });
+    }
   }
   if (videoPageReady) videoWin.webContents.send('vwin:layout', tiles);
 }
@@ -291,13 +295,18 @@ function videoState() {
 }
 
 ipcMain.handle('video:local-src', (_e, key) => (analyzer.videoPath(key) ? `app://ui/localvideo/${encodeURIComponent(key)}` : null));
-ipcMain.on('video:deck-source', (_e, id, src) => {
-  if (!DECKS.includes(id) || localVideo[id] === src) return;
-  localVideo[id] = src;
+ipcMain.on('video:deck-media', (_e, id, media) => {
+  if (!DECKS.includes(id) || !media || !['stream', 'local', 'none'].includes(media.kind)) return;
+  const m = { kind: media.kind };
+  if (m.kind === 'local') m.src = String(media.src || '');
+  if (m.kind === 'none') Object.assign(m, { label: String(media.label || 'Sin video').slice(0, 60), cover: typeof media.cover === 'string' && /^(https:|app:|data:image\/)/.test(media.cover) ? media.cover : null });
+  if (m.kind === 'local' && !m.src) return;
+  if (JSON.stringify(deckMedia[id]) === JSON.stringify(m)) return;
+  deckMedia[id] = m;
   if (videoOpen()) layoutVideo();
 });
 ipcMain.on('video:sync', (_e, id, s) => {
-  if (videoOpen() && localVideo[id]) videoWin.webContents.send('vwin:sync', id, s);
+  if (videoOpen() && deckMedia[id].kind === 'local') videoWin.webContents.send('vwin:sync', id, s);
 });
 // ---------- acerca de ----------
 ipcMain.handle('app:info', () => ({ name: 'AlyssDJ', version: app.getVersion(), org: 'AlystechPY', author: 'Alejandro Ramírez', license: 'MIT', repo: 'https://github.com/alexdrgpy06/AlyssDJ' }));

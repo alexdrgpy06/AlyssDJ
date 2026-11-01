@@ -2,16 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' app:; media-src app: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' app:; media-src app: blob:; img-src 'self' app: data: https://*.ytimg.com https://*.googleusercontent.com https://*.ggpht.com; style-src 'self' 'unsafe-inline'; script-src 'self'" />
   <title>AlyssDJ — Video</title>
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
     video { position: absolute; background: #000; object-fit: contain; display: none; }
+    .ph { position: absolute; display: none; place-items: center; overflow: hidden; background: #000; color: #9ba6b8; font: 600 clamp(12px, 2.4vw, 22px)/1.3 system-ui, sans-serif; letter-spacing: .04em; text-align: center; }
+    .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .22; filter: blur(2px); }
+    .ph img:not([src]) { display: none; }
+    .ph span { position: relative; padding: 6px 14px; border-radius: 99px; background: #000a; }
   </style>
   <script type="module" src="video.js"></script>
 </head>
 <body>
   <video id="v-A" muted></video>
   <video id="v-B" muted></video>
+  <div class="ph" id="ph-A"><img alt="" /><span></span></div>
+  <div class="ph" id="ph-B"><img alt="" /><span></span></div>
 </body>
 </html>

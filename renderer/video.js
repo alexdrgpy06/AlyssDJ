@@ -11,6 +11,18 @@ window.ytdjVideo.onLayout((layout) => {
   for (const id of ['A', 'B']) {
     const l = layout[id];
     const el = tiles[id].el;
+    const ph = document.getElementById(`ph-${id}`);
+    ph.style.display = 'none';
+    if (l && !l.src && l.label) {
+      // sin pista o sin video: pantalla negra con la portada atenuada y la leyenda, nunca la página de YouTube Music
+      el.style.display = 'none';
+      tiles[id].setSource(null);
+      Object.assign(ph.style, { display: 'grid', left: `${l.x}px`, top: `${l.y}px`, width: `${l.width}px`, height: `${l.height}px` });
+      const img = ph.querySelector('img');
+      if (l.cover) img.src = l.cover; else img.removeAttribute('src');
+      ph.querySelector('span').textContent = l.label;
+      continue;
+    }
     if (!l || !l.src) {
       el.style.display = 'none';
       tiles[id].setSource(null);

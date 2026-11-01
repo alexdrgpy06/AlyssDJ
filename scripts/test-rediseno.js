@@ -26,6 +26,31 @@ tests['video-removed'] = async () => {
   console.log('video-removed: OK');
 };
 
+tests['video-media'] = async () => {
+  const { spawnSync } = require('child_process');
+  const os = require('os');
+  // estático: el contrato existe de punta a punta y main ya no deja visible la vista de un deck sin medio
+  const main = read('main/main.js');
+  assert.ok(/video:deck-media/.test(main) && /video:deck-media/.test(read('preload/app.js')), 'canal video:deck-media');
+  assert.ok(!/video:deck-source|setDeckSource/.test(main + read('preload/app.js') + read('renderer/deck.js')), 'sin el canal antiguo');
+  assert.ok(/m\.kind === 'stream'/.test(main), 'la vista de streaming solo se muestra con medio stream');
+  assert.ok(/id="ph-A"/.test(read('renderer/video.html')), 'la ventana tiene pantalla de «sin video»');
+  // e2e en Electron
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-media-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'video-media-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: path.join(root, 'docs/demo-audio') } });
+  const f = path.join(tmp, 'video-media.json');
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  const r = JSON.parse(fs.readFileSync(f, 'utf8')); if (process.env.DEBUG_MEDIA) console.log(JSON.stringify(r));
+  for (const [k, v] of Object.entries(r)) assert.ok(!(v && v.__err), `${k}: ${JSON.stringify(v)}`);
+  assert.ok(r.hasWin, 'se abrió la ventana de video');
+  assert.strictEqual(r.emptyA.display, 'grid'); assert.strictEqual(r.emptyA.text, 'Sin pista');
+  assert.strictEqual(r.emptyB.text, 'Sin pista');
+  assert.deepStrictEqual(r.emptyVisible, [false, false], 'decks vacíos: la página de YouTube Music no se ve');
+  assert.strictEqual(r.localNoVideo.text, 'Sin video'); assert.strictEqual(r.localVisible, false);
+  assert.strictEqual(r.streamLoading.text, 'Cargando…'); assert.strictEqual(r.streamVisible, false);
+  console.log('video-media: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });
