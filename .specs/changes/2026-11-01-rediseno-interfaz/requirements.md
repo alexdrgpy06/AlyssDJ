@@ -3,7 +3,7 @@ change: 2026-11-01-rediseno-interfaz
 type: refactor
 domains: [ui, video]
 paths: [renderer/**, main/main.js, preload/**, docs/**, scripts/**]
-commits: []
+commits: [6ad8024,c411b2d,ce27e0c,0f3c054,8dca06b,616e69c,a7b25e8,3302946,8300bcc,1aaf942]
 status: approved
 rev: 1
 approved_rev: 1
