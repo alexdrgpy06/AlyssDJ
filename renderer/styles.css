@@ -200,7 +200,9 @@ body.learning [data-ctl].armed { outline: 2px solid var(--warn); }
 .kchip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: #05080d; background: var(--k, var(--line-2)); }
 .kchip:empty, .kchip.none { background: var(--raised-2); color: var(--faint); }
 
-canvas.overview { width: 100%; height: 38px; background: var(--inset); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; display: block; }
+/* la vista general es un minimapa de toda la pista (fino y apagado); la onda con desplazamiento es la que se mira para mezclar */
+canvas.overview { width: 100%; height: 22px; background: var(--inset); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; display: block; filter: grayscale(.85) brightness(.85); }
+canvas.overview:hover { filter: none; }
 .times { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--dim); }
 .times .state { color: var(--warn); }
 
@@ -585,7 +587,7 @@ fieldset { min-width: 0; }
 :is(body.am-compact, body[data-layout='compact']) .view-ytm, :is(body.am-compact, body[data-layout='compact']) .bank-tabs, :is(body.am-compact, body[data-layout='compact']) .pads .pane { display: none; }
 :is(body.am-compact, body[data-layout='compact']) .bpm { font-size: 20px; }
 :is(body.am-compact, body[data-layout='compact']) .sub { margin-top: 2px; }
-:is(body.am-compact, body[data-layout='compact']) canvas.overview { height: 24px; }
+:is(body.am-compact, body[data-layout='compact']) canvas.overview { height: 16px; }
 :is(body.am-compact, body[data-layout='compact']) .deck-body { flex: none; height: 84px; grid-template-columns: 82px minmax(0, 1fr) 40px; gap: 8px; }
 :is(body.am-compact, body[data-layout='compact']) .platter { min-height: 0; max-height: 84px; }
 :is(body.am-compact, body[data-layout='compact']) .transport { flex-direction: row; flex-wrap: wrap; gap: 4px; align-content: center; justify-content: center; }
@@ -703,7 +705,7 @@ dialog#help { width: 640px; }
 .tb-views { gap: var(--s-1); }
 .view-switch button span { display: inline; }
 @media (max-width: 1440px) { .view-switch button span { display: none; } }
-.deck-scroll { display: none; position: relative; height: 72px; background: linear-gradient(#06080c, #04050a); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.deck-scroll { display: none; position: relative; height: 110px; background: linear-gradient(#06080c, #04050a); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .deck-scroll canvas { width: 100%; height: 100%; display: block; }
 
 /* ondas dentro del deck: la franja superior desaparece y su altura pasa a la consola o a la librería */
@@ -711,7 +713,7 @@ body[data-waves='deck'] .waves { display: none; }
 body[data-waves='deck'] .deck-scroll { display: block; }
 body[data-waves='deck'] { grid-template-rows: 44px auto minmax(150px, 1fr); }
 body[data-layout='compact'][data-waves='deck'] { grid-template-rows: 40px auto minmax(150px, 1fr); }
-body[data-waves='deck'].am-compact .deck-scroll, body[data-waves='deck'][data-layout='compact'] .deck-scroll { height: 48px; }
+body[data-waves='deck'].am-compact .deck-scroll, body[data-waves='deck'][data-layout='compact'] .deck-scroll { height: 64px; }
 
 /* vista Ondas: ondas grandes, una tira por deck y el mezclador; sin librería */
 body[data-view='waves'] { grid-template-rows: 44px minmax(0, 1fr) auto; }
