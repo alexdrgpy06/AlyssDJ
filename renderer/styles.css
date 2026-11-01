@@ -485,7 +485,7 @@ menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
 
 .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; }
 .help-grid h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
-.help-grid dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.help-grid dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; align-items: start; }
 .help-grid dt { font-family: var(--mono); background: var(--inset); border: 1px solid var(--line-2); border-radius: 4px; padding: 0 6px; justify-self: start; font-size: 12px; }
 .help-grid dd { margin: 0; color: var(--dim); }
 #btn-rec.recording { color: #fff; background: #5a1420; border-color: var(--err); }
@@ -651,6 +651,7 @@ dialog#mixedit { width: min(1100px, 94vw); }
 .brand-by { font-size: 10px; font-weight: 500; letter-spacing: .08em; color: var(--faint); text-transform: none; }
 :is(body.am-compact, body[data-layout='compact']) .brand-by { display: none; }
 dialog#about { width: 380px; }
+dialog#help { width: 640px; }
 .about { padding: 22px 26px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .about h2 { margin: 6px 0 0; font-size: 20px; }
 .about p { margin: 0; }

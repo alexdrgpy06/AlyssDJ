@@ -30,7 +30,7 @@ module.exports = (win, decks) => {
     fs.writeFileSync(path.join(out, name), img.toPNG());
     L('shot', name);
   }
-  const closePanels = () => js(`for (const id of ['video-panel','automix-panel','sampler-panel']) document.getElementById(id).hidden = true; for (const d of document.querySelectorAll('dialog[open]')) d.close(); document.body.classList.remove('learning'); return 1`);
+  const closePanels = () => js(`for (const id of ['video-panel','sampler-panel']) document.getElementById(id).hidden = true; for (const d of document.querySelectorAll('dialog[open]')) d.close(); document.body.classList.remove('learning'); return 1`);
 
   wc.once('did-finish-load', async () => {
     try {

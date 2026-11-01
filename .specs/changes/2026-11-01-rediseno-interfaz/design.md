@@ -73,4 +73,31 @@ Texto secundario `#9ba6b8` sobre `#0b0e14` = 7,6:1; mínimo `--faint` `#6d788b` 
 ### Perfiles
 `compact` (<1280×780): consola con una fila menos de pads; panel de fuentes en iconos. `normal`: como arriba. `wide` (≥1920): escala `--ui-scale` actual.
 
+## Domain deltas
+### video
+#### REMOVED spec: Miniatura de video correcta y redimensionable
+#### ADDED spec: La ventana de video muestra solo el medio propio de cada deck
+WHEN la ventana de video muestra un deck THE SYSTEM SHALL mostrar el video solo si ese deck tiene su propia pista cargada (video local guardado de esa pista, o streaming ya listo).
+IF un deck está vacío, sin video o aún cargando THEN THE SYSTEM SHALL mostrar una pantalla negra con la portada atenuada y la leyenda «Sin pista», «Sin video» o «Cargando…», nunca la página de YouTube Music.
+#### MODIFIED design: videoKey y pickMedia
+`Deck.videoKey` identifica la pista a la que pertenece `Deck.videoSrc`. `Deck.videoMedia()` calcula el medio del deck (`stream` solo con `source==='stream'`, pista cargada y `st.ready`; `local` con `videoSrc` de esa pista; si no, `none` con leyenda y portada) y `syncMedia()` lo envía por `video:deck-media` solo si cambia. Main guarda `deckMedia[id]` y `layoutVideo()` muestra la vista de YouTube Music únicamente con `kind:'stream'`; con `none` oculta la vista y la página `video.html` dibuja la pantalla negra (`#ph-A`, `#ph-B`). Ya no existen `pickMedia`, los fotogramas del stream (`deck:frame`, `grabFrame`) ni la vista de miniaturas.
+### ui
+#### REMOVED design: Franja #stage
+#### ADDED spec: Estructura en cuatro zonas
+THE SYSTEM SHALL organizar la ventana en barra superior, ondas, consola (deck A, mezclador, deck B) y librería, con la barra agrupada en identidad y sesión, herramientas de la mezcla y sistema, y la misma cabecera de deck (portada, título, artista, BPM, tonalidad, tiempos, fuente) en ambos decks.
+#### ADDED spec: Sistema visual único
+THE SYSTEM SHALL usar una escala única de espaciado, tipografía, radios y elevaciones, y componentes únicos (botón, segmentado, interruptor, deslizador, estado vacío, diálogo); el cian y el rosa identifican solo a los decks A y B.
+#### ADDED spec: Librería con panel de fuentes
+THE SYSTEM SHALL mostrar las fuentes (Buscar, Me gusta, Playlists, Importadas, Local, Analizados, Historial, AutoMix) en un panel lateral, que bajo 1100 px de ancho se reduce a iconos, con la búsqueda y las acciones de la fuente en una barra de herramientas y un estado vacío con la siguiente acción.
+#### ADDED spec: AutoMix por grupos
+THE SYSTEM SHALL presentar los controles de AutoMix en los grupos Reproducción, Transición, Cola y Fuente, sin quitar funciones ni atajos.
+#### ADDED spec: Ajustes por secciones
+THE SYSTEM SHALL mostrar Ajustes con navegación lateral por secciones (Herramientas, Librería y música, Audio, Decks y diseño, MIDI, Cuenta), una a la vez y operable con flechas, conservando todos los campos.
+#### ADDED spec: Accesibilidad y estados
+THE SYSTEM SHALL mantener contraste mínimo 4.5:1 en texto, objetivos de clic de al menos 28 px en la consola y 32 px en la barra, foco visible y movimiento reducido cuando el sistema lo pide.
+#### ADDED design: Tokens y componentes
+`styles.css` define `--s-1…6`, `--fs-1…5`, `--fs-bpm`, `--r-1…3`, `--r-pill`, `--sh-1/2`, `--dur-1/2`, `--ctl-h`, `--ctl-h-lg` y la selección neutra `--sel`/`--sel-ink`. Todo `input[type=checkbox]` es un interruptor y todo `input[type=range]` (salvo faders y crossfader) usa el deslizador único, con acento `--accent` del deck o `--sel`.
+#### ADDED design: Panel de fuentes y ajustes por secciones
+`aside.sources` (botones `data-tab`, selector `.sources [data-tab]`) y `.lib-toolbar` sustituyen a `.tabs`; `#settings` usa `.set-nav` (rol tablist) y `.set-pane[data-pane]` con `App.setSettingsPane(id)`. AutoMix agrupa sus controles en `fieldset.am-group`.
+
 ## Amendments
