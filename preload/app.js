@@ -12,7 +12,6 @@ contextBridge.exposeInMainWorld('ytdj', {
     cmd: (id, cmd) => ipcRenderer.send('deck:cmd', id, cmd),
     show: (id, rect) => ipcRenderer.send('deck:show', id, rect),
     onState: on('deck:state'),
-    onFrame: on('deck:frame'),
     onReady: on('deck:ready'),
   },
   app: {

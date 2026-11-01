@@ -139,7 +139,7 @@ function createDeckView(id) {
 function deckCmd(id, cmd) {
   const d = decks[id];
   if (!d) return;
-  if (['mix', 'routing', 'rate', 'loop', 'videoView', 'frames', 'videoPref'].includes(cmd.type)) d.replay[cmd.type] = { ...(d.replay[cmd.type] || {}), ...cmd };
+  if (['mix', 'routing', 'rate', 'loop', 'videoView', 'videoPref'].includes(cmd.type)) d.replay[cmd.type] = { ...(d.replay[cmd.type] || {}), ...cmd };
   if (!d.ready) {
     if (cmd.type === 'load') d.pendingLoad = cmd;
     return;
@@ -182,10 +182,6 @@ ipcMain.on('deck:show', (_e, id, rect) => {
     d.view.setVisible(true);
   } else if (videoOpen()) layoutVideo();
   else d.view.setVisible(false);
-});
-ipcMain.on('deck:frame', (e, dataUrl) => {
-  const id = deckIdOf(e.sender);
-  if (id) send('deck:frame', id, dataUrl);
 });
 
 // ---------- ventana de video (segunda pantalla) ----------

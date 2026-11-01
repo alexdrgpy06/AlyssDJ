@@ -73,8 +73,6 @@ export class Deck {
     this.local = null;
     this.ovCache = {};
     this.trimTouched = false;
-    this.frameUrl = null;
-    this.frameAt = 0;
     this.videoSrc = null; // video guardado de la pista (solo con video real) cuando suena desde archivo
     this.videoKey = null;
     this.videoSyncAt = 0;
@@ -158,17 +156,6 @@ export class Deck {
       this.wave = liveWave(s.dur);
     }
     if (s.playing) recordLive(this.wave, s.pos, s.level);
-  }
-
-  onFrame(url) {
-    this.frameUrl = url;
-    this.frameAt = performance.now();
-  }
-
-  // Los fotogramas del stream solo se capturan mientras la vista de video de AutoMix los muestra (cuesta CPU).
-  setFrames(on) {
-    this.sendStream({ type: 'frames', on });
-    if (!on) this.frameUrl = null;
   }
 
   // Una pista de YouTube que lleva 30 s sonando por streaming se guarda y analiza en segundo plano (si el ajuste está activo).
@@ -267,7 +254,6 @@ export class Deck {
     this.st = { pos: this.cuePoint, dur: track.duration || 0, playing: false, rate: this.rate(), level: 0 };
     this.wantPlay = play;
     this.broadcast({ type: 'loop' });
-    this.frameUrl = null;
     this.videoSrc = null; // el video del deck anterior no vale para esta pista hasta que refreshVideo lo resuelva
     this.videoKey = null;
     this.playedMs = 0;

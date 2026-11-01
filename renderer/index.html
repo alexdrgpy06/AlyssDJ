@@ -214,20 +214,6 @@
     <div id="deck-B" class="deck-slot"></div>
   </main>
 
-  <section class="stage" id="stage" aria-label="Vista AutoMix" hidden>
-    <figure class="tile" data-deck="A" title="Doble clic: abrir la ventana de video">
-      <div class="t-media"><img class="cover" alt="" /><img class="frame" alt="" hidden /><video muted playsinline hidden></video><span class="t-deck">A</span><span class="t-label" hidden></span></div>
-      <figcaption><span class="t-title"></span><span class="t-artist"></span><span class="t-time"></span></figcaption>
-      <div class="t-bar"><i></i></div>
-    </figure>
-    <figure class="tile" data-deck="B" title="Doble clic: abrir la ventana de video">
-      <div class="t-media"><img class="cover" alt="" /><img class="frame" alt="" hidden /><video muted playsinline hidden></video><span class="t-deck">B</span><span class="t-label" hidden></span></div>
-      <figcaption><span class="t-title"></span><span class="t-artist"></span><span class="t-time"></span></figcaption>
-      <div class="t-bar"><i></i></div>
-    </figure>
-    <div class="stage-grip" role="slider" tabindex="0" aria-label="Cambiar tamaño de las miniaturas" aria-valuemin="160" aria-valuemax="560" aria-valuenow="320" title="Arrastra para cambiar el tamaño ([ y ] con el teclado)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13 13 3M8 13 13 8"/></svg></div>
-  </section>
-
   <section class="library">
     <nav class="tabs" aria-label="Librería">
       <button data-tab="search" class="on">Buscar</button>
@@ -269,7 +255,6 @@
       </div>
       <div class="am-controls">
         <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
-        <button class="btn" id="amv-stage" type="button" aria-pressed="false" title="Oculta los decks y deja miniaturas de video por deck (V)"><svg class="ic"><use href="#i-video"/></svg><span>Vista de video</span></button>
         <button class="btn" id="amv-mix" type="button" title="Busca la salida y la entrada más cercanas que suenen bien y mezcla (Mayús + →; otra pulsación cancela)"><svg class="ic"><use href="#i-skip"/></svg><span id="amv-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
         <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
           <button data-v="crossfade" type="button" title="Solo crossfader">Fundido</button>

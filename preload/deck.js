@@ -46,13 +46,6 @@ let videoPref = false; // preferir el video musical (cambia el modo de reproducc
 let videoPrefDone = null; // videoId para el que ya se aplicó la preferencia
 let videoSwitchUntil = 0; // hasta cuándo es válido que YT Music pase a la versión en video (tras pulsar su botón)
 let videoAltId = null; // id de esa versión en video, una vez vista
-let frameTimer = null;
-let lastFrameKey = '';
-let hadFrame = false;
-const frameCanvas = document.createElement('canvas');
-frameCanvas.width = 224;
-frameCanvas.height = 126;
-const frameCtx = frameCanvas.getContext('2d');
 
 async function setVideoView(on) {
   if (on && !videoCssKey) videoCssKey = await webFrame.insertCSS(VIDEO_CSS);
@@ -61,33 +54,6 @@ async function setVideoView(on) {
     videoCssKey = null;
   }
 }
-
-// Miniaturas para la UI principal (el video real puede estar en otra ventana). Sin frames útiles → null (la UI usa la portada).
-function grabFrame() {
-  const v = engine && engine.media;
-  const live = v && v.readyState >= 2 && v.videoWidth > 2 && meta.videoId;
-  if (!live) {
-    if (hadFrame) ipcRenderer.send('deck:frame', null);
-    hadFrame = false;
-    return;
-  }
-  const key = v.paused ? `${meta.videoId}:${Math.round(v.currentTime * 2)}` : '';
-  if (key && key === lastFrameKey) return;
-  lastFrameKey = key;
-  try {
-    frameCtx.drawImage(v, 0, 0, frameCanvas.width, frameCanvas.height);
-    ipcRenderer.send('deck:frame', frameCanvas.toDataURL('image/jpeg', 0.6));
-    hadFrame = true;
-  } catch {}
-}
-
-function setFrames(on) {
-  clearInterval(frameTimer);
-  frameTimer = on ? setInterval(grabFrame, 140) : null;
-  if (!on) hadFrame = false;
-}
-
-
 
 // La API del reproductor (loadVideoById, getVideoData…) vive en el main world de la página.
 const playerCall = (expr) =>
@@ -184,7 +150,6 @@ function boot() {
   engine = createDeckEngine({ adapter, onState: (s) => ipcRenderer.send('deck:state', s) });
   ipcRenderer.on('deck:cmd', (_e, cmd) => {
     if (cmd.type === 'videoView') return setVideoView(!!cmd.on);
-    if (cmd.type === 'frames') return setFrames(!!cmd.on);
     if (cmd.type === 'videoPref') {
       videoPref = !!cmd.on;
       videoPrefDone = null;
