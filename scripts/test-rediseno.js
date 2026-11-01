@@ -125,6 +125,24 @@ tests.automix = async () => {
   console.log('automix: OK');
 };
 
+tests.settings = async () => {
+  const html = read('renderer/index.html');
+  const dlg = html.slice(html.indexOf('<dialog id="settings"'), html.indexOf('</dialog>', html.indexOf('<dialog id="settings"')));
+  // REQ-7: seis secciones, una visible a la vez
+  const panes = [...dlg.matchAll(/<section class="set-pane" data-pane="(\w+)"[^>]*?( hidden)?>/g)];
+  assert.deepStrictEqual(panes.map((m) => m[1]), ['tools', 'library', 'audio', 'decks', 'midi', 'account']);
+  assert.deepStrictEqual(panes.filter((m) => !m[2]).map((m) => m[1]), ['tools'], 'solo Herramientas visible al abrir');
+  const nav = dlg.slice(dlg.indexOf('set-nav'), dlg.indexOf('set-panes'));
+  assert.strictEqual((nav.match(/role="tab"/g) || []).length, 6, 'seis pestañas');
+  assert.ok(/role="tablist"/.test(nav) && /aria-selected/.test(nav), 'semántica de pestañas');
+  // se conservan todos los campos y botones de antes (settings.js y app.js los leen por nombre)
+  const names = ['ytdlpPath', 'cookieSource', 'saveOnAnalyze', 'saveOnPlay', 'autoUpdate', 'saveVideo', 'videoMaxHeight', 'libraryDir', 'autoAnalyzeCue', 'outputMode', 'masterLabel', 'recordSource', 'cueLabel', 'pitchRange', 'crossfaderCurve', 'layoutMode', 'autoAnalyzeLocal'];
+  for (const n of names) assert.ok(new RegExp(`name="${n}"`).test(dlg), `campo ${n}`);
+  for (const id of ['tools-detail', 'btn-check-update', 'btn-pick-library', 'btn-open-library', 'btn-install-tools', 'btn-open-cache', 'music-dirs', 'btn-add-folder-2', 'midi-devices', 'btn-midi-export', 'btn-midi-import', 'btn-midi-clear', 'btn-logout']) assert.ok(dlg.includes(`id="${id}"`), `#${id}`);
+  assert.ok(/setSettingsPane/.test(read('renderer/app.js')) && /ArrowDown/.test(read('renderer/app.js')), 'navegación con teclado');
+  console.log('settings: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

@@ -387,17 +387,30 @@ table.tracks { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .ytm-float header { height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 12px; background: var(--raised); font-size: 12px; color: var(--dim); }
 .ytm-body { position: absolute; inset: 30px 0 0 0; }
 
-/* ---------- ajustes ---------- */
-dialog { background: var(--raised); color: var(--text); border: 1px solid var(--line-2); border-radius: 12px; padding: 0; width: 580px; max-height: 88vh; }
+/* ---------- diálogos y ajustes ---------- */
+dialog { background: var(--raised); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--r-3); padding: 0; width: 520px; max-height: 88vh; box-shadow: var(--sh-2); }
 dialog::backdrop { background: #000b; }
-.settings { padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; overflow: auto; max-height: 88vh; }
-.settings h2 { margin: 0; font-size: 17px; }
-fieldset { border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; gap: 9px; padding: 10px 12px 12px; }
-legend { color: var(--dim); padding: 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .04em; }
-.settings label { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 8px; }
+.settings { padding: var(--s-4) var(--s-5); display: flex; flex-direction: column; gap: var(--s-3); overflow: auto; max-height: 88vh; }
+.settings h2 { margin: 0; font-size: var(--fs-5); }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; }
+dialog#settings { width: min(780px, 94vw); }
+dialog#settings .settings { overflow: hidden; height: min(620px, 88vh); }
+.set-layout { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: var(--s-4); flex: 1; min-height: 0; }
+.set-nav { display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--line); padding-right: var(--s-3); }
+.set-nav button { justify-content: flex-start; background: transparent; border-color: transparent; color: var(--dim); font-weight: 600; min-height: var(--ctl-h-lg); }
+.set-nav button:hover { background: var(--raised-2); color: var(--text); }
+.set-nav button.on { background: var(--raised-2); border-color: var(--line-2); color: var(--text); }
+.set-panes { overflow: auto; min-height: 0; padding-right: var(--s-1); scrollbar-color: var(--line-2) transparent; }
+.set-pane { display: flex; flex-direction: column; gap: var(--s-3); }
+.set-pane h3 { margin: 0; font-size: var(--fs-4); }
+.set-pane h4 { margin: var(--s-2) 0 0; font-size: var(--fs-1); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 700; padding-top: var(--s-3); border-top: 1px solid var(--line); }
+fieldset { border: 1px solid var(--line); border-radius: var(--r-3); display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2) var(--s-3) var(--s-3); }
+legend { color: var(--dim); padding: 0 6px; font-size: var(--fs-2); font-weight: 600; letter-spacing: .04em; }
+.settings label { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: var(--s-2); }
 .settings label.check { display: flex; }
-.row-btns { display: flex; gap: 6px; }
+.row-btns { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
 menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
+@media (max-width: 720px) { .set-layout { grid-template-columns: 1fr; } .set-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; padding: 0; } }
 
 .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: var(--raised-2); border: 1px solid var(--line-2); padding: 9px 16px; border-radius: 8px; z-index: 30; max-width: 70vw; box-shadow: 0 10px 30px #000a; }
 .toast.err { border-color: var(--err); }
@@ -492,7 +505,6 @@ menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
 .settings { overflow-x: hidden; }
 dialog { overflow: hidden; } /* un solo desplazamiento: el de .settings */
 .hint code { word-break: break-all; }
-dialog { width: 620px; }
 @media (max-width: 1560px) { .legend { display: none; } }
 fieldset { min-width: 0; }
 .folders li span { min-width: 0; flex: 1; }

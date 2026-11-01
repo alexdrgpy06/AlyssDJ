@@ -766,7 +766,33 @@ class App {
     f.recordSource.value = s.recordSource || '';
     this.onMidiDevices(this.midi.devices());
     if (this.midi.error) $('#midi-devices').textContent = `MIDI no disponible: ${this.midi.error}`;
+    this.setSettingsPane('tools');
     $('#settings').showModal();
+  }
+
+  // Una sección de ajustes a la vez; flechas arriba/abajo cambian de sección (patrón de pestañas WAI-ARIA).
+  setSettingsPane(id) {
+    document.querySelectorAll('#settings .set-nav button').forEach((b) => {
+      const on = b.dataset.pane === id;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    document.querySelectorAll('#settings .set-pane').forEach((p) => (p.hidden = p.dataset.pane !== id));
+  }
+
+  bindSettingsNav() {
+    const nav = document.querySelector('#settings .set-nav');
+    nav.addEventListener('click', (e) => e.target.dataset.pane && this.setSettingsPane(e.target.dataset.pane));
+    nav.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const tabs = [...nav.querySelectorAll('button')];
+      const i = tabs.indexOf(document.activeElement);
+      const next = tabs[(i + (e.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length];
+      e.preventDefault();
+      this.setSettingsPane(next.dataset.pane);
+      next.focus();
+    });
   }
 
   async renderMusicDirs() {
@@ -794,6 +820,7 @@ class App {
   }
 
   bindSettings() {
+    this.bindSettingsNav();
     const dlg = $('#settings');
     const f = dlg.querySelector('form');
     dlg.addEventListener('close', async () => {

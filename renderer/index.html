@@ -344,14 +344,24 @@
     </div>
   </dialog>
 
-  <dialog id="settings">
+  <dialog id="settings" aria-labelledby="set-title">
     <form method="dialog" class="settings">
-      <h2>Ajustes</h2>
-      <fieldset>
-        <legend>yt-dlp (análisis a pedido)</legend>
+      <header class="dlg-head"><h2 id="set-title">Ajustes</h2></header>
+      <div class="set-layout">
+        <nav class="set-nav" role="tablist" aria-label="Secciones de ajustes" aria-orientation="vertical">
+          <button type="button" role="tab" id="sn-tools" data-pane="tools" aria-controls="sp-tools" class="on" aria-selected="true">Herramientas</button>
+          <button type="button" role="tab" id="sn-library" data-pane="library" aria-controls="sp-library" aria-selected="false">Librería y música</button>
+          <button type="button" role="tab" id="sn-audio" data-pane="audio" aria-controls="sp-audio" aria-selected="false">Audio</button>
+          <button type="button" role="tab" id="sn-decks" data-pane="decks" aria-controls="sp-decks" aria-selected="false">Decks y diseño</button>
+          <button type="button" role="tab" id="sn-midi" data-pane="midi" aria-controls="sp-midi" aria-selected="false">MIDI</button>
+          <button type="button" role="tab" id="sn-account" data-pane="account" aria-controls="sp-account" aria-selected="false">Cuenta</button>
+        </nav>
+        <div class="set-panes">
+        <section class="set-pane" data-pane="tools" id="sp-tools" role="tabpanel" aria-labelledby="sn-tools">
+          <h3>Herramientas</h3>
         <p class="hint" id="tools-detail"></p>
         <label>Ruta de yt-dlp <input name="ytdlpPath" placeholder="yt-dlp (en PATH)" /></label>
-        <label>Cookies para yt-dlp <small class="inline-hint">avanzado</small>
+        <label>Cookies (avanzado)
           <select name="cookieSource" title="yt-dlp va sin sesión. Solo cambia esto si una pista exige iniciar sesión.">
             <option value="none">Ninguna: sin sesión (recomendado)</option>
             <option value="firefox">Usar cookies de Firefox</option>
@@ -361,10 +371,19 @@
           </select>
         </label>
         <p class="hint">Tu sesión de YouTube Music se usa <b>solo para el streaming</b> de los decks. Las descargas de yt-dlp van sin sesión: así no se mezcla tu cuenta y evitan errores de “formato no disponible”.</p>
-        <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
-        <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
+          <h4>Actualizaciones</h4>
         <label class="check"><input type="checkbox" name="autoUpdate" /><span>Buscar actualizaciones automáticamente <small>Solo en la app instalada: al abrirla y cada 6 horas, consulta los releases públicos de GitHub. Nunca descarga sin preguntarte.</small></span></label>
         <div class="row-btns"><button type="button" class="btn" id="btn-check-update">Comprobar ahora</button><span class="hint" id="upd-status"></span></div>
+          <h4>Mantenimiento</h4>
+        <div class="row-btns">
+          <button type="button" class="btn" id="btn-install-tools">Instalar / actualizar herramientas</button>
+          <button type="button" class="btn ghost" id="btn-open-cache">Abrir carpeta de caché</button>
+        </div>
+        </section>
+        <section class="set-pane" data-pane="library" id="sp-library" role="tabpanel" aria-labelledby="sn-library" hidden>
+          <h3>Librería y música local</h3>
+        <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
+        <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
         <label class="check"><input type="checkbox" name="saveVideo" /><span>Guardar también el video de las pistas que lo tengan <small>Solo videos musicales de verdad; las pistas de solo portada no descargan video. Se usa en la ventana de video y la miniatura del deck.</small></span></label>
         <label>Calidad máxima del video <select name="videoMaxHeight"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select></label>
         <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>
@@ -373,20 +392,14 @@
           <button type="button" class="btn ghost" id="btn-open-library">Abrir carpeta</button>
         </div>
         <label class="check"><input type="checkbox" name="autoAnalyzeCue" /> Analizar al cargar una pista en un deck que no está al aire</label>
-        <div class="row-btns">
-          <button type="button" class="btn" id="btn-install-tools">Instalar / actualizar herramientas</button>
-          <button type="button" class="btn ghost" id="btn-open-cache">Abrir carpeta de caché</button>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>Música local</legend>
+          <h4>Música local</h4>
         <p class="hint">Las pistas de tus carpetas se cargan directo al deck y se analizan solas (BPM, tonalidad, forma de onda) sin descargar nada. También puedes arrastrar archivos de audio a un deck.</p>
         <ul class="folders" id="music-dirs"></ul>
         <div class="row-btns"><button type="button" class="btn" id="btn-add-folder-2"><svg class="ic"><use href="#i-plus"/></svg>Añadir carpeta…</button></div>
         <label class="check"><input type="checkbox" name="autoAnalyzeLocal" /> Analizar automáticamente al cargar una pista local</label>
-      </fieldset>
-      <fieldset>
-        <legend>Salida de audio</legend>
+        </section>
+        <section class="set-pane" data-pane="audio" id="sp-audio" role="tabpanel" aria-labelledby="sn-audio" hidden>
+          <h3>Salida de audio</h3>
         <label>Modo
           <select name="outputMode">
             <option value="split">Dos dispositivos (master y auriculares)</option>
@@ -396,9 +409,9 @@
         <label>Master <select name="masterLabel"></select></label>
         <label>Grabar desde <select name="recordSource"></select></label>
         <label>Auriculares (cue) <select name="cueLabel"></select></label>
-      </fieldset>
-      <fieldset>
-        <legend>Decks</legend>
+        </section>
+        <section class="set-pane" data-pane="decks" id="sp-decks" role="tabpanel" aria-labelledby="sn-decks" hidden>
+          <h3>Decks y diseño</h3>
         <label>Rango de pitch
           <select name="pitchRange"><option>6</option><option>8</option><option>16</option><option>50</option></select>
         </label>
@@ -408,9 +421,9 @@
         <label>Diseño de la interfaz
           <select name="layoutMode" title="Auto elige según el tamaño de la ventana"><option value="auto">Auto (según la pantalla)</option><option value="compact">Compacto</option><option value="normal">Normal</option><option value="wide">Amplio</option></select>
         </label>
-      </fieldset>
-      <fieldset>
-        <legend>MIDI</legend>
+        </section>
+        <section class="set-pane" data-pane="midi" id="sp-midi" role="tabpanel" aria-labelledby="sn-midi" hidden>
+          <h3>MIDI</h3>
         <p class="hint" id="midi-devices">—</p>
         <div class="row-btns">
           <button type="button" class="btn ghost" id="btn-midi-export">Exportar mapeo</button>
@@ -418,11 +431,13 @@
           <button type="button" class="btn ghost" id="btn-midi-clear">Borrar mapeo</button>
         </div>
         <p class="hint">Teclado: A → Z play, X cue, 1–4 hot cues, Q sync · B → M play, N cue, 7–0 hot cues, P sync · ←/→ crossfader · Shift+hot cue borra.</p>
-      </fieldset>
-      <fieldset>
-        <legend>Sesión</legend>
+        </section>
+        <section class="set-pane" data-pane="account" id="sp-account" role="tabpanel" aria-labelledby="sn-account" hidden>
+          <h3>Cuenta</h3>
         <button type="button" class="btn ghost" id="btn-logout">Cerrar sesión de YouTube Music</button>
-      </fieldset>
+        </section>
+        </div>
+      </div>
       <menu><button value="ok" class="btn primary">Listo</button></menu>
     </form>
   </dialog>
