@@ -35,9 +35,12 @@ tests['video-media'] = async () => {
   assert.ok(!/video:deck-source|setDeckSource/.test(main + read('preload/app.js') + read('renderer/deck.js')), 'sin el canal antiguo');
   assert.ok(/m\.kind === 'stream'/.test(main), 'la vista de streaming solo se muestra con medio stream');
   assert.ok(/id="ph-A"/.test(read('renderer/video.html')), 'la ventana tiene pantalla de «sin video»');
-  // e2e en Electron
+  // e2e en Electron (el audio de demostración no está en git: se genera en una carpeta temporal)
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-media-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'video-media-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: path.join(root, 'docs/demo-audio') } });
+  const music = path.join(tmp, 'music');
+  const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
+  assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `no se pudo generar el audio de demostración: ${gen.stderr || gen.stdout}`);
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'video-media-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
   const f = path.join(tmp, 'video-media.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   const r = JSON.parse(fs.readFileSync(f, 'utf8')); if (process.env.DEBUG_MEDIA) console.log(JSON.stringify(r));
