@@ -51,6 +51,33 @@ tests['video-media'] = async () => {
   console.log('video-media: OK');
 };
 
+// contraste WCAG entre dos colores #rrggbb
+const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+const token = (css, name) => (css.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`)) || [])[1];
+
+tests.tokens = async () => {
+  const css = read('renderer/styles.css');
+  // REQ-3: escalas únicas
+  for (const n of ['s-1', 's-2', 's-3', 's-4', 's-5', 's-6', 'fs-1', 'fs-2', 'fs-3', 'fs-4', 'fs-5', 'fs-bpm', 'r-1', 'r-2', 'r-3', 'r-pill', 'sh-1', 'sh-2', 'dur-1', 'dur-2', 'ctl-h', 'sel']) assert.ok(new RegExp(`--${n}:`).test(css), `token --${n}`);
+  // componentes únicos: interruptor, deslizador, vacío, segmentado neutro, botón primario neutro
+  assert.ok(/input\[type='checkbox'\]::after/.test(css), 'interruptor');
+  assert.ok(/input\[type='range'\]:not\(\.vfader\)/.test(css), 'deslizador');
+  assert.ok(/\.empty \{/.test(css), 'estado vacío');
+  assert.ok(/button\.primary, \.btn\.primary \{ background: var\(--sel\)/.test(css), 'botón primario neutro');
+  assert.ok(/\.seg button\.on \{ background: var\(--accent, var\(--sel\)\)/.test(css), 'segmentado neutro fuera de decks');
+  assert.ok(!/accent-color: var\(--a\)/.test(css.replace(/\.tools-bar progress[^}]*}/, '')), 'sin acento de deck en controles generales');
+  // REQ-8: movimiento reducido y contraste
+  assert.ok(/prefers-reduced-motion: reduce/.test(css));
+  const bg = token(css, 'bg'); const surface = token(css, 'surface'); const raised = token(css, 'raised');
+  for (const name of ['text', 'dim', 'faint']) for (const base of [bg, surface, raised]) {
+    const c = contrast(token(css, name), base);
+    assert.ok(c >= 4.5, `--${name} sobre ${base}: ${c.toFixed(2)}:1`);
+  }
+  for (const name of ['a', 'b', 'play', 'cue', 'warn', 'err']) assert.ok(contrast(token(css, name), surface) >= 4.5, `--${name} como texto`);
+  console.log('tokens: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });
