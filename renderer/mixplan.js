@@ -264,13 +264,43 @@ export function bestInsertion({ cur, queue, track, analysisOf, lock = 0 }) {
   return best;
 }
 
+// Modos de salida de la pista que suena (como los modos de transición de un DJ automático):
+//   optimal: la mejor salida del análisis · intro-outro: al empezar el outro, con la duración del menor entre outro e intro
+//   outro-start: al empezar el outro, con la duración elegida · end: casi al final de la pista.
+export const EXIT_MODES = ['optimal', 'intro-outro', 'outro-start', 'end'];
+export const MIN_TRANSITION = 4;
+export const MAX_TRANSITION = 48;
+
+// Duración de la transición en «Outro y intro»: el menor entre lo que queda de outro y el intro de la entrante; si solo se
+// conoce uno, ese; si ninguno, `fallback`. No pasa del outro de la propia entrante y se acota a [4, 48] s.
+export function introOutroSeconds({ outroLen, introLen, fallback, nextOutroGap }) {
+  const known = [outroLen, introLen].filter((x) => Number.isFinite(x) && x > 0);
+  let sec = known.length ? Math.min(...known) : fallback;
+  if (Number.isFinite(nextOutroGap) && nextOutroGap > 0) sec = Math.min(sec, nextOutroGap);
+  return Math.max(MIN_TRANSITION, Math.min(MAX_TRANSITION, sec));
+}
+
 // Plan de la transición entre `cur` (suena, en `pos`) y `next`.
-//   cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), optimal, style }.
-export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } = {}) {
+//   cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), exitMode, optimal (heredado), style }.
+export function planTransition(cur, next, { len: chosenLen = 16, exitMode, optimal = true, pos = 0 } = {}) {
+  const mode = EXIT_MODES.includes(exitMode) ? exitMode : optimal === false ? 'end' : 'optimal';
   const dur = cur.duration || 0;
   const bpm = cur.bpm || 120;
   const beat = 60 / bpm;
   const warnings = [];
+  const enterAt0 = Math.max(0, next?.mixEdit?.in ?? next?.mix?.mixIn ?? next?.offset ?? 0);
+  const outroStart = cur.mix?.outroStart;
+  let len = chosenLen;
+  if (mode === 'intro-outro') {
+    // Con puntos de salida editados la salida no es el inicio del outro: la duración sigue siendo la elegida.
+    const edited0 = cur.mixEdit?.outs?.length;
+    len = edited0 || !(outroStart > 0) ? chosenLen : introOutroSeconds({
+      outroLen: dur - outroStart,
+      introLen: next?.mix?.introEnd != null ? next.mix.introEnd - enterAt0 : null,
+      fallback: chosenLen,
+      nextOutroGap: next?.mix?.outroStart != null ? next.mix.outroStart - enterAt0 : null,
+    });
+  }
   const gap = bpmGap(cur.bpm, next?.bpm);
   let tempo = !!gap && gap.gap <= MAX_BPM_GAP;
   let style = null;
@@ -282,22 +312,27 @@ export function planTransition(cur, next, { len = 16, optimal = true, pos = 0 } 
     seconds = Math.min(len * 1.5, 48);
   } else if (!gap) warnings.push('sin BPM: fundido simple');
   const wantBeats = Math.max(MIN_BEATS, Math.round(seconds / beat / 4) * 4);
-  const enterAt = Math.max(0, next?.mixEdit?.in ?? next?.mix?.mixIn ?? next?.offset ?? 0);
+  const enterAt = enterAt0;
 
   const endPlan = () => {
     const sec = Math.min(seconds, Math.max(2, dur - pos - 1));
-    return { exitAt: Math.max(pos, dur - sec - 1.2), enterAt, beats: Math.round(sec / beat), seconds: sec, style, tempo, warnings, kind: 'final' };
+    return { exitAt: Math.max(pos, dur - sec - 1.2), enterAt, beats: Math.round(sec / beat), seconds: sec, style, tempo, warnings, kind: 'final', mode };
   };
   // Con puntos de salida editados se usan solo esos, en el orden de preferencia del usuario (la primera que aún esté por delante).
   const edited = cur.mixEdit?.outs?.length ? cur.mixEdit.outs.map((o) => ({ t: o.t, kind: 'edit' })) : null;
-  const cands = edited || cur.mix?.mixOut;
-  if ((!optimal && !edited) || !cands?.length || !cur.bpm) return endPlan();
+  let cands = edited || cur.mix?.mixOut;
+  if (!edited && (mode === 'outro-start' || mode === 'intro-outro')) {
+    cands = outroStart > 0 ? [{ t: outroStart, kind: 'outro' }] : null;
+    if (!cands) warnings.push('sin outro marcado: sale al final');
+  }
+  if ((mode === 'end' && !edited) || !cands?.length || !cur.bpm) return endPlan();
   for (const c of cands) {
     if (c.t < pos - 0.25) continue; // esa salida ya pasó
     const avail = dur - c.t;
     const beats = Math.min(wantBeats, Math.floor(avail / beat / 4) * 4);
     if (beats < MIN_BEATS) continue;
-    return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style, tempo, warnings, kind: c.kind };
+    return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style, tempo, warnings, kind: c.kind, mode };
   }
+  if ((mode === 'outro-start' || mode === 'intro-outro') && !edited && !warnings.some((w) => w.startsWith('sin outro'))) warnings.push('sin outro marcado: sale al final');
   return endPlan();
 }
