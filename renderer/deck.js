@@ -637,6 +637,7 @@ export class Deck {
       vid: q('.vid'),
       rot: q('.vid .rot'),
       cover: q('.vid .cover'),
+      headCover: q('.head-cover'),
       pop: q('.vid .pop'),
       ring: q('.ring-fg'),
       plTime: q('.pl-time'),
@@ -669,6 +670,7 @@ export class Deck {
       platter: q('.platter'),
     });
     q('.deck-letter').textContent = this.id;
+    q('.art-letter').textContent = this.id;
     const openVideo = () => !this.app.learning && this.app.openVideo(this.id);
     el.pop.addEventListener('click', (e) => (e.stopPropagation(), openVideo()));
     el.vid.addEventListener('dblclick', openVideo);
@@ -877,7 +879,7 @@ export class Deck {
     setText(el.title, t ? t.title || 'Cargando…' : 'Arrastra o carga una pista');
     setText(el.artist, t ? t.artist || '' : '—');
     const thumb = t ? t.thumb || generatedCover(t) : null;
-    if (el.cover.getAttribute('src') !== thumb) thumb ? (el.cover.src = thumb) : el.cover.removeAttribute('src');
+    for (const c of [el.cover, el.headCover]) if (c.getAttribute('src') !== thumb) thumb ? (c.src = thumb) : c.removeAttribute('src');
     const eb = this.effBpm();
     setText(el.bpm, eb ? eb.toFixed(1) : '—');
     el.bpmBox.classList.toggle('est', !this.analysis?.bpm && !!this.tap);

@@ -78,6 +78,28 @@ tests.tokens = async () => {
   console.log('tokens: OK');
 };
 
+tests.shell = async () => {
+  const html = read('renderer/index.html');
+  const css = read('renderer/styles.css');
+  // REQ-4: cuatro zonas en orden y barra en tres grupos
+  const order = ['class="topbar"', 'class="waves"', 'class="console"', 'class="library"'].map((k) => html.indexOf(k));
+  assert.ok(order.every((i) => i > 0) && order.every((v, i) => !i || v > order[i - 1]), 'zonas: barra, ondas, consola, librería');
+  const bar = html.slice(html.indexOf('class="topbar"'), html.indexOf('</header>'));
+  assert.ok(/tb-id/.test(bar) && /tb-mix/.test(bar) && /tb-sys/.test(bar), 'tres grupos en la barra');
+  const grp = (c) => bar.slice(bar.indexOf(c), bar.indexOf('</div>', bar.indexOf(c) + 40) + 6);
+  for (const id of ['btn-automix', 'btn-sampler', 'btn-rec']) assert.ok(grp('tb-mix').includes(id) || bar.slice(bar.indexOf('tb-mix'), bar.indexOf('tb-sep')).includes(id), `${id} en herramientas de mezcla`);
+  for (const id of ['btn-midi-learn', 'btn-video', 'btn-help', 'btn-settings']) assert.ok(bar.slice(bar.indexOf('tb-sys')).includes(id), `${id} en sistema`);
+  // cabecera de deck: portada, título, artista, BPM, tonalidad, tiempos, fuente
+  const tpl = html.slice(html.indexOf('<template id="deck-tpl">'), html.indexOf('</template>'));
+  for (const k of ['head-art', 'class="title"', 'class="artist"', 'bpm-val', 'class="kchip key"', 'class="elapsed"', 'class="remain"', 'class="seg source"']) assert.ok(tpl.includes(k), `cabecera: ${k}`);
+  assert.ok(/\.head-art \{/.test(css), 'estilo de la portada de cabecera');
+  // el mezclador conserva sus controles
+  for (const k of ['data-knob="master"', 'data-knob="cue"', 'id="xfader"', 'master-vu', 'class="ch" data-deck="A"', 'class="ch" data-deck="B"']) assert.ok(html.includes(k), `mezclador: ${k}`);
+  // la barra solo avisa si falta una herramienta
+  assert.ok(!/ffmpeg ✓/.test(read('renderer/app.js')), 'sin estado fijo de yt-dlp en la barra');
+  console.log('shell: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

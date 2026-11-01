@@ -162,9 +162,8 @@ class App {
     const bad = [];
     if (!t.ytdlp) bad.push('yt-dlp sin instalar');
     if (!t.ffmpeg) bad.push('falta ffmpeg');
-    $('#tools-status').innerHTML = bad.length
-      ? `<span class="bad">${bad.join(' · ')}</span>`
-      : `yt-dlp ${t.ytdlp.version} · ffmpeg ✓`;
+    // la barra solo avisa si falta algo; el detalle completo está en Ajustes → Herramientas
+    $('#tools-status').innerHTML = bad.length ? `<span class="bad">${bad.join(' · ')}</span>` : '';
     $('#tools-detail').innerHTML = [
       t.ytdlp ? `yt-dlp <code>${t.ytdlp.version}</code> en <code>${t.ytdlp.bin}</code>.` : '<b>yt-dlp no está instalado.</b> AlyssDJ lo descarga solo (binario oficial); pulsa “Instalar / actualizar herramientas”.',
       t.ffmpeg ? 'ffmpeg OK.' : `<b>Falta ffmpeg.</b> ${t.ffmpegHint}`,

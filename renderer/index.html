@@ -41,21 +41,28 @@
   </svg>
 
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ<small class="brand-by">by AlystechPY</small></div>
-    <div class="session" id="session">
-      <span class="dot" id="session-dot"></span>
-      <span id="session-label">YouTube Music…</span>
-      <button class="btn ghost sm" id="btn-login">Iniciar sesión</button>
+    <div class="tb-group tb-id">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ<small class="brand-by">by AlystechPY</small></div>
+      <div class="session" id="session">
+        <span class="dot" id="session-dot"></span>
+        <span id="session-label">YouTube Music…</span>
+        <button class="btn ghost sm" id="btn-login">Iniciar sesión</button>
+      </div>
     </div>
     <div class="spacer"></div>
     <div class="status" id="tools-status"></div>
-    <button class="btn ghost" id="btn-rec" title="Grabar la mezcla (lo que sale por tu salida de audio)"><svg class="ic"><use href="#i-rec"/></svg><span>REC</span></button>
-    <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
-    <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
-    <button class="btn ghost" id="btn-video" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-video"/></svg>Video</button>
-    <button class="btn ghost" id="btn-midi-learn" title="Clic aquí, luego en un control, luego mueve el control MIDI"><svg class="ic"><use href="#i-midi"/></svg>MIDI learn</button>
-    <button class="icon-btn" id="btn-help" aria-label="Ayuda y atajos" title="Ayuda y atajos (?)"><svg class="ic"><use href="#i-help"/></svg></button>
-    <button class="btn ghost" id="btn-settings"><svg class="ic"><use href="#i-sliders"/></svg>Ajustes</button>
+    <div class="tb-group tb-mix" role="group" aria-label="Herramientas de la mezcla">
+      <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Mezcla automática de la cola (A)"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
+      <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
+      <button class="btn ghost" id="btn-rec" title="Grabar la mezcla (lo que sale por tu salida de audio)"><svg class="ic"><use href="#i-rec"/></svg><span>REC</span></button>
+    </div>
+    <span class="tb-sep" aria-hidden="true"></span>
+    <div class="tb-group tb-sys" role="group" aria-label="Sistema">
+      <button class="btn ghost" id="btn-midi-learn" title="MIDI learn: clic aquí, luego en un control, luego mueve el control MIDI"><svg class="ic"><use href="#i-midi"/></svg>MIDI</button>
+      <button class="btn ghost" id="btn-video" aria-haspopup="true" aria-expanded="false" title="Ventana de video en otra pantalla"><svg class="ic"><use href="#i-video"/></svg>Video</button>
+      <button class="icon-btn" id="btn-help" aria-label="Ayuda y atajos" title="Ayuda y atajos (?)"><svg class="ic"><use href="#i-help"/></svg></button>
+      <button class="btn ghost" id="btn-settings"><svg class="ic"><use href="#i-sliders"/></svg>Ajustes</button>
+    </div>
   </header>
 
   <div class="popover" id="video-panel" hidden role="dialog" aria-label="Pantalla de video">
@@ -102,6 +109,7 @@
     <template id="deck-tpl">
       <section class="deck">
         <div class="deck-head">
+          <div class="head-art" aria-hidden="true"><img class="head-cover" alt="" /><span class="art-letter"></span></div>
           <div class="meta">
             <div class="title">Arrastra o carga una pista</div>
             <div class="artist">—</div>
