@@ -252,7 +252,9 @@ tests.views = async () => {
   assert.deepStrictEqual([r.mix.view, r.mix.compact, r.mix.canvasIn], ['mix', false, 'wave-row']);
   assert.ok(r.mix.waveTop && r.mix.library && r.mix.console, 'Mezcla: ondas, consola y librería visibles');
   assert.deepStrictEqual([r.library.view, r.library.compact], ['library', true]);
-  assert.ok(r.library.library.h > r.mix.library.h + 100, `Librería gana altura: ${r.library.library.h} vs ${r.mix.library.h}`);
+  // en pantallas chicas el perfil compacto ya compacta también la vista Mezcla: ahí solo se exige que no pierda altura
+  if (r.mix.layout === 'compact') assert.ok(r.library.library.h >= r.mix.library.h, `Librería no pierde altura: ${r.library.library.h} vs ${r.mix.library.h}`);
+  else assert.ok(r.library.library.h > r.mix.library.h + 100, `Librería gana altura: ${r.library.library.h} vs ${r.mix.library.h}`);
   assert.deepStrictEqual([r.waves.view, r.waves.library], ['waves', null], 'Ondas oculta la librería');
   assert.ok(r.waves.waveTop.h > 300, `ondas grandes: ${r.waves.waveTop.h}`);
   assert.strictEqual(r.back.view, 'mix');

@@ -9,7 +9,7 @@ module.exports = (win) => {
     win.setContentSize(1600, 960); await wait(2500);
     await js(`__app.masterGain = 0; localStorage.removeItem('alyssdj.view'); __app.setView('mix'); __app.setWaves('top'); return 1`);
     const probe = `const r = (s) => { const e = document.querySelector(s); if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { t: Math.round(b.top), h: Math.round(b.height), b: Math.round(b.bottom) }; };
-      return { view: document.body.dataset.view, waves: document.body.dataset.waves, compact: document.body.classList.contains('am-compact'),
+      return { layout: document.body.dataset.layout, view: document.body.dataset.view, waves: document.body.dataset.waves, compact: document.body.classList.contains('am-compact'),
         waveTop: r('.waves'), library: r('.library'), console: r('.console'), deckScroll: r('#deck-A .deck-scroll'),
         canvasIn: document.getElementById('scroll-A').parentElement.className, sw: document.documentElement.scrollWidth, w: innerWidth,
         stored: JSON.parse(localStorage.getItem('alyssdj.view') || 'null'), pressed: [...document.querySelectorAll('#view-switch button.on')].map((b) => b.dataset.view) }`;

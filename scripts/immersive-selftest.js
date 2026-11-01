@@ -10,6 +10,9 @@ module.exports = (win) => {
     await js(`__app.masterGain = 0; localStorage.removeItem('alyssdj.view'); __app.setView('mix'); return 1`);
     const rows = [];
     for (const n of ['Neon Drive', 'Night Pulse']) rows.push(await js(`return (await window.ytdj.local.register(${JSON.stringify(path.join(music, n + '.mp3'))})).data`));
+    // el BPM y la tonalidad salen del análisis: esperar a que terminen (en el CI tarda más)
+    for (const r of rows) await js(`window.ytdj.analysis.request(${JSON.stringify(r.videoId)}, { meta: { title: ${JSON.stringify(r.title)}, artist: ${JSON.stringify(r.artist)}, thumb: ${JSON.stringify(r.thumb)}, trackDuration: ${r.duration} }, file: ${JSON.stringify(r.path)} }); return 1`);
+    for (let i = 0; i < 90; i++) { await wait(500); if (await js(`return !!(await window.ytdj.analysis.get(${JSON.stringify(rows[0].videoId)})) && !!(await window.ytdj.analysis.get(${JSON.stringify(rows[1].videoId)}))`)) break; }
     await js(`await __app.decks.A.load(${JSON.stringify(rows[0])}); await __app.decks.B.load(${JSON.stringify(rows[1])}); return 1`); await wait(800);
     const probe = `const vis = (s) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; };
       return { view: document.body.dataset.view, imm: vis('#immersive'), console: vis('.console'), library: vis('.library'), waves: vis('.waves'),
