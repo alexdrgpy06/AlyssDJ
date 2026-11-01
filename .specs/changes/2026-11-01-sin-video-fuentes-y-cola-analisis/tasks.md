@@ -9,6 +9,6 @@ Formato: `- [ ] 1.1 Descripción (REQ-1) @rol [verify: comando] [runner: claude|
 - [x] 2.1 Módulo `source.js`, ajuste preferSaved, etiqueta de origen en deck y chip en librería (REQ-2) @coder [verify: node scripts/test-sinvideo.js source]
 - [x] 3.1 Cola de análisis persistente en main con IPC y pruebas de unidad (REQ-3) @coder [verify: node scripts/test-sinvideo.js backlog]
 - [x] 3.2 Fuente y vista «Análisis», «Analizar lista» y «Analizar» por playlist (REQ-4) @ui [verify: node scripts/test-sinvideo.js queue-ui]
-- [~] 4.1 Sistema de vistas (Mezcla, Librería, Ondas), selector, atajos y ondas arriba o en el deck (REQ-5) @ui [verify: node scripts/test-sinvideo.js views] {claim: alex@alex-pc 2026-11-01T19:01:13-03:00}
-- [ ] 4.2 Vista Automix inmersiva y salto automático desde la fuente AutoMix (REQ-5) @ui [verify: node scripts/test-sinvideo.js immersive]
+- [x] 4.1 Sistema de vistas (Mezcla, Librería, Ondas), selector, atajos y ondas arriba o en el deck (REQ-5) @ui [verify: node scripts/test-sinvideo.js views]
+- [x] 4.2 Vista Automix inmersiva y salto automático desde la fuente AutoMix (REQ-5) @ui [verify: node scripts/test-sinvideo.js immersive]
 - [ ] 5.1 Regresión, documentación, capturas y lista de CI (REQ-6) @coder [verify: node scripts/test-sinvideo.js docs]

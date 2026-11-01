@@ -267,6 +267,31 @@ tests.views = async () => {
   console.log('views: OK');
 };
 
+tests.immersive = async () => {
+  const html = read('renderer/index.html'); const css = read('renderer/styles.css'); const app = read('renderer/app.js');
+  for (const k of ['id="immersive"', 'id="imm-cover"', 'id="imm-title"', 'id="imm-next"', 'id="imm-toggle"', 'id="imm-mix"', 'id="imm-style"', 'id="imm-len"', 'id="imm-queue"', 'data-view="automix"']) assert.ok(html.includes(k), k);
+  assert.ok(/body\[data-view='automix'\] \.immersive/.test(css) && /bindImmersive/.test(app) && /renderImmersive/.test(app));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-imm-')); const music = path.join(tmp, 'music');
+  const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
+  assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'immersive-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  const f = path.join(tmp, 'immersive.json');
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  if (process.env.IMMERSIVE_SHOT) fs.copyFileSync(path.join(tmp, 'immersive.png'), process.env.IMMERSIVE_SHOT);
+  const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+  for (const [k, x] of Object.entries(r)) assert.ok(!(x && x.__err), `${k}: ${JSON.stringify(x)}`);
+  assert.deepStrictEqual([r.on.view, r.on.imm, r.on.console, r.on.library, r.on.waves], ['automix', true, false, false, false], 'Alt+3 muestra solo la vista inmersiva');
+  assert.ok(r.on.title && r.on.title !== 'Nada cargado' && /Deck [AB]/.test(r.on.artist), `pista que suena: ${r.on.title} / ${r.on.artist}`);
+  assert.ok(/BPM/.test(r.on.bpm) && r.on.origin === 'ARCHIVO' && r.on.cover);
+  assert.deepStrictEqual([r.cfg.style, r.cfg.len, r.cfg.styleUi, r.cfg.lenOut], ['filter', 24, 'filter', '24 s'], 'estilo y duración conectados');
+  assert.deepStrictEqual([r.started.on, r.started.label], [true, 'Detener AutoMix']);
+  assert.deepStrictEqual([r.stopped.on, r.stopped.label], [false, 'Iniciar AutoMix']);
+  assert.deepStrictEqual([r.queue.view, r.queue.tab, r.queue.amView], ['library', 'automix', true], '«Ver cola» abre la cola');
+  assert.ok(r.small.sw <= r.small.w + 1 && r.small.controls.b <= r.small.h, `1366x768 cabe: ${JSON.stringify(r.small)}`);
+  console.log('immersive: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

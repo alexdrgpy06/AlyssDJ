@@ -62,6 +62,7 @@
       <div class="seg view-switch" id="view-switch">
         <button type="button" data-view="mix" title="Mezcla: consola completa y librería (Alt+1)"><svg class="ic"><use href="#i-v-mix"/></svg><span>Mezcla</span></button>
         <button type="button" data-view="library" title="Librería: decks compactos y la librería grande (Alt+2)"><svg class="ic"><use href="#i-v-lib"/></svg><span>Librería</span></button>
+        <button type="button" data-view="automix" title="Automix: portada grande y la siguiente pista (Alt+3)"><svg class="ic"><use href="#i-radio"/></svg><span>Automix</span></button>
         <button type="button" data-view="waves" title="Ondas: ondas grandes y una tira por deck (Alt+4)"><svg class="ic"><use href="#i-v-waves"/></svg><span>Ondas</span></button>
       </div>
       <button type="button" class="icon-btn" id="waves-toggle" aria-pressed="false" title="Ondas arriba o dentro de cada deck"><svg class="ic"><use href="#i-v-scroll"/></svg></button>
@@ -100,6 +101,31 @@
   <section class="waves" aria-label="Formas de onda">
     <div class="wave-row" data-deck="A"><span class="wave-tag">A</span><canvas class="scroll" id="scroll-A"></canvas></div>
     <div class="wave-row" data-deck="B"><span class="wave-tag">B</span><canvas class="scroll" id="scroll-B"></canvas></div>
+  </section>
+
+  <section class="immersive" id="immersive" aria-label="Vista Automix">
+    <div class="imm-bg" id="imm-bg"></div>
+    <div class="imm-main">
+      <div class="imm-cover"><img id="imm-cover" alt="" /><span class="imm-letter" id="imm-letter">♪</span></div>
+      <div class="imm-info">
+        <span class="lbl" id="imm-lbl">SUENA</span>
+        <h2 id="imm-title">Nada cargado</h2>
+        <p class="imm-artist" id="imm-artist">Carga una pista o inicia AutoMix.</p>
+        <div class="imm-chips"><b class="imm-bpm" id="imm-bpm"></b><span class="kchip key" id="imm-key"></span><span class="src-chip" id="imm-origin" hidden></span><span class="imm-time" id="imm-time"></span></div>
+        <div class="imm-flow"><div class="am-status" id="imm-status">Detenido</div><div class="am-bar" id="imm-bar-wrap"><i id="imm-bar"></i></div></div>
+        <div class="imm-next"><span class="lbl">SIGUE</span><b id="imm-next">—</b><small id="imm-next-sub"></small></div>
+      </div>
+    </div>
+    <div class="imm-controls">
+      <button class="btn primary imm-go" id="imm-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+      <button class="btn" id="imm-mix" type="button"><svg class="ic"><use href="#i-skip"/></svg><span id="imm-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
+      <div class="seg" id="imm-style" role="group" aria-label="Estilo de transición">
+        <button data-v="crossfade" type="button">Fundido</button><button data-v="bass" type="button" class="on">Bass swap</button><button data-v="filter" type="button">Filtro</button>
+      </div>
+      <label class="am-len"><span class="lbl">Duración</span><input type="range" id="imm-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="imm-len-out">16 s</output></label>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="imm-queue" type="button" title="Abre la cola de AutoMix en la vista Librería"><svg class="ic"><use href="#i-list"/></svg>Ver cola</button>
+    </div>
   </section>
 
   <main class="console">

@@ -60,6 +60,7 @@ class App {
     this.mixEditor = new MixEditor(this);
     this.bindAutoMix();
     this.bindViews();
+    this.bindImmersive();
     this.midi = new Midi(this);
     this.midi.init();
 
@@ -403,9 +404,72 @@ class App {
     this.applyView();
   }
 
+  // ---------- vista Automix inmersiva ----------
+  bindImmersive() {
+    const am = this.automix;
+    $('#imm-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#imm-mix').addEventListener('click', () => am.mixNow());
+    $('#imm-style').addEventListener('click', (e) => e.target.dataset.v && am.setCfg({ style: e.target.dataset.v }));
+    $('#imm-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
+    $('#imm-queue').addEventListener('click', () => {
+      this.setView('library');
+      this.library.show('automix');
+    });
+    const live = () => document.body.dataset.view === 'automix' && this.renderImmersive();
+    am.subscribe(live);
+    setInterval(live, 400);
+  }
+
+  renderImmersive() {
+    const st = this.automix.snapshot();
+    const pick = () => {
+      if (st.cur && this.decks[st.curDeck]?.track) return this.decks[st.curDeck];
+      const [a, b] = [this.decks.A, this.decks.B];
+      if (a.st.playing && !b.st.playing) return a;
+      if (b.st.playing && !a.st.playing) return b;
+      return a.track ? a : b.track ? b : null;
+    };
+    const d = pick();
+    const t = d?.track;
+    const mmss = (sec) => (Number.isFinite(sec) && sec > 0 ? `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}` : '');
+    const cover = d?.el.cover.getAttribute('src') || '';
+    const img = $('#imm-cover');
+    if (img.getAttribute('src') !== cover) cover ? (img.src = cover) : img.removeAttribute('src');
+    $('#imm-bg').style.backgroundImage = cover ? `url("${cover.replace(/"/g, '%22')}")` : '';
+    $('#imm-letter').hidden = !!cover;
+    $('#imm-title').textContent = t ? t.title || '—' : 'Nada cargado';
+    $('#imm-artist').textContent = t ? [t.artist, `Deck ${d.id}`].filter(Boolean).join(' · ') : 'Carga una pista o inicia AutoMix.';
+    const bpm = d?.effBpm?.();
+    $('#imm-bpm').textContent = bpm ? `${bpm.toFixed(1)} BPM` : '';
+    const key = $('#imm-key');
+    key.textContent = d?.analysis?.camelot || '';
+    key.style.setProperty('--k', camelotColor(d?.analysis?.camelot));
+    const origin = $('#imm-origin');
+    origin.hidden = !t || !d.srcInfo;
+    if (!origin.hidden) {
+      origin.textContent = d.srcInfo.origin === 'LOCAL' ? 'ARCHIVO' : d.srcInfo.origin;
+      origin.classList.toggle('file', d.srcInfo.origin !== 'STREAM');
+    }
+    const rem = d ? d.st.dur - d.pos() : NaN;
+    $('#imm-time').textContent = t && Number.isFinite(rem) ? `quedan ${mmss(rem)}` : '';
+    $('#imm-status').textContent = st.trans
+      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}`
+      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s` : 'Mezclará en cuanto la siguiente esté lista') : 'AutoMix activo') : 'AutoMix detenido';
+    $('#imm-bar').style.width = st.trans ? `${Math.round(st.trans.progress * 100)}%` : '0%';
+    $('#imm-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
+    $('#imm-next-sub').textContent = st.next ? [st.next.artist, st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : ''].filter(Boolean).join(' · ') : '';
+    $('#imm-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
+    $('#imm-mix').disabled = !st.on || !!st.trans;
+    $('#imm-mix-label').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
+    document.querySelectorAll('#imm-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
+    $('#imm-len').value = st.cfg.len;
+    $('#imm-len-out').textContent = `${st.cfg.len} s`;
+  }
+
   setView(view) {
     this.views.set(view);
     this.applyView();
+    if (view === 'automix') this.renderImmersive();
   }
 
   setWaves(waves) {
