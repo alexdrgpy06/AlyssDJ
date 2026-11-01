@@ -87,6 +87,105 @@ tests.source = async () => {
   console.log('source: OK');
 };
 
+tests.backlog = async () => {
+  const os = require('os');
+  const { Backlog } = require('../main/analysis-backlog');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-bl-'));
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const mkAn = (done = new Set()) => ({ running: null, queue: [], asked: [], cancelled: [], get: (id) => (done.has(id) ? { id } : null), request(id, o) { this.running = { id }; this.asked.push({ id, o }); }, cancel(id) { this.cancelled.push(id); } });
+  const tr = (id, extra = {}) => ({ videoId: id, title: `T ${id}`, artist: 'A', duration: 100, ...extra });
+  const mk = (an, name, o = {}) => new Backlog({ analyzer: an, file: path.join(dir, name), saveMs: 5, notifyMs: 5, botError: 'BOT', ...o });
+  const reply = async (bl, an, ev) => { an.running = null; bl.onAnalyzerEvent(ev); await wait(15); };
+
+  // REQ-3: encola solo lo no analizado y sin duplicar; una a la vez
+  const an = mkAn(new Set(['yaAnalizada']));
+  const bl = mk(an, 'a.json');
+  let r = bl.addList({ name: 'Playlist A', tracks: [tr('p1'), tr('p2'), tr('yaAnalizada'), tr('p1'), tr('p3')] });
+  assert.deepStrictEqual([r.added, r.skipped], [3, 2]);
+  assert.deepStrictEqual(an.asked.map((a) => a.id), ['p1'], 'pide solo una al analizador');
+  assert.strictEqual(bl.state().pending, 3);
+  assert.strictEqual(bl.addList({ name: 'Otra', tracks: [tr('p1'), tr('p2')] }).added, 0, 'lo ya en cola no se duplica');
+  assert.strictEqual(bl.addList({ name: 'Carpeta', tracks: [tr('f1', { local: true, path: '/musica/f1.mp3' })] }).added, 1);
+  bl.onAnalyzerEvent({ id: 'p1', stage: 'download', progress: 0.4 });
+  assert.strictEqual(bl.state().items.find((i) => i.id === 'p1').progress, 0.4);
+  await reply(bl, an, { id: 'p1', stage: 'done' });
+  assert.deepStrictEqual(an.asked.map((a) => a.id), ['p1', 'p2'], 'sigue con la siguiente');
+  // un error no detiene la cola
+  await reply(bl, an, { id: 'p2', stage: 'error', error: 'sin audio' });
+  assert.strictEqual(bl.state().items.find((i) => i.id === 'p2').state, 'error');
+  assert.strictEqual(an.asked.at(-1).id, 'p3');
+  await reply(bl, an, { id: 'p3', stage: 'done' });
+  assert.strictEqual(an.asked.at(-1).id, 'f1');
+  assert.strictEqual(an.asked.at(-1).o.file, '/musica/f1.mp3', 'archivo local: se analiza donde está');
+  await reply(bl, an, { id: 'f1', stage: 'done' });
+  const st = bl.state();
+  assert.deepStrictEqual([st.pending, st.lists[0].total, st.lists[0].done, st.lists[0].error], [0, 3, 2, 1]);
+  // reintentar errores y quitar terminadas
+  bl.retry(st.lists[0].id); await wait(10);
+  assert.strictEqual(an.asked.at(-1).id, 'p2');
+  await reply(bl, an, { id: 'p2', stage: 'done' });
+  bl.clearDone();
+  assert.deepStrictEqual([bl.state().lists.length, bl.state().items.length], [0, 0]);
+
+  // lo pedido a mano pasa primero: no se entrega nada mientras el analizador esté ocupado
+  const an2 = mkAn(); an2.running = { id: 'manual' };
+  const b2 = mk(an2, 'b.json');
+  b2.addList({ name: 'L', tracks: [tr('m1')] });
+  assert.strictEqual(an2.asked.length, 0, 'espera a que el analizador se libere');
+  await reply(b2, an2, { id: 'manual', stage: 'done' });
+  assert.deepStrictEqual(an2.asked.map((a) => a.id), ['m1']);
+
+  // las pistas cargadas en un deck van primero
+  const an3 = mkAn(); an3.running = { id: 'x' };
+  const b3 = mk(an3, 'c.json');
+  b3.addList({ name: 'L', tracks: [tr('n1'), tr('n2'), tr('n3')] });
+  b3.setPriority(['n3']);
+  await reply(b3, an3, { id: 'x', stage: 'done' });
+  assert.strictEqual(an3.asked[0].id, 'n3');
+
+  // pausa y reanudación
+  const an4 = mkAn(); const b4 = mk(an4, 'd.json');
+  b4.pause(); b4.addList({ name: 'L', tracks: [tr('q1'), tr('q2')] });
+  assert.strictEqual(an4.asked.length, 0, 'en pausa no avanza');
+  b4.resume();
+  assert.strictEqual(an4.asked.length, 1);
+
+  // bloqueo de bot: no avanza; un error de bot devuelve la pista a la cola y no la marca como fallida
+  let blocked = false;
+  const an5 = mkAn(); const b5 = mk(an5, 'e.json', { botBlocked: () => blocked });
+  b5.addList({ name: 'L', tracks: [tr('b1'), tr('b2')] });
+  blocked = true;
+  await reply(b5, an5, { id: 'b1', stage: 'error', error: 'BOT' });
+  assert.strictEqual(b5.state().items.find((i) => i.id === 'b1').state, 'queued', 'el bloqueo no es culpa de la pista');
+  assert.strictEqual(an5.asked.length, 1, 'con el bloqueo activo no se pide nada más');
+  assert.strictEqual(b5.state().botBlocked, true);
+  blocked = false; b5.pump();
+  assert.strictEqual(an5.asked.length, 2, 'al terminar el bloqueo reanuda');
+  b5.flush();
+
+  // cancelar una lista
+  const an6 = mkAn(); const b6 = mk(an6, 'f.json');
+  const l6 = b6.addList({ name: 'L', tracks: [tr('c1'), tr('c2')] });
+  b6.cancelList(l6.listId);
+  assert.deepStrictEqual(an6.cancelled, ['c1']); assert.strictEqual(b6.state().items.length, 0);
+
+  // persistencia: sobrevive al reinicio y lo que estaba en curso vuelve a «en cola»
+  const an7 = mkAn(); const b7 = mk(an7, 'g.json');
+  b7.addList({ name: 'Guardada', tracks: [tr('s1'), tr('s2')] });
+  b7.pause(); b7.flush();
+  assert.ok(!fs.existsSync(path.join(dir, 'g.json.tmp')), 'escritura atómica: no queda el temporal');
+  const an8 = mkAn(); const b8 = mk(an8, 'g.json');
+  const s8 = b8.state();
+  assert.deepStrictEqual([s8.paused, s8.lists[0].name, s8.items.map((i) => i.state)], [true, 'Guardada', ['queued', 'queued']]);
+  b8.resume(); assert.strictEqual(an8.asked[0].id, 's1');
+  // archivo dañado: cola vacía sin romper
+  fs.writeFileSync(path.join(dir, 'h.json'), '{no es json');
+  assert.strictEqual(mk(mkAn(), 'h.json').state().items.length, 0);
+  // con el analizador real: eventos y estado «ya analizada» (get)
+  assert.ok(/new Backlog/.test(read('main/main.js')) && /backlog:add/.test(read('main/main.js')) && /backlog:/.test(read('preload/app.js')), 'conectada en main y preload');
+  console.log('backlog: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

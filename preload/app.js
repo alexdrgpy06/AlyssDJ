@@ -61,6 +61,17 @@ contextBridge.exposeInMainWorld('ytdj', {
     openCache: () => ipcRenderer.invoke('analysis:open-cache'),
     onEvent: on('analysis:event'),
   },
+  backlog: {
+    add: (list) => ipcRenderer.invoke('backlog:add', list),
+    state: () => ipcRenderer.invoke('backlog:state'),
+    pause: () => ipcRenderer.invoke('backlog:pause'),
+    resume: () => ipcRenderer.invoke('backlog:resume'),
+    cancel: (listId) => ipcRenderer.invoke('backlog:cancel', listId),
+    retry: (listId) => ipcRenderer.invoke('backlog:retry', listId),
+    clearDone: () => ipcRenderer.invoke('backlog:clear-done'),
+    setPriority: (ids) => ipcRenderer.send('backlog:priority', ids),
+    onEvent: on('backlog:event'),
+  },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (patch) => ipcRenderer.invoke('settings:set', patch),

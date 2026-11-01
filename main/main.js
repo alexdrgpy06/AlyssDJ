@@ -6,6 +6,7 @@ const { execFile } = require('child_process');
 const { app, BrowserWindow, WebContentsView, ipcMain, protocol, session, shell, screen, dialog } = require('electron');
 const settings = require('./settings');
 const { Analyzer } = require('./analyzer');
+const { Backlog } = require('./analysis-backlog');
 const { YtmLibrary } = require('./ytm-library');
 const ytdlp = require('./ytdlp');
 const tools = require('./tools');
@@ -37,6 +38,7 @@ let toolDirs = [];
 let coversDir = '';
 let libraryView = null;
 let analyzer = null;
+let backlog = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
 
 function send(channel, ...args) {
@@ -308,6 +310,14 @@ ipcMain.handle('crates:list', () => readCrates().map(({ tracks, ...l }) => ({ ..
 ipcMain.handle('crates:get', (_e, id) => readCrates().find((c) => c.id === id)?.tracks || []);
 
 // ---------- análisis (yt-dlp, siempre a pedido) ----------
+ipcMain.handle('backlog:add', (_e, list) => backlog.addList(list || {}));
+ipcMain.handle('backlog:state', () => backlog.state());
+ipcMain.handle('backlog:pause', () => (backlog.pause(), backlog.state()));
+ipcMain.handle('backlog:resume', () => (backlog.resume(), backlog.state()));
+ipcMain.handle('backlog:cancel', (_e, listId) => (backlog.cancelList(String(listId)), backlog.state()));
+ipcMain.handle('backlog:retry', (_e, listId) => (backlog.retry(String(listId)), backlog.state()));
+ipcMain.handle('backlog:clear-done', () => (backlog.clearDone(), backlog.state()));
+ipcMain.on('backlog:priority', (_e, ids) => backlog?.setPriority(Array.isArray(ids) ? ids.map(String) : []));
 ipcMain.handle('analysis:request', (_e, id, opts) => analyzer.request(id, opts));
 ipcMain.handle('analysis:cancel', (_e, id) => analyzer.cancel(id));
 ipcMain.handle('analysis:get', (_e, id) => analyzer.get(id));
@@ -466,8 +476,21 @@ app.whenReady().then(() => {
     cacheDir: path.join(app.getPath('userData'), 'cache'),
     settings,
     session: ytm,
-    emit: (ev) => send('analysis:event', ev),
+    emit: (ev) => {
+      send('analysis:event', ev);
+      backlog?.onAnalyzerEvent(ev);
+    },
   });
+  // Cola de análisis de listas: persistente y de a una pista, sin competir con lo que pide el usuario.
+  backlog = new Backlog({
+    analyzer,
+    file: path.join(app.getPath('userData'), 'analysis-queue.json'),
+    emit: (state) => send('backlog:event', state),
+    botBlocked: () => ytdlp.botBlocked(),
+    botError: ytdlp.BOT_ERROR,
+  });
+  backlog.start();
+  app.on('before-quit', () => backlog?.flush());
 
   win = new BrowserWindow({
     width: 1600,
