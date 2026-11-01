@@ -12,6 +12,6 @@ assert.ok(idle > 0, 'falta la guardia sin pista');
 const block = tick.slice(idle, tick.indexOf('return;', idle));
 assert.ok(/v\.pause\(\)/.test(block) && /v\.muted = true/.test(block), 'pausa y silencia');
 assert.ok(idle < tick.indexOf('settling'), 'va antes de cualquier otra lógica');
-// REQ-2: el cambio a otra canción solo se acepta como versión en video pedida por el deck
-assert.ok(/isVideoSwitch/.test(src) && /videoSwitchUntil/.test(src));
+// REQ-2: si YT Music avanza solo a otra canción se vuelve a la pista del deck, sin excepción de «versión en video»
+assert.ok(/d\.id !== expected\.videoId && !settling\)/.test(src) && !/isVideoSwitch|videoSwitchUntil|videoPref/.test(src));
 console.log('stream-guard: OK');

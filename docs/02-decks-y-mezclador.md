@@ -8,7 +8,7 @@
 |---|---|
 | **Cabecera** | Título y artista; **STREAM / LOCAL** (de dónde suena); **Analizar**; BPM actual, tonalidad (con el color de la rueda Camelot) y desvío de pitch |
 | **Vista general** | Toda la pista. Clic para saltar |
-| **Plato** | La portada gira con la pista y el anillo marca el progreso. Arrastra en círculo: sonando = *bend*, en pausa = búsqueda fina. Doble clic abre la [ventana de video](05-video-y-segunda-pantalla.md) |
+| **Plato** | La portada gira con la pista y el anillo marca el progreso. Arrastra en círculo: sonando = *bend*, en pausa = búsqueda fina. |
 | **CUE / ▶ / SYNC** | Transporte (ver abajo) |
 | **Pitch** | Fader vertical, **+ / −** de nudge y el rango (±6, 8, 16, 50) |
 | **Hot cues 1–4** | Clic para fijar; clic de nuevo para saltar. **Shift** + clic (o clic derecho) los borra. Se guardan por pista |

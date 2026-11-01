@@ -129,40 +129,6 @@ function downloadToLibrary({ bin, videoId, dir, extraArgs, onProgress, format = 
   });
 }
 
-// Descarga el video (sin audio) de una pista con video real a <librería>/.video/<id>.mp4. Si falla no deja parciales.
-function downloadVideo({ bin, videoId, dir, extraArgs = [], onProgress, maxHeight = 1080 }) {
-  L.safeId(videoId);
-  try {
-    L.ensureWritableDir(L.videoDir(dir));
-  } catch (e) {
-    return Promise.reject(new Error(L.friendlyError(`${e.code} ${e.message}`) || e.message));
-  }
-  return new Promise((resolve, reject) => {
-    const args = [...L.videoArgs(dir, videoId, maxHeight), ...runtime().args, ...extraArgs, '--newline', '--progress', '--progress-template', 'download:YTDJ %(progress._percent_str)s', `https://www.youtube.com/watch?v=${videoId}`];
-    const p = spawn(bin, args, { env: { ...process.env, ...runtime().env } });
-    let err = '';
-    let buf = '';
-    const onLine = (line) => {
-      const m = line.match(/YTDJ\s+([\d.]+)%/);
-      if (m) onProgress?.(parseFloat(m[1]) / 100);
-    };
-    p.stdout.on('data', (d) => {
-      buf += d;
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      lines.forEach(onLine);
-    });
-    p.stderr.on('data', (d) => (err += d));
-    p.on('error', reject);
-    p.on('close', (code) => {
-      const file = L.findVideo(dir, videoId);
-      if (file) return resolve(file);
-      for (const n of fs.existsSync(L.videoDir(dir)) ? fs.readdirSync(L.videoDir(dir)) : []) if (n.startsWith(`${videoId}.`)) fs.rmSync(path.join(L.videoDir(dir), n), { force: true });
-      reject(new Error(err.trim().split('\n').filter((l) => /ERROR/.test(l)).pop() || `yt-dlp salió con ${code}`));
-    });
-  });
-}
-
 // YouTube a veces pide "confirmar que no eres un bot" y rechaza las descargas sin sesión. Insistir lo alarga:
 // tras el primer rechazo se dejan de lanzar descargas unos minutos (el deck sigue sonando por streaming).
 const BOT_RE = /not a bot|confirm you.?re not a bot|Sign in to confirm/i;
@@ -185,7 +151,7 @@ function guarded(fn) {
 }
 
 module.exports = {
-  downloadVideo: guarded(downloadVideo), download: guarded(download), downloadToLibrary: guarded(downloadToLibrary),
+  download: guarded(download), downloadToLibrary: guarded(downloadToLibrary),
   findYtdlp, setManagedDirs, cookieArgs, runtime, isFormatError, withFormatRetry, FORMAT_ERROR,
   isBotError, botBlocked, resetBot, BOT_ERROR, BOT_COOLDOWN_MS,
 };

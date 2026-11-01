@@ -17,9 +17,6 @@
     <defs>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
-      <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5 21 7.5v9l-5-3"/></symbol>
-      <symbol id="i-popout" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
-      <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
       <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
       <symbol id="i-midi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="7.6" cy="11" r=".9" fill="currentColor"/><circle cx="9.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="14.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="16.4" cy="11" r=".9" fill="currentColor"/><circle cx="12" cy="15.5" r=".9" fill="currentColor"/></symbol>
       <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6.5" rx="1.6"/><rect x="17" y="14" width="4" height="6.5" rx="1.6"/></symbol>
@@ -64,29 +61,10 @@
     <span class="tb-sep" aria-hidden="true"></span>
     <div class="tb-group tb-sys" role="group" aria-label="Sistema">
       <button class="btn ghost" id="btn-midi-learn" title="MIDI learn: clic aquí, luego en un control, luego mueve el control MIDI"><svg class="ic"><use href="#i-midi"/></svg>MIDI</button>
-      <button class="btn ghost" id="btn-video" aria-haspopup="true" aria-expanded="false" title="Ventana de video en otra pantalla"><svg class="ic"><use href="#i-video"/></svg>Video</button>
       <button class="icon-btn" id="btn-help" aria-label="Ayuda y atajos" title="Ayuda y atajos (?)"><svg class="ic"><use href="#i-help"/></svg></button>
       <button class="btn ghost" id="btn-settings"><svg class="ic"><use href="#i-sliders"/></svg>Ajustes</button>
     </div>
   </header>
-
-  <div class="popover" id="video-panel" hidden role="dialog" aria-label="Pantalla de video">
-    <div class="pop-row"><strong>Pantalla de video</strong><button class="icon-btn" id="vp-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
-    <p class="hint">El video sale del mismo reproductor de YouTube Music que suena en el deck, así que va sincronizado. Úsalo en otra pantalla o proyector.</p>
-    <div class="pop-row">
-      <button class="btn primary" id="vp-toggle"><svg class="ic"><use href="#i-popout"/></svg><span>Abrir ventana de video</span></button>
-      <button class="btn" id="vp-full" title="Pantalla completa"><svg class="ic"><use href="#i-fullscreen"/></svg>Completa</button>
-    </div>
-    <div class="pop-field">
-      <span class="lbl">Mostrar</span>
-      <div class="seg" id="vp-show" role="group" aria-label="Qué deck mostrar">
-        <button data-v="auto" class="on" title="Sigue al deck que está al aire">Auto</button>
-        <button data-v="A">A</button><button data-v="B">B</button><button data-v="split">A | B</button>
-      </div>
-    </div>
-    <label class="pop-field"><span class="lbl">Pantalla</span><select id="vp-display"></select></label>
-    <label class="check"><input type="checkbox" id="vp-pref" /><span>Preferir el video musical <small>Experimental: usa otra versión de la pista, así que la rejilla del análisis puede no coincidir.</small></span></label>
-  </div>
 
   <div class="popover" id="sampler-panel" hidden role="dialog" aria-label="Sampler">
     <div class="pop-row"><strong>Sampler</strong><button class="icon-btn" id="sp-close" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div>
@@ -144,9 +122,8 @@
           <div class="platter" role="slider" aria-label="Jog wheel" title="Jog: arrastra en círculo (sonando = bend, en pausa = búsqueda)">
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="48"/><circle class="ring-fg" cx="50" cy="50" r="48" pathLength="100"/></svg>
             <div class="spin"></div>
-            <div class="vid" title="Doble clic: abrir la ventana de video">
+            <div class="vid">
               <div class="rot"><img class="cover" alt="" /><span class="deck-letter"></span></div>
-              <button class="pop" aria-label="Abrir ventana de video"><svg class="ic"><use href="#i-popout"/></svg></button>
             </div>
             <div class="pl-info"><span class="pl-time">0:00</span><small class="pl-bpm"></small></div>
           </div>
@@ -384,8 +361,6 @@
           <h3>Librería y música local</h3>
         <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
         <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
-        <label class="check"><input type="checkbox" name="saveVideo" /><span>Guardar también el video de las pistas que lo tengan <small>Solo videos musicales de verdad; las pistas de solo portada no descargan video. Se usa en la ventana de video y la miniatura del deck.</small></span></label>
-        <label>Calidad máxima del video <select name="videoMaxHeight"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select></label>
         <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>
         <div class="row-btns">
           <button type="button" class="btn" id="btn-pick-library">Cambiar carpeta…</button>
@@ -481,7 +456,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd><dt>Plato (doble clic)</dt><dd>Ventana de video</dd></dl></section>
+        <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>

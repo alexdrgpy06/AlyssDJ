@@ -31,15 +31,6 @@ npm start
 
 El análisis de una pista de YouTube se aplica también al stream: beatgrid, BPM, tonalidad y forma de onda completa, SYNC y loops por beats. Si la rejilla queda corrida respecto del stream, usa ◀ ▶ (pasos de 5 ms; se guarda por pista). Sin analizar, el deck dibuja la onda mientras suena y **TAP** fija un BPM aproximado.
 
-## Video
-
-El plato de cada deck muestra la portada (el video no corre ahí para no gastar rendimiento). Con **Video** (arriba) o el botón del plato se abre una **ventana de video** con el video de YouTube Music que puedes mover a otra pantalla o proyector:
-
-- **Mostrar:** Auto (sigue al deck que está al aire), A, B o A | B.
-- **Pantalla:** eliges en cuál abrirla; **Completa** la pone a pantalla completa.
-- El video es el mismo reproductor que suena en el deck, así que va sincronizado; cerrar la ventana no corta el audio.
-- **Preferir el video musical** (experimental) cambia YouTube Music a la versión en video, que puede durar distinto que el audio.
-
 ## AutoMix (estilo radio de YouTube)
 
 Botón **AutoMix** (arriba) o **Radio** en cualquier pista de la librería. La cola sale de la radio de YouTube Music (pistas parecidas a la que suena) o de una lista (**AutoMix de esta lista**, **+** para encolar). La siguiente se precarga en el deck libre y se mezcla sola:
@@ -59,7 +50,7 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 3. En la librería, las pistas analizadas muestran su tonalidad con color Camelot y se resaltan las **compatibles** con el deck en juego (clave armónica y BPM dentro de ±6 %).
 4. **Ajustes:** salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader y carpetas de música.
 
-**Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista; si la pista de YouTube tiene video, se ve ahí (sin girar). Doble clic en el plato abre la ventana de video.
+**Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista.
 
 **Controles:** CUE estilo CDJ, 4 hot cues (Shift o clic derecho borra), loops de 1 a 16 beats e IN/OUT/EXIT, SYNC de tempo y fase, keylock, cuantizado, nudge, jog wheel, EQ de 3 bandas con kill, filtro bipolar, trim con auto-gain, PFL, crossfader y master.
 

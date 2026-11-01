@@ -11,7 +11,6 @@
 | [2. Decks y mezclador](02-decks-y-mezclador.md) | Plato, cue, hot cues, loops, beat jump, roll, sync, rejilla, EQ y efectos |
 | [3. Librería y playlists](03-libreria-y-playlists.md) | Buscar, música local, importar playlists, historial, orden y pistas compatibles |
 | [4. AutoMix](04-automix.md) | DJ automático con la radio de YouTube Music: vista con cola editable, mezclar ahora y modo local |
-| [5. Video y segunda pantalla](05-video-y-segunda-pantalla.md) | Ventana de video y segunda pantalla |
 | [6. Sampler, grabación y MIDI](06-sampler-grabacion-midi.md) | Pads, grabar la mezcla, controladoras y atajos |
 | [7. Problemas frecuentes](07-problemas-frecuentes.md) | Qué hacer cuando algo no funciona |
 | [Comparativa](COMPARATIVA.md) | Qué tienen Rekordbox, djay y Mixxx, qué añadimos y qué falta |

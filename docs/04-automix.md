@@ -104,8 +104,6 @@ Los controles de AutoMix están agrupados por función, con título:
 - **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Deshacer**, **Rellenar con radio** y **Vaciar**.
 - **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.
 
-AutoMix no lleva video: para ver el video de un deck usa el botón **Video** de la barra superior (ventana aparte, ver [Video y segunda pantalla](05-video-y-segunda-pantalla.md)).
-
 ## Buscar y agregar desde la propia vista
 
 ![Buscar para agregar](img/35-automix-buscar.png)

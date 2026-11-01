@@ -21,15 +21,11 @@ const DEFAULTS = {
   pitchRange: 8,
   musicDirs: [],
   autoAnalyzeLocal: true,
-  videoPref: false,
   recordSource: '',
   // Guardar en la librería local lo que se analiza o reproduce (el audio ya se descargó).
   saveOnAnalyze: true,
   saveOnPlay: true,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
-  // Guardar también el video de las pistas que lo tengan de verdad (no las de solo portada).
-  saveVideo: true,
-  videoMaxHeight: 1080, // 480 | 720 | 1080
 };
 
 let cache = null;
@@ -43,6 +39,8 @@ function get() {
   } catch {
     cache = { ...DEFAULTS };
   }
+  // El video se retiró: sus ajustes antiguos se ignoran (no se reescribe el archivo ni se tocan carpetas .video).
+  for (const k of ['saveVideo', 'videoMaxHeight', 'videoPref']) delete cache[k];
   // Migración: antes yt-dlp recibía las cookies de la sesión de la app ('app'); ya no.
   if (cache.cookieSource === 'app') {
     cache.cookieSource = 'none';

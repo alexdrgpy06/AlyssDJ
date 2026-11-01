@@ -22,9 +22,8 @@ const path = require('path');
   await assert.rejects(y.download({ bin: stub, videoId: 'abc', outDir: dir, extraArgs: [] }), (e) => e.message === y.BOT_ERROR);
   assert.strictEqual(calls(), 1);
   assert.ok(y.botBlocked());
-  // en pausa no se lanza yt-dlp: ni descargas de audio ni de video ni a la librería
+  // en pausa no se lanza yt-dlp: ni descargas de audio ni a la librería
   await assert.rejects(y.download({ bin: stub, videoId: 'abd', outDir: dir, extraArgs: [] }), (e) => e.message === y.BOT_ERROR);
-  await assert.rejects(y.downloadVideo({ bin: stub, videoId: 'abe', dir, extraArgs: [] }), (e) => e.message === y.BOT_ERROR);
   await assert.rejects(y.downloadToLibrary({ bin: stub, videoId: 'abf', dir, extraArgs: [] }), (e) => e.message === y.BOT_ERROR);
   assert.strictEqual(calls(), 1, 'no se insiste mientras dura la pausa');
   // pasada la pausa se vuelve a intentar

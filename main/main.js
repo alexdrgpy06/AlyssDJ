@@ -35,12 +35,6 @@ let ffmpegBin = 'ffmpeg';
 let localLib = null;
 let toolDirs = [];
 let coversDir = '';
-let videoWin = null;
-let videoShow = 'A'; // 'A' | 'B' | 'split'
-let videoPageReady = false; // la página de la ventana de video ya cargó y escucha mensajes
-// Medio de cada deck en la ventana de video: { kind: 'stream' } | { kind: 'local', src } | { kind: 'none', label, cover }.
-// Sin pista propia (deck vacío o sin video) nunca se muestra la página de YouTube Music: se vería lo último que sonó.
-const deckMedia = { A: { kind: 'none', label: 'Sin pista' }, B: { kind: 'none', label: 'Sin pista' } };
 let libraryView = null;
 let analyzer = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
@@ -87,10 +81,6 @@ function registerAppProtocol() {
       // Archivos locales: solo los que están en el índice (el renderer pide por id, nunca por ruta).
       if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
       if (rel === 'build/icon.png') return serveFile(path.join(ROOT, 'build/icon.png'), request);
-      if (rel.startsWith('localvideo/')) {
-        const f = analyzer.videoPath(decodeURIComponent(rel.slice(11)));
-        return f ? serveFile(f, request) : new Response('sin video', { status: 404 });
-      }
       if (rel.startsWith('localfile/')) return serveFile(localLib.pathOf(decodeURIComponent(rel.slice(10))), request);
       if (rel.startsWith('cache/')) return serveFile(safeJoin(analyzer.cacheDir, rel.slice(6)), request);
       const base = rel.startsWith('shared/') ? ROOT : path.join(ROOT, 'renderer');
@@ -141,7 +131,7 @@ function createDeckView(id) {
 function deckCmd(id, cmd) {
   const d = decks[id];
   if (!d) return;
-  if (['mix', 'routing', 'rate', 'loop', 'videoView', 'videoPref'].includes(cmd.type)) d.replay[cmd.type] = { ...(d.replay[cmd.type] || {}), ...cmd };
+  if (['mix', 'routing', 'rate', 'loop'].includes(cmd.type)) d.replay[cmd.type] = { ...(d.replay[cmd.type] || {}), ...cmd };
   if (!d.ready) {
     if (cmd.type === 'load') d.pendingLoad = cmd;
     return;
@@ -182,132 +172,16 @@ ipcMain.on('deck:show', (_e, id, rect) => {
     attach(id, win);
     d.view.setBounds({ x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) });
     d.view.setVisible(true);
-  } else if (videoOpen()) layoutVideo();
-  else d.view.setVisible(false);
+  } else d.view.setVisible(false);
 });
 
-// ---------- ventana de video (segunda pantalla) ----------
-// Las vistas de los decks son las mismas que reproducen el audio: se mueven a esta ventana y su CSS
-// aísla el video de YouTube Music, así que el video va a su fps real y sincronizado con el audio.
-const videoOpen = () => !!videoWin && !videoWin.isDestroyed();
-
+// La vista de YouTube Music de un deck se muestra flotando sobre la ventana principal (botón YTM).
 function attach(id, host) {
   const v = decks[id]?.view;
   if (!v || !host || host.isDestroyed()) return;
-  for (const w of [win, videoWin]) {
-    if (w && !w.isDestroyed() && w !== host) {
-      try { w.contentView.removeChildView(v); } catch {}
-    }
-  }
   host.contentView.addChildView(v);
 }
 
-function layoutVideo() {
-  if (!videoOpen()) return;
-  const [w, h] = videoWin.getContentSize();
-  const half = Math.floor(w / 2);
-  const rects = videoShow === 'split'
-    ? { A: { x: 0, y: 0, width: half, height: h }, B: { x: half, y: 0, width: w - half, height: h } }
-    : { [videoShow]: { x: 0, y: 0, width: w, height: h } };
-  const tiles = { A: null, B: null };
-  for (const id of DECKS) {
-    const v = decks[id].view;
-    attach(id, videoWin);
-    const m = deckMedia[id];
-    if (!rects[id]) v.setVisible(false);
-    else if (m.kind === 'stream') {
-      v.setBounds(rects[id]);
-      v.setVisible(true);
-      deckCmd(id, { type: 'videoView', on: true });
-    } else {
-      // video local guardado o pantalla sin video: lo dibuja la página de la ventana y la vista del stream se oculta
-      tiles[id] = { ...rects[id], ...(m.kind === 'local' ? { src: m.src } : { label: m.label, cover: m.cover || null }) };
-      v.setVisible(false);
-      deckCmd(id, { type: 'videoView', on: false });
-    }
-  }
-  if (videoPageReady) videoWin.webContents.send('vwin:layout', tiles);
-}
-
-function videoDisplays() {
-  const primary = screen.getPrimaryDisplay().id;
-  return screen.getAllDisplays().map((d, i) => ({
-    id: d.id,
-    label: `${d.label || 'Pantalla ' + (i + 1)} · ${d.size.width}×${d.size.height}${d.id === primary ? ' (principal)' : ''}`,
-    primary: d.id === primary,
-  }));
-}
-
-function moveVideoTo(displayId, fullscreen) {
-  const d = screen.getAllDisplays().find((x) => x.id === displayId);
-  if (!d || !videoOpen()) return;
-  const wasFs = videoWin.isFullScreen();
-  if (wasFs) videoWin.setFullScreen(false);
-  const { x, y, width, height } = d.workArea;
-  videoWin.setBounds({ x: x + Math.round(width * 0.1), y: y + Math.round(height * 0.1), width: Math.round(width * 0.6), height: Math.round((width * 0.6 * 9) / 16) });
-  if (fullscreen ?? wasFs) setTimeout(() => videoOpen() && videoWin.setFullScreen(true), 200);
-}
-
-function openVideo({ displayId, fullscreen, show } = {}) {
-  if (['A', 'B', 'split'].includes(show)) videoShow = show;
-  if (!videoOpen()) {
-    const cur = screen.getDisplayMatching(win.getBounds());
-    const target = (displayId != null && screen.getAllDisplays().find((d) => d.id === displayId)) ||
-      screen.getAllDisplays().find((d) => d.id !== cur.id) || cur;
-    videoWin = new BrowserWindow({
-      width: 960, height: 540, x: target.workArea.x + 60, y: target.workArea.y + 60,
-      backgroundColor: '#000000', title: 'AlyssDJ — Video', autoHideMenuBar: true,
-      webPreferences: { sandbox: true, preload: path.join(__dirname, '../preload/video-window.js') },
-    });
-    videoWin.loadURL('app://ui/video.html');
-    videoPageReady = false;
-    videoWin.webContents.on('did-finish-load', () => ((videoPageReady = true), layoutVideo()));
-    videoWin.on('resize', layoutVideo);
-    videoWin.on('enter-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
-    videoWin.on('leave-full-screen', () => { layoutVideo(); send('video:state', videoState()); });
-    videoWin.on('closed', () => {
-      videoWin = null;
-      videoPageReady = false;
-      for (const id of DECKS) {
-        if (win && !win.isDestroyed()) attach(id, win);
-        decks[id].view.setVisible(false);
-        deckCmd(id, { type: 'videoView', on: false });
-      }
-      send('video:state', videoState());
-    });
-    layoutVideo();
-    if (fullscreen) setTimeout(() => videoOpen() && videoWin.setFullScreen(true), 200);
-  } else {
-    if (displayId != null) moveVideoTo(displayId, fullscreen);
-    else if (fullscreen != null) videoWin.setFullScreen(fullscreen);
-    layoutVideo();
-    videoWin.show();
-  }
-  send('video:state', videoState());
-}
-
-function videoState() {
-  const open = videoOpen();
-  return {
-    open, show: videoShow, fullscreen: open && videoWin.isFullScreen(),
-    displayId: open ? screen.getDisplayMatching(videoWin.getBounds()).id : null,
-  };
-}
-
-ipcMain.handle('video:local-src', (_e, key) => (analyzer.videoPath(key) ? `app://ui/localvideo/${encodeURIComponent(key)}` : null));
-ipcMain.on('video:deck-media', (_e, id, media) => {
-  if (!DECKS.includes(id) || !media || !['stream', 'local', 'none'].includes(media.kind)) return;
-  const m = { kind: media.kind };
-  if (m.kind === 'local') m.src = String(media.src || '');
-  if (m.kind === 'none') Object.assign(m, { label: String(media.label || 'Sin video').slice(0, 60), cover: typeof media.cover === 'string' && /^(https:|app:|data:image\/)/.test(media.cover) ? media.cover : null });
-  if (m.kind === 'local' && !m.src) return;
-  if (JSON.stringify(deckMedia[id]) === JSON.stringify(m)) return;
-  deckMedia[id] = m;
-  if (videoOpen()) layoutVideo();
-});
-ipcMain.on('video:sync', (_e, id, s) => {
-  if (videoOpen() && deckMedia[id].kind === 'local') videoWin.webContents.send('vwin:sync', id, s);
-});
 // ---------- acerca de ----------
 ipcMain.handle('app:info', () => ({ name: 'AlyssDJ', version: app.getVersion(), org: 'AlystechPY', author: 'Alejandro Ramírez', license: 'MIT', repo: 'https://github.com/alexdrgpy06/AlyssDJ' }));
 ipcMain.handle('app:open-repo', () => shell.openExternal('https://github.com/alexdrgpy06/AlyssDJ'));
@@ -323,16 +197,6 @@ ipcMain.handle('update:install', () => updater?.install());
 ipcMain.handle('update:skip', () => updater?.skip());
 ipcMain.handle('update:later', () => updater?.later());
 ipcMain.handle('update:open-release', (_e, url) => (/^https:\/\/github\.com\/alexdrgpy06\/AlyssDJ\/releases\//.test(String(url)) ? shell.openExternal(url) : null));
-ipcMain.handle('video:open', (_e, opts) => (openVideo(opts), videoState()));
-ipcMain.handle('video:close', () => { if (videoOpen()) videoWin.close(); return videoState(); });
-ipcMain.handle('video:state', videoState);
-ipcMain.handle('video:displays', videoDisplays);
-ipcMain.on('video:show', (_e, show) => {
-  if (!['A', 'B', 'split'].includes(show)) return;
-  videoShow = show;
-  layoutVideo();
-});
-
 // ---------- sesión de YouTube Music ----------
 async function authStatus() {
   const ses = session.fromPartition(PARTITION);
@@ -417,7 +281,6 @@ ipcMain.handle('lib:playlists', wrap(() => library.playlists()));
 ipcMain.handle('lib:playlist', wrap((id) => library.playlist(id)));
 ipcMain.handle('lib:radio', wrap((videoId) => library.radio(videoId)));
 ipcMain.handle('lib:popularity', wrap((ids) => library.popularityMany(Array.isArray(ids) ? ids.filter((x) => /^[\w-]{6,20}$/.test(x)) : [])));
-ipcMain.handle('lib:video-type', wrap((videoId) => library.videoType(videoId)));
 
 // Importar playlists: copia título y pistas de cada lista (y Me gusta) a disco para usarlas sin conexión y en AutoMix.
 const cratesFile = () => path.join(app.getPath('userData'), 'playlists.json');
@@ -599,7 +462,6 @@ app.whenReady().then(() => {
   analyzer = new Analyzer({
     localLib,
     libraryDir,
-    videoType: (id) => library.videoType(id),
     ffmpeg: () => ffmpegBin,
     cacheDir: path.join(app.getPath('userData'), 'cache'),
     settings,
@@ -617,7 +479,6 @@ app.whenReady().then(() => {
     webPreferences: { preload: path.join(ROOT, 'preload', 'app.js'), contextIsolation: true, sandbox: true },
   });
   win.loadURL('app://ui/index.html');
-  win.on('closed', () => { if (videoOpen()) videoWin.destroy(); });
 
   for (const id of DECKS) createDeckView(id);
   libraryView = new WebContentsView({ webPreferences: { partition: PARTITION, contextIsolation: true, sandbox: true } });

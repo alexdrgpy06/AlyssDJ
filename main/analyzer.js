@@ -9,9 +9,7 @@ const ytdlp = require('./ytdlp');
 const L = require('./library-save');
 
 class Analyzer {
-  constructor({ cacheDir, settings, session, emit, ffmpeg, localLib, libraryDir, videoType }) {
-    this.videoType = videoType || (async () => null); // (videoId) → musicVideoType de YouTube Music
-    this.videoJobs = new Set();
+  constructor({ cacheDir, settings, session, emit, ffmpeg, localLib, libraryDir }) {
     this.localLib = localLib;
     this.libraryDir = libraryDir || (() => path.join(cacheDir, 'saved'));
     this.ffmpeg = ffmpeg || (() => 'ffmpeg');
@@ -89,7 +87,6 @@ class Analyzer {
     const have = existing && !opts.force && (!needsAudio || existing.saved || (!save && existing.audio));
     if (have) {
       this.emit({ id, stage: 'done', analysis: existing });
-      if (existing.saved && existing.videoState === undefined) this.saveVideo(id); // guardada antes de existir el video: se completa en segundo plano
       return;
     }
     if (this.running?.id === id || this.queue.some((j) => j.id === id)) return;
@@ -164,50 +161,7 @@ class Analyzer {
     }
     fs.writeFileSync(this.jsonPath(id), JSON.stringify(record));
     if (!local && !save && !reuse && !opts.keepAudio) fs.rmSync(file, { force: true }); // nunca se borra un archivo guardado
-    if (save) setImmediate(() => this.saveVideo(id)); // el video va después y sin bloquear: el audio ya está listo
     return this.get(id);
-  }
-
-  // Si la pista tiene video de verdad (no solo portada) se baja junto al audio, en segundo plano. Un fallo no toca el audio.
-  async saveVideo(id) {
-    const s = this.settings.get();
-    if (s.saveVideo === false || this.videoJobs.has(id)) return;
-    const a = this.get(id);
-    if (!a?.saved) return;
-    this.videoJobs.add(id);
-    const libDir = this.libraryDir();
-    const mark = (patch) => {
-      const cur = this.get(id);
-      if (!cur) return;
-      const { audio, mixEdit, ...rest } = cur;
-      fs.writeFileSync(this.jsonPath(id), JSON.stringify({ ...rest, ...patch }));
-      this.emit({ id, stage: 'video', ...patch });
-    };
-    try {
-      if (L.findVideo(libDir, id)) return mark({ videoState: 'ready' });
-      const type = await this.videoType(id);
-      if (!L.isRealVideo(type)) return mark({ videoState: 'none', videoType: type || null }); // solo portada: no se descarga nada
-      const tool = await ytdlp.findYtdlp(s.ytdlpPath);
-      if (!tool) throw new Error('yt-dlp no está instalado');
-      mark({ videoState: 'downloading', videoType: type });
-      await ytdlp.downloadVideo({ bin: tool.bin, videoId: id, dir: libDir, extraArgs: ytdlp.cookieArgs(s), maxHeight: s.videoMaxHeight || 1080, onProgress: (p) => this.emit({ id, stage: 'video', videoState: 'downloading', progress: p }) });
-      mark({ videoState: 'ready', videoType: type });
-    } catch (e) {
-      mark({ videoState: 'error', videoError: String(e.message).slice(0, 200) }); // el audio guardado sigue intacto
-    } finally {
-      this.videoJobs.delete(id);
-    }
-  }
-
-  // Ruta del video guardado de una pista (id de YouTube o id de su copia local), o null.
-  videoPath(key) {
-    const a = this.get(key);
-    const yt = a?.ytId || key;
-    try {
-      return L.findVideo(this.libraryDir(), yt);
-    } catch {
-      return null;
-    }
   }
 
   // El archivo guardado entra al índice local (con etiquetas y carátula) y recibe una copia del análisis,

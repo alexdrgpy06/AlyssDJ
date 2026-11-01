@@ -46,7 +46,6 @@ Comparación de funciones hecha a partir de lo que ofrecen estos programas en su
 | | Valoración, color y etiquetas propias | ✓ | ✓ | ✓ | ⏳ |
 | **Automático** | AutoDJ / Automix | ✓ | ✓ | ✓ | ✅ con radio de YouTube, tempo, fase y estilos; 🆕 puntos de mezcla por estructura, orden por BPM/clave/energía y vista editable |
 | **Streaming** | Servicios integrados | Beatport, Tidal, SoundCloud… | Spotify, Tidal, SoundCloud, Beatport… | — | ✅ YouTube Music Premium |
-| **Video** | Video de las pistas | plugin | ✓ | — | ✅ ventana en otra pantalla y vista de video en AutoMix |
 | **Control** | Controladoras MIDI | ✓ (mapeos incluidos) | ✓ (mapeos incluidos) | ✓ (muchos mapeos) | ✅ MIDI learn ⏳ mapeos incluidos y LEDs |
 | | Atajos de teclado | ✓ | ✓ | configurables | ✅ ⏳ configurables |
 | | Vinilo/CDJ con timecode | ✓ | ✓ | ✓ | ❌ |

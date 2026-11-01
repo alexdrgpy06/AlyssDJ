@@ -83,7 +83,7 @@ git clone https://github.com/alexdrgpy06/AlyssDJ.git && cd AlyssDJ
 npm install && npm start
 ```
 
-Si ya tienes `ffmpeg` o `yt-dlp` en el sistema, los usa. En Wayland el sistema ignora la posición de la ventana de video: elige la pantalla en el selector y usa «Completa».
+Si ya tienes `ffmpeg` o `yt-dlp` en el sistema, los usa.
 
 ## Actualizaciones automáticas
 

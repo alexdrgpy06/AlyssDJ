@@ -14,7 +14,6 @@
 | El beatgrid no cae en los golpes | **GRID → SET GRID** sobre un bombo, o **◀ ▶** para afinar. En los streams puede haber un desfase fijo: se guarda por pista |
 | SYNC / loops / beat jump dicen que falta BPM | Analiza la pista o usa **TAP** |
 | Las playlists salen vacías | Hace falta la sesión iniciada. Después, **Importar mis playlists** |
-| La ventana de video no se coloca en mi otra pantalla | En Wayland el sistema ignora la posición. Arrastra la ventana a esa pantalla y pulsa **Completa** |
 | No suena por mis auriculares | **Ajustes → Salida de audio**: elige el dispositivo de auriculares y activa **CUE** en el canal. Revisa el knob **PHONES** |
 | **REC** dice que no puede grabar | Solo Linux por ahora, y necesita `pactl` y `ffmpeg`. Elige la fuente en *Grabar desde* |
 | La rueda del ratón no hace zoom | Es **Ctrl + rueda** sobre la onda. Sin Ctrl, y en pausa, la rueda busca fino |

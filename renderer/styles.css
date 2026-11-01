@@ -124,7 +124,7 @@ body.learning #btn-midi-learn { background: var(--warn); color: #1a1200; border-
 body.learning [data-ctl] { outline: 1px dashed var(--warn); outline-offset: 2px; }
 body.learning [data-ctl].armed { outline: 2px solid var(--warn); }
 
-/* ---------- popover de video ---------- */
+/* ---------- popovers ---------- */
 .popover {
   position: fixed; top: 48px; right: 14px; width: 380px; z-index: 20; padding: 14px; display: flex; flex-direction: column; gap: 10px;
   background: var(--raised); border: 1px solid var(--line-2); border-radius: var(--r-3); box-shadow: var(--sh-2);
@@ -247,7 +247,7 @@ canvas.overview { width: 100%; height: 38px; background: var(--inset); border: 1
 .ring-fg { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
 .platter .spin { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
 .platter .spin::after { content: ''; position: absolute; left: 50%; top: 5%; width: 4px; height: 9%; margin-left: -2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent); }
-/* etiqueta del vinilo: portada que gira con el plato, o el video si lo hay (el video no gira) */
+/* etiqueta del vinilo: portada que gira con el plato */
 .vid { position: absolute; inset: 14%; border-radius: 50%; overflow: hidden; background: #05070b; box-shadow: 0 0 0 3px #0a0d13, 0 0 0 4px #ffffff14, inset 0 0 20px #000a; cursor: pointer; }
 .vid .rot { position: absolute; inset: 0; will-change: transform; }
 .vid img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -256,8 +256,6 @@ canvas.overview { width: 100%; height: 38px; background: var(--inset); border: 1
 .vid::after { content: ''; position: absolute; left: 50%; top: 50%; width: 9%; height: 9%; margin: -4.5% 0 0 -4.5%; border-radius: 50%; background: #05070b; box-shadow: 0 0 0 2px #ffffff22; z-index: 2; }
 .deck-letter { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15cqmin; font-weight: 800; color: var(--accent); opacity: .5; }
 .vid:has(.cover[src]) .deck-letter { display: none; }
-.vid .pop { position: absolute; right: 12%; bottom: 12%; z-index: 3; padding: 3px; min-width: var(--ctl-h); border-radius: 5px; background: #000b; border-color: #ffffff22; color: #fff; opacity: 0; transition: opacity .15s var(--ease); }
-.vid:hover .pop, .vid .pop:focus-visible { opacity: 1; }
 .pl-info { position: absolute; left: 50%; bottom: 4.5%; transform: translateX(-50%); z-index: 3; display: flex; align-items: baseline; gap: 6px; padding: 1px 9px; border-radius: 99px; background: #000b; font-family: var(--mono); pointer-events: none; }
 .pl-time { font-size: 12px; font-weight: 600; }
 .pl-bpm { display: none; }
@@ -451,7 +449,7 @@ menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
 .am-queue .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .am-queue .t small { color: var(--dim); }
 .am-queue:empty::after { content: 'Vacía: la radio la irá llenando'; color: var(--faint); font-size: 12px; }
-#btn-automix.active, #btn-video.active { color: var(--text); background: var(--raised-2); border-color: var(--line-2); }
+#btn-automix.active { color: var(--text); background: var(--raised-2); border-color: var(--line-2); }
 #btn-automix.active .ic { color: var(--play); }
 .tracks .actions button.rd { color: var(--play); border-color: #1c5a38; }
 .tracks .actions button.qq { padding: 2px 7px; }

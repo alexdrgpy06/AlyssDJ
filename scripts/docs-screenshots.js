@@ -30,7 +30,7 @@ module.exports = (win, decks) => {
     fs.writeFileSync(path.join(out, name), img.toPNG());
     L('shot', name);
   }
-  const closePanels = () => js(`for (const id of ['video-panel','sampler-panel']) document.getElementById(id).hidden = true; for (const d of document.querySelectorAll('dialog[open]')) d.close(); document.body.classList.remove('learning'); return 1`);
+  const closePanels = () => js(`for (const id of ['sampler-panel']) document.getElementById(id).hidden = true; for (const d of document.querySelectorAll('dialog[open]')) d.close(); document.body.classList.remove('learning'); return 1`);
 
   wc.once('did-finish-load', async () => {
     try {
@@ -103,10 +103,6 @@ module.exports = (win, decks) => {
       await js(`document.getElementById('btn-sampler').click(); __app.sampler.play(0); return 1`);
       await wait(120);
       await shot('15-sampler.png', '#sampler-panel', 12);
-      await closePanels();
-      await js(`document.getElementById('btn-video').click(); return 1`);
-      await wait(700);
-      await shot('16-video-panel.png', '#video-panel', 12);
       await closePanels();
       await js(`document.getElementById('btn-settings').click(); return 1`);
       await wait(900);

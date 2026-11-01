@@ -58,11 +58,6 @@ class App {
     this.automix = new AutoMix(this);
     this.mixEditor = new MixEditor(this);
     this.bindAutoMix();
-    this.videoMode = 'auto';
-    this.videoState = await window.ytdj.video.state();
-    this.lastShown = 'A';
-    this.bindVideoPanel();
-    if (this.settings.videoPref) this.eachDeck((d) => d.sendStream({ type: 'videoPref', on: true }));
     this.midi = new Midi(this);
     this.midi.init();
 
@@ -267,7 +262,6 @@ class App {
     const panel = $('#sampler-panel');
     const btn = $('#btn-sampler');
     const setOpen = (open) => {
-      if (open) $('#video-panel').hidden = true;
       panel.hidden = !open;
       btn.setAttribute('aria-expanded', String(open));
       btn.classList.toggle('active', open);
@@ -490,100 +484,6 @@ class App {
     }).join('');
   }
 
-  // ---------- pantalla de video ----------
-  autoShow() {
-    const score = (d) => (d.st.playing ? 1 : 0.25) * d.channelGain();
-    const a = score(this.decks.A);
-    const b = score(this.decks.B);
-    if (a > b * 1.3) return 'A';
-    if (b > a * 1.3) return 'B';
-    return a === 0 && b === 0 ? this.lastShown : 'split';
-  }
-
-  resolveVideoShow() {
-    return this.videoMode === 'auto' ? this.autoShow() : this.videoMode;
-  }
-
-  async openVideo(id) {
-    this.videoMode = id;
-    this.videoState = await window.ytdj.video.open({ show: id });
-    this.renderVideoPanel();
-  }
-
-  async refreshDisplays() {
-    const sel = $('#vp-display');
-    const list = await window.ytdj.video.displays();
-    const cur = sel.value;
-    sel.innerHTML = list.map((d) => `<option value="${d.id}">${d.label}</option>`).join('');
-    sel.value = cur && list.some((d) => String(d.id) === cur) ? cur : String((list.find((d) => !d.primary) || list[0]).id);
-  }
-
-  renderVideoPanel() {
-    const st = this.videoState;
-    $('#vp-toggle span').textContent = st.open ? 'Cerrar ventana de video' : 'Abrir ventana de video';
-    $('#btn-video').classList.toggle('active', !!st.open);
-    document.querySelectorAll('#vp-show button').forEach((b) => b.classList.toggle('on', b.dataset.v === this.videoMode));
-    $('#vp-full').classList.toggle('on', !!st.fullscreen);
-  }
-
-  bindVideoPanel() {
-    const panel = $('#video-panel');
-    const btn = $('#btn-video');
-    const setOpen = (open) => {
-      if (open) this.closeSampler();
-      panel.hidden = !open;
-      btn.setAttribute('aria-expanded', String(open));
-      if (open) this.refreshDisplays().then(() => this.renderVideoPanel());
-    };
-    const displayId = () => Number($('#vp-display').value) || undefined;
-    btn.addEventListener('click', () => setOpen(panel.hidden));
-    $('#vp-close').addEventListener('click', () => setOpen(false));
-    document.addEventListener('keydown', (e) => e.key === 'Escape' && !panel.hidden && setOpen(false));
-    $('#vp-toggle').addEventListener('click', async () => {
-      this.videoState = this.videoState.open
-        ? await window.ytdj.video.close()
-        : await window.ytdj.video.open({ show: this.resolveVideoShow(), displayId: displayId() });
-      this.renderVideoPanel();
-    });
-    $('#vp-full').addEventListener('click', async () => {
-      this.videoState = await window.ytdj.video.open({ show: this.resolveVideoShow(), displayId: displayId(), fullscreen: !this.videoState.fullscreen });
-      this.renderVideoPanel();
-    });
-    $('#vp-show').addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-v]');
-      if (!b) return;
-      this.videoMode = b.dataset.v;
-      if (this.videoMode !== 'auto') window.ytdj.video.show(this.videoMode);
-      this.renderVideoPanel();
-    });
-    $('#vp-display').addEventListener('change', async () => {
-      if (this.videoState.open) this.videoState = await window.ytdj.video.open({ displayId: displayId() });
-      this.renderVideoPanel();
-    });
-    $('#vp-pref').checked = !!this.settings.videoPref;
-    $('#vp-pref').addEventListener('change', async (e) => {
-      this.settings = await window.ytdj.settings.set({ videoPref: e.target.checked });
-      this.eachDeck((d) => d.sendStream({ type: 'videoPref', on: e.target.checked }));
-    });
-    window.ytdj.video.onState((st) => {
-      this.videoState = st;
-      this.renderVideoPanel();
-    });
-    // Modo Auto: la ventana sigue al deck que está al aire (con un respiro para no parpadear al cruzar).
-    let pending = null;
-    setInterval(() => {
-      if (!this.videoState.open || this.videoMode !== 'auto') return;
-      const want = this.autoShow();
-      if (want === this.lastShown) return (pending = null);
-      if (pending?.want !== want) pending = { want, since: performance.now() };
-      else if (performance.now() - pending.since > 600) {
-        this.lastShown = want;
-        window.ytdj.video.show(want);
-        pending = null;
-      }
-    }, 200);
-  }
-
   // Inicio de sesión: Google bloquea el login embebido, así que se importa la sesión de un navegador instalado.
   bindLogin() {
     const dlg = $('#login');
@@ -744,8 +644,6 @@ class App {
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
     f.autoUpdate.checked = s.autoUpdate !== false;
-    f.saveVideo.checked = s.saveVideo !== false;
-    f.videoMaxHeight.value = String(s.videoMaxHeight || 1080);
     f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
     f.autoAnalyzeCue.checked = !!s.autoAnalyzeCue;
     f.outputMode.value = s.output?.mode || 'split';
@@ -831,8 +729,6 @@ class App {
         saveOnAnalyze: f.saveOnAnalyze.checked,
         saveOnPlay: f.saveOnPlay.checked,
         autoUpdate: f.autoUpdate.checked,
-        saveVideo: f.saveVideo.checked,
-        videoMaxHeight: Number(f.videoMaxHeight.value),
         libraryDir: f.libraryDir.value,
         autoAnalyzeCue: f.autoAnalyzeCue.checked,
         output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value },

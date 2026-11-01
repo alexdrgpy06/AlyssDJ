@@ -73,9 +73,6 @@ export class Deck {
     this.local = null;
     this.ovCache = {};
     this.trimTouched = false;
-    this.videoSrc = null; // video guardado de la pista (solo con video real) cuando suena desde archivo
-    this.videoKey = null;
-    this.videoSyncAt = 0;
     this.fx = { on: false, type: 'echo', wet: 0.5, div: 0.75 };
     this.playedMs = 0;
     this.lastRender = performance.now();
@@ -144,7 +141,6 @@ export class Deck {
   applyState(s) {
     this.st = s;
     this.stAt = performance.now();
-    this.syncMedia();
     if (!this.track) return;
     if (!this.track.title && s.title) {
       this.track.title = s.title;
@@ -255,9 +251,6 @@ export class Deck {
     this.st = { pos: this.cuePoint, dur: track.duration || 0, playing: false, rate: this.rate(), level: 0 };
     this.wantPlay = play;
     this.broadcast({ type: 'loop' });
-    this.videoSrc = null; // el video del deck anterior no vale para esta pista hasta que refreshVideo lo resuelva
-    this.videoKey = null;
-    this.syncMedia();
     this.playedMs = 0;
     this.logged = false;
     this.streamPlayedMs = 0;
@@ -276,44 +269,7 @@ export class Deck {
     if (!this.analysis) {
       if (track.local ? this.app.settings.autoAnalyzeLocal !== false : this.app.settings.autoAnalyzeCue && !this.isAudible()) this.analyze();
     }
-    this.refreshVideo();
     this.app.onDeckLoaded(this);
-  }
-
-  // Si la pista tiene video guardado y suena desde archivo, la miniatura y la ventana de video usan ese video.
-  async refreshVideo() {
-    const key = this.track?.videoId;
-    let src = null;
-    if (key && this.source === 'local') src = await window.ytdj.video.localSrc(key);
-    if (key !== this.track?.videoId) return; // cambió de pista mientras se consultaba
-    this.videoSrc = src;
-    this.videoKey = src ? key : null; // id de la pista a la que pertenece videoSrc
-    this.syncMedia();
-  }
-
-  // Qué ve la ventana de video de este deck: solo su propia pista (video local o streaming ya cargado), si no una pantalla negra.
-  videoMedia() {
-    const t = this.track;
-    if (!t) return { kind: 'none', label: 'Sin pista' };
-    const cover = t.thumb || null;
-    if (this.source === 'local') return this.videoSrc && this.videoKey === t.videoId ? { kind: 'local', src: this.videoSrc } : { kind: 'none', label: 'Sin video', cover };
-    return this.st.videoId === t.videoId && this.st.ready ? { kind: 'stream' } : { kind: 'none', label: 'Cargando…', cover };
-  }
-
-  syncMedia() {
-    const m = this.videoMedia();
-    const k = JSON.stringify(m);
-    if (k === this.mediaKey) return;
-    this.mediaKey = k;
-    window.ytdj.video.setDeckMedia(this.id, m);
-  }
-
-  // Mantiene el video sincronizado con el audio (miniatura aquí; ventana de video por el proceso principal).
-  tickVideo(now) {
-    if (!this.videoSrc || this.source !== 'local' || now - this.videoSyncAt < 250) return;
-    this.videoSyncAt = now;
-    const sync = { t: this.pos(), playing: !!this.st.playing, rate: this.st.rate || 1, at: now };
-    window.ytdj.video.sync(this.id, { t: sync.t, playing: sync.playing, rate: sync.rate });
   }
 
   async setSource(src) {
@@ -338,7 +294,6 @@ export class Deck {
       if (playing) this.sendStream({ type: 'play' });
     }
     if (this.loop) this.broadcast({ type: 'loop', ...this.loop });
-    this.refreshVideo();
   }
 
   saveCues() {
@@ -355,7 +310,6 @@ export class Deck {
   }
 
   onAnalysisEvent(ev) {
-    if (ev.stage === 'video' && ev.videoState === 'ready' && (ev.id === this.track?.videoId || ev.id === this.analysis?.ytId)) return void this.refreshVideo();
     if (ev.id !== this.track?.videoId) return;
     if (ev.stage === 'mixedit') {
       if (this.analysis) this.analysis.mixEdit = ev.mixEdit || undefined;
@@ -638,7 +592,6 @@ export class Deck {
       rot: q('.vid .rot'),
       cover: q('.vid .cover'),
       headCover: q('.head-cover'),
-      pop: q('.vid .pop'),
       ring: q('.ring-fg'),
       plTime: q('.pl-time'),
       plBpm: q('.pl-bpm'),
@@ -671,9 +624,6 @@ export class Deck {
     });
     q('.deck-letter').textContent = this.id;
     q('.art-letter').textContent = this.id;
-    const openVideo = () => !this.app.learning && this.app.openVideo(this.id);
-    el.pop.addEventListener('click', (e) => (e.stopPropagation(), openVideo()));
-    el.vid.addEventListener('dblclick', openVideo);
     const P = `deck${this.id}`;
     const hold = (btn, id, fn) => {
       btn.addEventListener('pointerdown', (e) => !this.app.learning && e.button === 0 && fn(true));
@@ -753,7 +703,7 @@ export class Deck {
 
     // Jog: arrastrar en círculo. Sonando = pitch bend; en pausa = búsqueda fina.
     el.platter.addEventListener('pointerdown', (e) => {
-      if (this.app.learning || e.target.closest('.pop')) return;
+      if (this.app.learning) return;
       el.platter.setPointerCapture(e.pointerId);
       const r = el.platter.getBoundingClientRect();
       const angle = (ev) => (Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2)) * 180) / Math.PI;
@@ -865,7 +815,6 @@ export class Deck {
     }
     this.tickSaveOnPlay(Math.min(nowT - this.lastRender, 1000));
     this.lastRender = nowT;
-    this.tickVideo(nowT);
     const el = this.el;
     const t = this.track;
     const pos = this.pos();
