@@ -16,7 +16,7 @@ module.exports = (win) => {
     for (let i = 0; i < 60; i++) { await wait(500); if (await js(`return !!(await window.ytdj.analysis.get(${JSON.stringify(rows[0].videoId)})) && !!(await window.ytdj.analysis.get(${JSON.stringify(rows[1].videoId)}))`)) break; }
     res.rows = rows.map((r) => r.videoId);
     // cola de AutoMix con las dos pistas y análisis cargados
-    await js(`const am = __app.automix; am.cfg.preferLocal = false; am.queue = ${JSON.stringify(rows)}; for (const r of ${JSON.stringify(rows)}) am.ana.set(r.videoId, await window.ytdj.analysis.get(r.videoId)); document.querySelector('.tabs [data-tab="automix"]').click(); am.emit(); return 1`);
+    await js(`const am = __app.automix; am.cfg.preferLocal = false; am.queue = ${JSON.stringify(rows)}; for (const r of ${JSON.stringify(rows)}) am.ana.set(r.videoId, await window.ytdj.analysis.get(r.videoId)); document.querySelector('.sources [data-tab="automix"]').click(); am.emit(); return 1`);
     await wait(500);
     // abrir desde la fila de la cola
     res.opened = await js(`document.querySelector('#amv-list [data-act="edit"]').click(); await new Promise(r=>setTimeout(r,500)); const d=document.getElementById('mixedit'); return { open: d.open, auto: document.getElementById('me-hint').textContent, items: document.querySelectorAll('#me-list li').length, previewDisabled: document.getElementById('me-preview').disabled }`);

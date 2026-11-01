@@ -40,7 +40,7 @@ export class Library {
       this.setMsg(p.finished ? 'Importación terminada' : `Importando ${p.done + 1}/${p.total}: ${p.title || ''}${p.error ? ' (error)' : ''}`);
     });
 
-    document.querySelectorAll('.tabs [data-tab]').forEach((b) =>
+    document.querySelectorAll('.sources [data-tab]').forEach((b) =>
       b.addEventListener('click', () => this.show(b.dataset.tab)),
     );
     document.getElementById('search-form').addEventListener('submit', (e) => {
@@ -62,6 +62,7 @@ export class Library {
   async refreshAnalyzed() {
     const list = await window.ytdj.analysis.list();
     this.analyzed = new Map(list.map((a) => [a.id, a]));
+    document.getElementById('cnt-analyzed').textContent = list.length || '';
     if (this.tab === 'analyzed') this.show('analyzed');
     else this.render();
   }
@@ -73,10 +74,11 @@ export class Library {
   async show(tab, query) {
     this.tab = tab;
     document.dispatchEvent(new CustomEvent('alyss:tab', { detail: tab }));
-    document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    document.querySelectorAll('.sources [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     const isAm = tab === 'automix';
     document.getElementById('am-view').hidden = !isAm;
     document.querySelector('.table-wrap').hidden = isAm;
+    document.querySelector('.lib-toolbar').hidden = isAm;
     if (isAm) {
       this.addFolder.hidden = this.importBtn.hidden = this.listBtn.hidden = true;
       this.setMsg('');
@@ -267,7 +269,26 @@ export class Library {
       th.classList.toggle('asc', this.sort?.k === th.dataset.sort && this.sort.dir === 1);
     });
     this.body.innerHTML = rows.map((r, i) => this.rowHtml(r, i)).join('');
+    this.renderEmpty(rows);
     this.listBtn.hidden = !rows.some((r) => r.videoId && !r.playlist);
+  }
+
+  // Estado vacío: qué pasa y qué hacer a continuación, según la fuente.
+  renderEmpty(rows) {
+    const el = document.getElementById('lib-empty');
+    const none = !rows.length && !this.msg.textContent.startsWith('Cargando');
+    el.hidden = !none;
+    if (!none) return;
+    const hint = {
+      search: 'Escribe arriba y pulsa Enter para buscar en YouTube Music.',
+      liked: 'No hay canciones con Me gusta. Inicia sesión en YouTube Music para verlas.',
+      playlists: 'No hay playlists. Inicia sesión en YouTube Music para verlas.',
+      imported: 'Aún no importaste nada. Pulsa «Importar mis playlists» (necesitas la sesión iniciada).',
+      local: 'Añade una carpeta de música o arrastra archivos a un deck.',
+      analyzed: 'Aún no hay pistas analizadas. Pulsa «Analizar» en cualquier pista.',
+      history: 'Aquí aparece lo que suena más de 20 s.',
+    }[this.tab] || 'Sin pistas.';
+    document.getElementById('lib-empty-text').textContent = this.onlyCompat && this.base?.length ? 'Ninguna pista es compatible con el deck en juego. Desactiva «Solo compatibles».' : hint;
   }
 
   updateRow(id) {

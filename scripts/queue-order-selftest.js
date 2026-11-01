@@ -12,7 +12,7 @@ module.exports = (win) => {
       am.cfg.preferLocal = false; // sin descargas reales
       am.queue = Object.keys(bp).map((id) => mk(id));
       for (const id of Object.keys(bp)) am.ana.set(id, { id, bpm: bp[id], camelot: '8A', duration: 200, offset: 0, mix: { mixIn: 8, mixOut: [{ t: 180, score: 1 }], phrases: new Array(12).fill(60), phraseBeats: 16 } });
-      document.querySelector('.tabs [data-tab="automix"]').click();
+      document.querySelector('.sources [data-tab="automix"]').click();
       am.emit();
       await new Promise(r => setTimeout(r, 400));
       const before = [...document.querySelectorAll('#amv-list .am-item b')].map(b => b.firstChild.textContent);

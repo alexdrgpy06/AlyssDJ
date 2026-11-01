@@ -100,6 +100,19 @@ tests.shell = async () => {
   console.log('shell: OK');
 };
 
+tests.sources = async () => {
+  const html = read('renderer/index.html');
+  const css = read('renderer/styles.css');
+  // REQ-5: panel de fuentes, sin fila de pestañas
+  assert.ok(/<aside class="sources"/.test(html) && !/class="tabs"/.test(html), 'panel lateral en lugar de pestañas');
+  for (const t of ['search', 'liked', 'playlists', 'imported', 'local', 'analyzed', 'history', 'automix']) assert.ok(new RegExp(`<button data-tab="${t}"`).test(html), `fuente ${t}`);
+  assert.ok(/class="lib-toolbar"/.test(html) && html.indexOf('id="search-form"') > html.indexOf('lib-toolbar'), 'búsqueda en la barra de herramientas');
+  assert.ok(!/\.tabs\b/.test(css), 'sin reglas .tabs');
+  assert.ok(/@media \(max-width: 1100px\)[^}]*\.library \{ grid-template-columns: 48px/.test(css), 'colapsa a iconos bajo 1100 px');
+  assert.ok(/id="lib-empty"/.test(html) && /renderEmpty/.test(read('renderer/library.js')), 'estado vacío');
+  console.log('sources: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

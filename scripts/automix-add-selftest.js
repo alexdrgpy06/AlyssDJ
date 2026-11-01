@@ -18,7 +18,7 @@ module.exports = (win) => {
     await js(`const am = __app.automix; am.cfg.preferLocal = false; am.cfg.endless = false; am.on = true;
       const A = __app.decks.A; A.track = ${JSON.stringify(rows[0])}; A.analysis = await window.ytdj.analysis.get(${JSON.stringify(rows[0].videoId)}); A.st = { playing: true, dur: 110, ready: true, videoId: A.track.videoId, pos: 20, rate: 1 }; am.cur = A; am.ana.set(A.track.videoId, A.analysis);
       am.queue = [${JSON.stringify(rows[1])}]; for (const r of [${JSON.stringify(rows[1])}]) am.ana.set(r.videoId, await window.ytdj.analysis.get(r.videoId));
-      document.querySelector('.tabs [data-tab="automix"]').click(); am.emit(); return 1`);
+      document.querySelector('.sources [data-tab="automix"]').click(); am.emit(); return 1`);
     await wait(800);
     // 1) buscar en la propia vista: resultados de YouTube Music (con reproducciones) y de la librería
     res.search = await js(`const i=document.getElementById('amv-search'); i.value='neon drive'; i.dispatchEvent(new Event('input')); await new Promise(r=>setTimeout(r,2500)); const rows=[...document.querySelectorAll('#amv-results .am-res')].map(li=>({title:li.querySelector('b').textContent, sub:li.querySelector('small').textContent, plays: li.querySelector('.am-plays')?.textContent||'', hint: li.querySelector('.am-hint').textContent})); return { hidden: document.getElementById('amv-results').hidden, rows }`);
