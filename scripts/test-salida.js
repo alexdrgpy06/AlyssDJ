@@ -69,6 +69,77 @@ tests.plan = async () => {
   console.log('plan: OK');
 };
 
+tests.queue = async () => {
+  const listeners = [];
+  const toasts = [];
+  globalThis.localStorage = { getItem: () => null, setItem() {} };
+  globalThis.window = { ytdj: { analysis: { onEvent: (cb) => listeners.push(cb), get: async () => null, request() {} }, lib: { radio: async () => ({ ok: true, data: [] }), search: async () => ({ ok: true, data: [] }) } } };
+  const { AutoMix } = await import('../renderer/automix.js');
+  const mk = (cfg = {}) => {
+    const A = { id: 'A', track: { videoId: 'CUR' }, st: { playing: true, dur: 200 }, pos: 10, remaining: () => 190, channelGain: () => 1, analysis: null };
+    const B = { id: 'B', track: null, st: {} };
+    const app = { decks: { A, B }, other: (d) => (d === A ? B : A), toast: (m) => toasts.push(m), xfader: { value: -1 }, applyXf() {} };
+    const am = new AutoMix(app);
+    Object.assign(am.cfg, { endless: false }, cfg);
+    am.on = true; am.cur = A;
+    am.queue = ['a', 'b', 'c', 'd', 'e'].map((x) => ({ videoId: x.toUpperCase(), title: `Pista ${x}`, local: true }));
+    return { am, A, B };
+  };
+  const ids = (am) => am.queue.map((t) => t.videoId).join('');
+
+  // REQ-1: el modo se deriva del ajuste heredado y se puede elegir
+  let { am } = mk();
+  assert.strictEqual(am.exitMode(), 'optimal');
+  ({ am } = mk({ optimalPoints: false })); assert.strictEqual(am.exitMode(), 'end', 'puntos óptimos apagado → final de la pista');
+  ({ am } = mk({ optimalPoints: true })); assert.strictEqual(am.exitMode(), 'optimal');
+  ({ am } = mk({ optimalPoints: false, exitMode: 'intro-outro' })); assert.strictEqual(am.exitMode(), 'intro-outro', 'lo elegido manda');
+  ({ am } = mk({ exitMode: 'raro' })); assert.strictEqual(am.exitMode(), 'optimal');
+  am.setCfg({ exitMode: 'outro-start' }); assert.strictEqual(am.snapshot().exitMode, 'outro-start');
+
+  // REQ-3: saltar siguiente
+  ({ am } = mk());
+  assert.strictEqual(am.snapshot().canSkip, true);
+  assert.strictEqual(am.skipNext(), true);
+  assert.strictEqual(ids(am), 'BCDE'); assert.ok(/Saltada: Pista a/.test(am.note) && toasts.at(-1) === am.note);
+  am.pinned.add('C'); am.queue = am.queue.slice(0, 2); am.pinned.add('B');
+  assert.strictEqual(am.skipNext(), true); assert.ok(!am.pinned.has('B'), 'la saltada deja de estar fijada'); assert.strictEqual(ids(am), 'C');
+  assert.strictEqual(am.skipNext(), false, 'con una sola pista no hay nada que saltar'); assert.strictEqual(am.snapshot().canSkip, false);
+  ({ am } = mk()); am.trans = { from: am.cur, to: {}, t0: performance.now(), len: 10 };
+  assert.strictEqual(am.skipNext(), false, 'en plena transición no salta'); assert.strictEqual(am.snapshot().canSkip, false);
+  ({ am } = mk()); am.on = false; assert.strictEqual(am.skipNext(), false);
+  // un «Mezclar ahora» pendiente pierde su plan (era de la pista saltada)
+  ({ am } = mk()); am.pendingMix = { plan: { exitAt: 50 } }; am.skipNext(); assert.deepStrictEqual(am.pendingMix, { plan: null });
+
+  // REQ-4: barajar
+  const seq = (vals) => { let i = 0; return () => vals[i++ % vals.length]; };
+  ({ am } = mk());
+  assert.strictEqual(am.cfg.smartOrder, true);
+  assert.strictEqual(am.shuffle(seq([0.1, 0.9, 0.3, 0.6])), true);
+  assert.notStrictEqual(ids(am), 'ABCDE'); assert.deepStrictEqual([...ids(am)].sort().join(''), 'ABCDE', 'no pierde ni duplica pistas');
+  assert.strictEqual(am.cfg.smartOrder, false, '«Orden automático» se apaga'); assert.ok(/Orden automático/.test(am.note));
+  assert.strictEqual(am.undoReorder(), true); assert.strictEqual(ids(am), 'ABCDE', 'Deshacer devuelve el orden anterior');
+  // fijadas y la cabeza en preparación no se mueven
+  ({ am } = mk({ smartOrder: false })); am.pinned.add('C'); am.pinned.add('D');
+  const keepHead = () => { const r = am.shuffle(seq([0.2, 0.7, 0.4])); return r; };
+  am.loadingNext = true; // la cabeza (A) ya se está cargando
+  keepHead();
+  assert.strictEqual(am.queue[0].videoId, 'A'); assert.strictEqual(am.queue[2].videoId, 'C'); assert.strictEqual(am.queue[3].videoId, 'D');
+  assert.strictEqual(am.queue[1].videoId === 'B' || am.queue[1].videoId === 'E', true);
+  assert.strictEqual(am.cfg.smartOrder, false);
+  // cabeza ya cargada en el deck libre
+  ({ am } = mk({ smartOrder: false })); am.app.decks.B.track = { videoId: 'A' };
+  for (let k = 0; k < 6; k++) { am.shuffle(seq([0.5, 0.1, 0.9, 0.3])); assert.strictEqual(am.queue[0].videoId, 'A', 'la cargada no se mueve'); }
+  // sin pistas sueltas no hay nada que barajar
+  ({ am } = mk({ smartOrder: false })); for (const x of 'ABCDE') am.pinned.add(x);
+  assert.strictEqual(am.shuffle(), false); assert.ok(/No hay pistas sueltas/.test(am.note));
+  ({ am } = mk()); am.queue = am.queue.slice(0, 1); assert.strictEqual(am.shuffle(), false); assert.strictEqual(am.snapshot().canShuffle, false);
+  // el azar no deja la misma cola: siempre cambia el orden
+  ({ am } = mk({ smartOrder: false })); assert.strictEqual(am.shuffle(() => 0.999), true); assert.notStrictEqual(ids(am), 'ABCDE');
+  // con el azar real siempre sale una permutación válida
+  for (let k = 0; k < 40; k++) { ({ am } = mk({ smartOrder: false })); am.shuffle(); assert.strictEqual([...ids(am)].sort().join(''), 'ABCDE'); }
+  console.log('queue: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

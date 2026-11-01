@@ -1,7 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
-import { planTransition, planNearest, rankCandidates, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { EXIT_MODES, planTransition, planNearest, rankCandidates, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -39,7 +39,7 @@ export class AutoMix {
     this.poolAt = -Infinity;
     this.moves = new Map(); // agregadas sin analizar: se avisa dónde acaban cuando llega su análisis
     this.suggestBusy = new Set();
-    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, optimalPoints: true, smartOrder: true };
+    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, smartOrder: true };
     try {
       Object.assign(this.cfg, JSON.parse(localStorage.getItem(LS) || '{}'));
     } catch {}
@@ -53,6 +53,12 @@ export class AutoMix {
   emit() {
     for (const l of this.listeners) l();
   }
+  // Modo de salida de la pista que suena. Si nunca se eligió, se deriva del ajuste heredado «puntos óptimos»
+  // (apagado = final de la pista), así lo guardado antes de existir el selector sigue valiendo.
+  exitMode() {
+    return EXIT_MODES.includes(this.cfg.exitMode) ? this.cfg.exitMode : this.cfg.optimalPoints === false ? 'end' : 'optimal';
+  }
+
   setCfg(patch) {
     Object.assign(this.cfg, patch);
     try {
@@ -137,6 +143,51 @@ export class AutoMix {
     this.pinned.add(track.videoId);
     this.emit();
   }
+  // «Saltar siguiente»: quita de la cola la pista que sigue; la mezcla irá a la que venía después.
+  skipNext() {
+    if (!this.on || this.trans || this.queue.length < 2) return false;
+    const [t] = this.queue.splice(0, 1);
+    this.pinned.delete(t.videoId);
+    this.pendingMix = this.pendingMix ? { plan: null } : this.pendingMix; // el plan de «Mezclar ahora» era para la pista saltada
+    this.note = `Saltada: ${t.title || t.videoId}`;
+    this.app.toast(this.note);
+    this.prepareAhead?.();
+    this.emit();
+    return true;
+  }
+
+  // «Barajar»: orden al azar de lo que no está fijado. No mueve lo fijado a mano ni la pista que ya se está preparando.
+  shuffle(rng = Math.random) {
+    if (this.queue.length < 2 || this.trans) return false;
+    const fixed = new Set(this.pinned);
+    const head = this.queue[0];
+    const other = this.cur ? this.app.other(this.cur) : null;
+    const prep = head ? this.prepOf(head)?.state : null;
+    if (head && (this.loadingNext || other?.track?.videoId === head.videoId || ['download', 'analyze', 'ready'].includes(prep))) fixed.add(head.videoId);
+    const slots = this.queue.map((t, i) => (fixed.has(t.videoId) ? -1 : i)).filter((i) => i >= 0);
+    if (slots.length < 2) {
+      this.note = 'No hay pistas sueltas que barajar (las fijadas y la que se prepara no se mueven).';
+      this.emit();
+      return false;
+    }
+    const items = slots.map((i) => this.queue[i]);
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    const before = this.queue.slice();
+    if (items.every((t, k) => t === before[slots[k]])) items.push(items.shift()); // el azar dejó el mismo orden: se rota una posición
+    slots.forEach((slot, k) => (this.queue[slot] = items[k]));
+    this.undoStack = before;
+    this.note = 'Cola barajada';
+    if (this.cfg.smartOrder) {
+      this.setCfg({ smartOrder: false });
+      this.note = 'Cola barajada; «Orden automático» se apagó para conservar este orden';
+    }
+    this.emit();
+    return true;
+  }
+
   remove(i) {
     const [t] = this.queue.splice(i, 1);
     if (t) this.pinned.delete(t.videoId);
@@ -524,7 +575,7 @@ export class AutoMix {
     const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
     curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
     const nextAna = (next.track?.videoId === head.videoId && next.analysis) || this.ana.get(head.videoId) || {};
-    return planTransition(curAna, nextAna, { len: quick ? Math.min(this.cfg.len, 6) : this.cfg.len, optimal: this.cfg.optimalPoints && !quick, pos: posOf(cur) });
+    return planTransition(curAna, nextAna, { len: quick ? Math.min(this.cfg.len, 6) : this.cfg.len, exitMode: quick ? 'end' : this.exitMode(), pos: posOf(cur) });
   }
 
   resetWait() {
@@ -682,8 +733,11 @@ export class AutoMix {
       nextReady: !!next && this.ready(next, this.queue[0]),
       queue: items,
       suggestions: this.suggestions(),
+      exitMode: this.exitMode(),
+      canSkip: this.on && !t && this.queue.length >= 2,
+      canShuffle: this.queue.length >= 2 && !t,
       chain: { canUndo: !!this.undoStack, total: items.reduce((x, i) => x + (i.cost || 0), 0), analyzed: items.filter((i) => i.bpm).length },
-      plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
+      plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, mode: this.plan.mode, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
       pos: this.cur ? posOf(this.cur) : null,
       trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, len: t.len, warnings: t.warnings } : null,
       progress: t ? Math.min(1, (performance.now() - t.t0) / 1000 / t.len) : null,
