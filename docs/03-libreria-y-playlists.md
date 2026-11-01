@@ -15,9 +15,23 @@ A la izquierda de la librería hay un panel de fuentes (con ancho reducido, solo
 | **Local** | Carpetas de tu disco (con etiquetas y carátulas) |
 | **Analizados** | Pistas que ya analizaste |
 | **Historial** | Lo que sonó más de 20 s |
+| **Análisis** | La cola de análisis en segundo plano (ver más abajo), con un contador de pendientes |
 | **AutoMix** | La cola y los controles de la mezcla automática (ver [AutoMix](04-automix.md)) |
 
 ![Búsqueda](img/14-libreria-busqueda.png)
+
+Cada fila lleva un chip de **origen** bajo el nombre del artista: **ARCHIVO** (archivo de tu disco o copia guardada) o **STREAM** (suena desde YouTube Music).
+
+## Analizar listas enteras en segundo plano
+
+![Cola de análisis](img/42-cola-de-analisis.png)
+
+- **Analizar lista** (barra de herramientas de la librería) encola todas las pistas de lo que estás viendo que aún no estén analizadas: una playlist abierta, Me gusta, una búsqueda, una carpeta local.
+- En **Playlists** e **Importadas**, cada lista tiene su botón **Analizar** sin tener que abrirla; en Importadas se ve cuántas pistas de cada una ya están analizadas.
+- La fuente **Análisis** muestra cada lista con su avance (hechas/total) y el estado de cada pista: en cola, descargando con porcentaje, analizando, hecha o error con su motivo. Puedes **pausar y reanudar** todo, **cancelar** una lista, **reintentar** las que fallaron y **quitar las terminadas**.
+- Se analiza **de una en una** para no competir con lo que suena. Lo que pidas a mano pasa primero, y las pistas cargadas en un deck van antes que el resto. Un error no detiene la cola.
+- La cola se **guarda en disco**: si cierras la app, sigue donde quedó al abrirla.
+- Si YouTube pide comprobar que no eres un bot, la cola **espera** unos minutos y sigue sola.
 
 ## Importar tus playlists
 

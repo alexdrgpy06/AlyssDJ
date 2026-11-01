@@ -11,4 +11,4 @@ Formato: `- [ ] 1.1 Descripción (REQ-1) @rol [verify: comando] [runner: claude|
 - [x] 3.2 Fuente y vista «Análisis», «Analizar lista» y «Analizar» por playlist (REQ-4) @ui [verify: node scripts/test-sinvideo.js queue-ui]
 - [x] 4.1 Sistema de vistas (Mezcla, Librería, Ondas), selector, atajos y ondas arriba o en el deck (REQ-5) @ui [verify: node scripts/test-sinvideo.js views]
 - [x] 4.2 Vista Automix inmersiva y salto automático desde la fuente AutoMix (REQ-5) @ui [verify: node scripts/test-sinvideo.js immersive]
-- [ ] 5.1 Regresión, documentación, capturas y lista de CI (REQ-6) @coder [verify: node scripts/test-sinvideo.js docs]
+- [x] 5.1 Regresión, documentación, capturas y lista de CI (REQ-6) @coder [verify: node scripts/test-sinvideo.js docs]

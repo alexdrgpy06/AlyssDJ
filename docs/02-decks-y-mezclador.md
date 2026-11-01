@@ -6,7 +6,7 @@
 
 | Zona | Qué hace |
 |---|---|
-| **Cabecera** | Título y artista; **STREAM / LOCAL** (de dónde suena); **Analizar**; BPM actual, tonalidad (con el color de la rueda Camelot) y desvío de pitch |
+| **Cabecera** | Título y artista; la etiqueta de **origen** (ARCHIVO LOCAL, GUARDADA o STREAM) y el selector **STREAM / ARCHIVO**; **Analizar**; BPM actual, tonalidad (con el color de la rueda Camelot) y desvío de pitch |
 | **Vista general** | Toda la pista. Clic para saltar |
 | **Plato** | La portada gira con la pista y el anillo marca el progreso. Arrastra en círculo: sonando = *bend*, en pausa = búsqueda fina. |
 | **CUE / ▶ / SYNC** | Transporte (ver abajo) |
@@ -88,9 +88,33 @@ En el centro: **MASTER** y **PHONES** (volumen de auriculares).
 
 En **Ajustes → Audio** elige *Dos dispositivos* (master y auriculares por separado) o *Un dispositivo de 4 canales* (1-2 master, 3-4 cue, típico de controladoras DJ).
 
-## Fuente: STREAM o LOCAL
+## De dónde suena cada pista
 
+La fuente se decide sola al cargar la pista y se ve en la etiqueta del deck y en el chip de cada fila de la librería:
+
+- **ARCHIVO LOCAL**: un archivo de tus carpetas. Es siempre el archivo; no existe otra fuente.
+- **GUARDADA**: una pista de YouTube de la que ya tienes copia (la guardó el análisis). Suena desde el archivo, sin anuncios, si **Ajustes → Librería y música → Preferir la copia guardada** está activo (lo está por defecto).
 - **STREAM**: suena desde YouTube Music con tu sesión.
-- **LOCAL**: suena un archivo. Las pistas de tus carpetas son siempre locales. Una pista de YouTube pasa a LOCAL si activas *Conservar audio tras analizar* y la analizas.
+
+El selector **STREAM / ARCHIVO** del deck solo se puede usar cuando existen las dos opciones (una pista guardada); si no, aparece atenuado y al pasar el ratón dice por qué («Analiza la pista para tener archivo»). Si la copia guardada se borró, la pista suena por streaming y la app lo avisa una vez.
+
+## Vistas de trabajo
+
+Arriba, junto a las herramientas, el selector de vista (también **Alt+1 … Alt+4**):
+
+| Vista | Para qué |
+|---|---|
+| **Mezcla** (Alt+1) | La consola completa: ondas, decks, mezclador y la librería debajo |
+| **Librería** (Alt+2) | Decks compactos y la librería con casi toda la altura, para preparar y buscar |
+| **Automix** (Alt+3) | Portada grande de lo que suena, la siguiente pista, la barra de la transición y los controles de AutoMix |
+| **Ondas** (Alt+4) | Ondas grandes y una tira por deck con play, cue y sync, más el mezclador; sin librería |
+
+![Vista Ondas](img/39-vista-ondas.png)
+
+El botón junto al selector (o **Ajustes → Decks y diseño → Ondas grandes**) elige dónde van las ondas con desplazamiento en las vistas Mezcla y Librería: **arriba**, a todo el ancho, o **dentro de cada deck**, encima de su vista general; así la franja superior libera su altura.
+
+![Ondas en el deck](img/40-ondas-en-el-deck.png)
+
+La vista y la opción de ondas se recuerdan entre sesiones. Al abrir la fuente **AutoMix** de la librería se pasa a la vista Librería y, al salir, vuelve la anterior (salvo que hayas elegido otra mientras tanto).
 
 ![Sync](img/10-deck-sync.png)

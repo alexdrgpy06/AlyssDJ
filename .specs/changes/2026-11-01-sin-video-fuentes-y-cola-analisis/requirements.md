@@ -3,7 +3,7 @@ change: 2026-11-01-sin-video-fuentes-y-cola-analisis
 type: refactor
 domains: [video, library, analysis, ui]
 paths: [main/**, preload/**, renderer/**, shared/**, scripts/**, docs/**, README.md, .github/**]
-commits: []
+commits: [b3fe169,75108f5,e459faa,04bc632,b69f271,6d70ec3]
 status: approved
 rev: 1
 approved_rev: 1

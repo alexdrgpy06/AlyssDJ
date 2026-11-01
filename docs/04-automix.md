@@ -13,6 +13,10 @@ AutoMix es un DJ automático: elige la siguiente pista y la **mezcla solo**, con
 
 ## La vista
 
+Al abrir la fuente **AutoMix** de la librería la app pasa a la vista **Librería** (decks compactos) y al salir vuelve a la anterior. Si prefieres solo mirar y controlar, la vista **Automix** (Alt+3) muestra la portada grande, la siguiente pista, la barra de la transición, Iniciar / Mezclar ahora, el estilo y la duración; **Ver cola** abre la cola completa.
+
+![Vista Automix](img/41-vista-automix.png)
+
 Arriba, tres tarjetas: **SUENA** (con lo que falta), el estado de la mezcla con su barra de progreso y **SIGUE**. Debajo, los controles y la **cola completa**.
 
 | Control | Qué hace |

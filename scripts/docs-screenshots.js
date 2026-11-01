@@ -139,6 +139,23 @@ module.exports = (win, decks) => {
       await shot('22-automix-mezclando.png');
       await shot('23-automix-vista-mezclando.png', '.library');
       await js(`__app.automix.stop(); return 1`);
+
+      // ---- vistas de trabajo y cola de análisis ----
+      await js(`__app.library.show('local'); __app.setView('mix'); __app.setWaves('top'); const A=__app.decks.A; A.seek(40); return 1`);
+      await wait(800);
+      await shot('37-vista-mezcla.png');
+      await js(`__app.setView('library'); return 1`); await wait(700);
+      await shot('38-vista-libreria.png');
+      await js(`__app.setView('waves'); return 1`); await wait(700);
+      await shot('39-vista-ondas.png');
+      await js(`__app.setView('mix'); __app.setWaves('deck'); return 1`); await wait(700);
+      await shot('40-ondas-en-el-deck.png');
+      await js(`__app.setWaves('top'); __app.setView('automix'); return 1`); await wait(900);
+      await shot('41-vista-automix.png');
+      await js(`__app.setView('library'); await window.ytdj.backlog.pause(); await window.ytdj.backlog.add({ name: 'Playlist de ejemplo', tracks: ${JSON.stringify(rows.map((r) => ({ videoId: 'DEMO' + r.videoId.slice(0, 7), title: r.title + ' (ejemplo)', artist: r.artist, duration: r.duration })))} }); document.querySelector('.sources [data-tab="queue"]').click(); return 1`);
+      await wait(900);
+      await shot('42-cola-de-analisis.png', '.library');
+      await js(`const st = await window.ytdj.backlog.state(); for (const l of st.lists) await window.ytdj.backlog.cancel(l.id); await window.ytdj.backlog.resume(); __app.setView('mix'); return 1`);
     } catch (e) {
       L('error', e.stack.slice(0, 500));
     }

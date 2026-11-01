@@ -50,7 +50,11 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 3. En la librería, las pistas analizadas muestran su tonalidad con color Camelot y se resaltan las **compatibles** con el deck en juego (clave armónica y BPM dentro de ±6 %).
 4. **Ajustes:** salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader y carpetas de música.
 
-**Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista.
+**Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista. La fuente (archivo local, copia guardada o streaming) se decide sola y se ve en cada deck y en cada fila.
+
+**Vistas:** Mezcla, Librería, Automix (portada grande) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck.
+
+**Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).
 
 **Controles:** CUE estilo CDJ, 4 hot cues (Shift o clic derecho borra), loops de 1 a 16 beats e IN/OUT/EXIT, SYNC de tempo y fase, keylock, cuantizado, nudge, jog wheel, EQ de 3 bandas con kill, filtro bipolar, trim con auto-gain, PFL, crossfader y master.
 

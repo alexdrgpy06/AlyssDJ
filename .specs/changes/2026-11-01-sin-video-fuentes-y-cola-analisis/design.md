@@ -75,4 +75,33 @@ nextView({ current, prev, tab, userChoseSince }) → vista
 - Vista Automix: portada con radio `--r-3` y sombra `--sh-2`, fondo con la misma portada desenfocada al 12 %; título 20 px, BPM mono 30 px; botón primario grande de 40 px; sin elementos decorativos animados (sin consumo de CPU adicional).
 - Todas las vistas respetan los tamaños mínimos de control del rediseño anterior (28 px en consola, 32 px en barra).
 
+## Domain deltas
+### video
+#### REMOVED spec: video local de pistas con video real
+#### REMOVED spec: La ventana de video muestra solo el medio propio de cada deck
+#### MODIFIED spec: Sin video en el plato y pista correcta en el stream
+THE SYSTEM SHALL no ofrecer ni reproducir video; WHILE el stream reproduce una pista distinta de la cargada THE SYSTEM SHALL volver a la del deck, sin excepción de versión en video.
+#### REMOVED design: videoKey y pickMedia
+### library
+#### REMOVED design: .video y sincronización
+#### MODIFIED spec: Guardar pistas de YouTube en la librería local
+WHEN una pista de YouTube ya está guardada THE SYSTEM SHALL reproducirla desde el archivo si «Preferir la copia guardada» está activo (por defecto), y por streaming si no; el usuario puede cambiar a mano mientras exista la copia.
+IF la carpeta no es escribible o no hay espacio THEN THE SYSTEM SHALL mostrar la causa sin dejar parciales y sin colgarse.
+IF el archivo guardado ya no existe al cargar la pista THEN THE SYSTEM SHALL reproducirla por streaming y avisar una vez.
+#### ADDED spec: Origen visible de cada pista
+THE SYSTEM SHALL mostrar el origen (ARCHIVO LOCAL, GUARDADA o STREAM) en cada deck y un chip de origen (ARCHIVO o STREAM) en cada fila de la librería; el selector archivo/stream del deck solo se puede usar si existen ambas fuentes y, si no, explica por qué.
+#### ADDED design: Resolución de fuente
+`renderer/source.js` exporta `resolveSource({ track, analysis, preferSaved, forced })` → `{ source, origin, canSwitch, why, missing }`. `Analyzer.get` añade `savedMissing` cuando el archivo guardado ya no existe. El ajuste `preferSaved` (por defecto `true`) vive en `main/settings.js`.
+### analysis
+#### ADDED spec: Cola de análisis de listas
+WHEN el usuario pide «Analizar lista» THE SYSTEM SHALL encolar las pistas no analizadas ni ya en cola, analizarlas de una en una (las cargadas en un deck primero), seguir tras un error, guardar la cola en disco y retomarla al abrir la app, y esperar mientras dure el bloqueo de yt-dlp por comprobación de bot.
+THE SYSTEM SHALL ofrecer la vista Análisis con el avance por lista y pista, pausar, reanudar, cancelar una lista, reintentar errores y quitar terminadas.
+#### ADDED design: Backlog persistente
+`main/analysis-backlog.js` (`Backlog`) guarda `userData/analysis-queue.json` (escritura atómica con retardo) con listas e ítems (`queued|running|done|error`), entrega de a uno al `Analyzer` solo cuando está libre y `!botBlocked()`, escucha sus eventos y notifica por `backlog:event` (máx. cada 250 ms). IPC `backlog:add|state|pause|resume|cancel|retry|clear-done|priority`.
+### ui
+#### ADDED spec: Vistas de trabajo
+THE SYSTEM SHALL ofrecer las vistas Mezcla, Librería, Automix y Ondas (Alt+1…4), la opción de ondas arriba o en el deck, recordarlas entre sesiones y, al abrir la fuente AutoMix de la librería, pasar a Librería y volver a la vista anterior al salir si el usuario no eligió otra.
+#### ADDED design: Máquina de vistas
+`renderer/views.js` (`ViewState`: `set`, `setWaves`, `enterAutomixTab`, `leaveAutomixTab`, `effectiveWaves`, `compact`, `toJSON`) con `body[data-view]` y `body[data-waves]`; las ondas «en el deck» mueven el mismo canvas a `.deck-scroll`; la vista inmersiva es `#immersive` conectada a los métodos de `AutoMix`.
+
 ## Amendments

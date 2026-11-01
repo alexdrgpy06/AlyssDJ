@@ -292,6 +292,25 @@ tests.immersive = async () => {
   console.log('immersive: OK');
 };
 
+tests.docs = async () => {
+  const docs = ['README.md', ...fs.readdirSync(path.join(root, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`)];
+  const all = docs.map((f) => [f, read(f)]);
+  // REQ-1: nada de video en la documentación ni en la lista de documentos
+  for (const [f, t] of all) assert.ok(!/ventana de video|Video y segunda pantalla|Preferir el video|05-video/.test(t), `${f} aún habla de video`);
+  // REQ-2…5 descritas
+  assert.ok(/De dónde suena cada pista/.test(read('docs/02-decks-y-mezclador.md')) && /Vistas de trabajo/.test(read('docs/02-decks-y-mezclador.md')));
+  assert.ok(/Analizar listas enteras en segundo plano/.test(read('docs/03-libreria-y-playlists.md')) && /Vista Automix/.test(read('docs/04-automix.md')));
+  // todas las imágenes referenciadas existen y las nuevas se usan
+  for (const [f, t] of all) for (const m of t.matchAll(/\((?:docs\/)?(img\/[^)]+\.png)\)/g)) assert.ok(fs.existsSync(path.join(root, 'docs', m[1])), `${f}: falta ${m[1]}`);
+  const used = all.map(([, t]) => t).join('\n');
+  for (const n of ['39-vista-ondas', '40-ondas-en-el-deck', '41-vista-automix', '42-cola-de-analisis']) assert.ok(used.includes(n), `${n} sin usar`);
+  assert.ok(!fs.existsSync(path.join(root, 'docs/img/16-video-panel.png')));
+  // CI
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in removed backlog docs; do node scripts\/test-sinvideo\.js/.test(ci) && /for m in source queue-ui views immersive; do xvfb-run/.test(ci), 'CI ejecuta test-sinvideo');
+  console.log('docs: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

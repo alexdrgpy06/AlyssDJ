@@ -11,7 +11,7 @@ npm start
 
 ![Barra superior](img/11-barra-superior.png)
 
-Tres grupos, de izquierda a derecha: **identidad y sesión** (estado de YouTube Music), **herramientas de la mezcla** (**AutoMix**, **Sampler**, **REC**) y **sistema** (**MIDI** para MIDI learn, **ayuda (?)** y **Ajustes**). Si falta yt-dlp o ffmpeg, se avisa en amarillo entre los dos primeros grupos; el detalle está en **Ajustes → Herramientas**.
+Cuatro grupos, de izquierda a derecha: **identidad y sesión** (estado de YouTube Music), el **selector de vista** (Mezcla, Librería, Automix, Ondas; ver [Decks y mezclador](02-decks-y-mezclador.md)), **herramientas de la mezcla** (**AutoMix**, **Sampler**, **REC**) y **sistema** (**MIDI** para MIDI learn, **ayuda (?)** y **Ajustes**). Si falta yt-dlp o ffmpeg, se avisa en amarillo entre los dos primeros grupos; el detalle está en **Ajustes → Herramientas**.
 
 ## Iniciar sesión (YouTube Music Premium)
 
