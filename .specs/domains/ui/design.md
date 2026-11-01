@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-10-31-automix-vista-video
+last_change: 2026-11-01-rediseno-interfaz
 ---
 # ui · design
 
@@ -17,6 +17,10 @@ last_change: 2026-10-31-automix-vista-video
 
 Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (oculta en compacto) e identificador py.alystech.alyssdj.
 
-## Franja #stage
+## Tokens y componentes
 
-Teselas 16:9 con borde del color del deck al aire (`.air`) y opacidad 0,6 en espera; asa de 32 px (`role=slider`, flechas y `[` `]`); por debajo de 520 px de ancho se apilan.
+`styles.css` define `--s-1…6`, `--fs-1…5`, `--fs-bpm`, `--r-1…3`, `--r-pill`, `--sh-1/2`, `--dur-1/2`, `--ctl-h`, `--ctl-h-lg` y la selección neutra `--sel`/`--sel-ink`. Todo `input[type=checkbox]` es un interruptor y todo `input[type=range]` (salvo faders y crossfader) usa el deslizador único, con acento `--accent` del deck o `--sel`.
+
+## Panel de fuentes y ajustes por secciones
+
+`aside.sources` (botones `data-tab`, selector `.sources [data-tab]`) y `.lib-toolbar` sustituyen a `.tabs`; `#settings` usa `.set-nav` (rol tablist) y `.set-pane[data-pane]` con `App.setSettingsPane(id)`. AutoMix agrupa sus controles en `fieldset.am-group`.
