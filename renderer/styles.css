@@ -698,3 +698,33 @@ dialog#help { width: 640px; }
 .qv-t small { color: var(--dim); margin-left: var(--s-2); }
 .qv-s { color: var(--dim); white-space: nowrap; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; }
 .qv-running .qv-s { color: var(--warn); } .qv-done .qv-s { color: var(--ok); } .qv-error .qv-s { color: var(--err); }
+
+/* ---------- vistas de trabajo ---------- */
+.tb-views { gap: var(--s-1); }
+.view-switch button span { display: inline; }
+@media (max-width: 1100px) { .view-switch button span { display: none; } }
+.deck-scroll { display: none; position: relative; height: 72px; background: linear-gradient(#06080c, #04050a); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.deck-scroll canvas { width: 100%; height: 100%; display: block; }
+
+/* ondas dentro del deck: la franja superior desaparece y su altura pasa a la consola o a la librería */
+body[data-waves='deck'] .waves { display: none; }
+body[data-waves='deck'] .deck-scroll { display: block; }
+body[data-waves='deck'] { grid-template-rows: 44px auto minmax(150px, 1fr); }
+body[data-layout='compact'][data-waves='deck'] { grid-template-rows: 40px auto minmax(150px, 1fr); }
+body[data-waves='deck'].am-compact .deck-scroll, body[data-waves='deck'][data-layout='compact'] .deck-scroll { height: 48px; }
+
+/* vista Ondas: ondas grandes, una tira por deck y el mezclador; sin librería */
+body[data-view='waves'] { grid-template-rows: 44px minmax(0, 1fr) auto; }
+body[data-layout='compact'][data-view='waves'] { grid-template-rows: 40px minmax(0, 1fr) auto; }
+body[data-view='waves'] .library { display: none; }
+body[data-view='waves'] .waves { display: grid; grid-template-rows: 1fr 1fr; min-height: 0; }
+body[data-view='waves'] .wave-row { height: auto; min-height: 0; }
+body[data-view='waves'] .pads, body[data-view='waves'] .platter, body[data-view='waves'] .pitch, body[data-view='waves'] canvas.overview,
+body[data-view='waves'] .badges, body[data-view='waves'] .head-art, body[data-view='waves'] .deck-scroll { display: none; }
+body[data-view='waves'] .deck { gap: var(--s-1); padding: var(--s-2) var(--s-3); }
+body[data-view='waves'] .deck-head { min-height: 0; grid-template-columns: minmax(0, 1fr) auto; }
+body[data-view='waves'] .deck-body { grid-template-columns: 1fr; flex: none; }
+body[data-view='waves'] .transport { flex-direction: row; justify-content: center; }
+body[data-view='waves'] .transport button { width: 44px; height: 44px; font-size: 11px; }
+body[data-view='waves'] .transport .sync { width: 64px; height: 32px; }
+body[data-view='waves'] .console { align-items: start; }

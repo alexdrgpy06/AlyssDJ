@@ -213,6 +213,60 @@ tests['queue-ui'] = async () => {
   console.log('queue-ui: OK');
 };
 
+tests.views = async () => {
+  const { ViewState, VIEWS } = await import('../renderer/views.js');
+  // REQ-5: máquina de estados
+  assert.deepStrictEqual(VIEWS, ['mix', 'library', 'automix', 'waves']);
+  let v = new ViewState({ view: 'basura', waves: 'x' });
+  assert.deepStrictEqual([v.view, v.waves], ['mix', 'top'], 'valores guardados inválidos → por defecto');
+  v = new ViewState({ view: 'waves', waves: 'deck' });
+  assert.strictEqual(v.effectiveWaves(), 'top', 'en Ondas las ondas van arriba');
+  v.set('library'); assert.strictEqual(v.effectiveWaves(), 'deck'); assert.ok(v.compact());
+  v.set('mix'); assert.ok(!v.compact());
+  // fuente AutoMix: Librería y vuelta a la anterior
+  v = new ViewState({ view: 'mix' });
+  v.enterAutomixTab(); assert.strictEqual(v.view, 'library');
+  assert.strictEqual(v.toJSON().view, 'mix', 'no se guarda la vista temporal');
+  v.leaveAutomixTab(); assert.strictEqual(v.view, 'mix');
+  // si el usuario eligió otra vista dentro, se respeta
+  v.enterAutomixTab(); v.set('waves'); v.leaveAutomixTab(); assert.strictEqual(v.view, 'waves');
+  // elegir la misma vista Librería también cuenta como elección
+  v = new ViewState({ view: 'waves' }); v.enterAutomixTab(); v.set('library'); v.leaveAutomixTab(); assert.strictEqual(v.view, 'library');
+  // entrar dos veces no pisa la vista previa
+  v = new ViewState({ view: 'waves' }); v.enterAutomixTab(); v.enterAutomixTab(); v.leaveAutomixTab(); assert.strictEqual(v.view, 'waves');
+  assert.strictEqual(v.set('inexistente'), 'waves');
+  // interfaz
+  const html = read('renderer/index.html'); const css = read('renderer/styles.css'); const app = read('renderer/app.js');
+  for (const k of ['data-view="mix"', 'data-view="library"', 'data-view="waves"', 'id="waves-toggle"', 'class="deck-scroll"', 'name="wavesMode"']) assert.ok(html.includes(k), k);
+  assert.ok(/Digit\(\[1-4\]\)/.test(app) && /bindViews/.test(app) && !/syncCompact/.test(app), 'atajos Alt+1…4 y sin compactación por AutoMix activo');
+  assert.ok(/body\[data-view='waves'\]/.test(css) && /body\[data-waves='deck'\]/.test(css));
+  // e2e
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-views-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'views-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const f = path.join(tmp, 'views.json');
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+  const flat = { ...r, ...Object.fromEntries(Object.entries(r.small).map(([k, x]) => [`small-${k}`, x])) };
+  for (const [k, x] of Object.entries(flat)) assert.ok(!(x && x.__err), `${k}: ${JSON.stringify(x)}`);
+  assert.deepStrictEqual([r.mix.view, r.mix.compact, r.mix.canvasIn], ['mix', false, 'wave-row']);
+  assert.ok(r.mix.waveTop && r.mix.library && r.mix.console, 'Mezcla: ondas, consola y librería visibles');
+  assert.deepStrictEqual([r.library.view, r.library.compact], ['library', true]);
+  assert.ok(r.library.library.h > r.mix.library.h + 100, `Librería gana altura: ${r.library.library.h} vs ${r.mix.library.h}`);
+  assert.deepStrictEqual([r.waves.view, r.waves.library], ['waves', null], 'Ondas oculta la librería');
+  assert.ok(r.waves.waveTop.h > 300, `ondas grandes: ${r.waves.waveTop.h}`);
+  assert.strictEqual(r.back.view, 'mix');
+  assert.deepStrictEqual([r.deckWaves.waves, r.deckWaves.waveTop, r.deckWaves.canvasIn], ['deck', null, 'deck-scroll'], 'ondas en el deck: sin franja y el canvas dentro del deck');
+  assert.ok(r.deckWaves.deckScroll && r.deckWaves.library.h > r.mix.library.h, 'la altura de la franja pasa a la librería');
+  assert.strictEqual(r.wavesWithDeckOpt.waves, 'top', 'la vista Ondas ignora «en el deck»');
+  assert.deepStrictEqual([r.topAgain.waves, r.topAgain.canvasIn], ['top', 'wave-row']);
+  assert.deepStrictEqual([r.amIn.view, r.amOut.view, r.amChosen.view], ['library', 'mix', 'waves'], 'AutoMix: entra a Librería, vuelve, y respeta la elección');
+  assert.deepStrictEqual(r.saved, { view: 'library', waves: 'deck' }, 'se recuerda');
+  for (const [k, x] of Object.entries(r.small)) assert.ok(x.sw <= x.w + 1, `1366x768 ${k}: desplazamiento horizontal`);
+  assert.ok(r.small.library.library.h >= 150 && r.small.mix.library.h >= 120, `1366x768: librería visible ${r.small.mix.library.h}/${r.small.library.library.h}`);
+  console.log('views: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

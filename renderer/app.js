@@ -10,6 +10,7 @@ import { renderUpdate } from './update-ui.js';
 import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
+import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -58,6 +59,7 @@ class App {
     this.automix = new AutoMix(this);
     this.mixEditor = new MixEditor(this);
     this.bindAutoMix();
+    this.bindViews();
     this.midi = new Midi(this);
     this.midi.init();
 
@@ -279,7 +281,6 @@ class App {
     const am = this.automix;
     const view = $('#am-view');
     $('#btn-automix').addEventListener('click', () => this.library.show('automix'));
-    document.addEventListener('alyss:tab', () => this.syncCompact());
     am.subscribe(() => !view.hidden && this.renderAutoMix());
     setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
     $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
@@ -380,9 +381,63 @@ class App {
     }, 1000);
   }
 
-  // Con AutoMix activo (o su vista abierta) los decks se compactan para dejarle sitio a la lista.
-  syncCompact() {
-    document.body.classList.toggle('am-compact', this.automix.on || this.library?.tab === 'automix');
+  // ---------- vistas de trabajo ----------
+  bindViews() {
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(VIEW_STORE) || '{}');
+    } catch {}
+    this.views = new ViewState(saved);
+    let prevTab = this.library?.tab;
+    document.addEventListener('alyss:tab', (e) => {
+      if (e.detail === 'automix' && prevTab !== 'automix') this.views.enterAutomixTab();
+      else if (e.detail !== 'automix' && prevTab === 'automix') this.views.leaveAutomixTab();
+      prevTab = e.detail;
+      this.applyView();
+    });
+    $('#view-switch').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-view]');
+      if (b) this.setView(b.dataset.view);
+    });
+    $('#waves-toggle').addEventListener('click', () => this.setWaves(this.views.waves === 'deck' ? 'top' : 'deck'));
+    this.applyView();
+  }
+
+  setView(view) {
+    this.views.set(view);
+    this.applyView();
+  }
+
+  setWaves(waves) {
+    this.views.setWaves(waves);
+    this.applyView();
+  }
+
+  // Aplica la vista al <body>; las ondas «en el deck» mueven el mismo canvas dentro de cada deck (no hay segundo dibujo).
+  applyView() {
+    const v = this.views;
+    const body = document.body;
+    const where = v.effectiveWaves();
+    body.dataset.view = v.view;
+    body.dataset.waves = where;
+    body.classList.toggle('am-compact', v.compact());
+    document.querySelectorAll('#view-switch button').forEach((b) => {
+      const on = b.dataset.view === v.view;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    const tog = $('#waves-toggle');
+    tog.setAttribute('aria-pressed', String(v.waves === 'deck'));
+    tog.classList.toggle('active', v.waves === 'deck');
+    tog.disabled = !(v.view === 'mix' || v.view === 'library');
+    for (const id of ['A', 'B']) {
+      const canvas = document.getElementById(`scroll-${id}`);
+      const host = where === 'deck' ? document.querySelector(`#deck-${id} .deck-scroll`) : document.querySelector(`.wave-row[data-deck='${id}']`);
+      if (canvas && host && canvas.parentElement !== host) host.append(canvas);
+    }
+    try {
+      localStorage.setItem(VIEW_STORE, JSON.stringify(v));
+    } catch {}
   }
 
   // Abre el editor de una pista de la cola (la siguiente de la lista es la de la prueba de mezcla).
@@ -421,7 +476,6 @@ class App {
       return ['Pendiente', ''];
     };
     $('#btn-automix').classList.toggle('active', st.on);
-    this.syncCompact();
     $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#amv-mix').disabled = !st.on || !!st.trans;
     $('#amv-mix').classList.toggle('on', !!st.pendingMix);
@@ -567,6 +621,8 @@ class App {
     };
     const typing = (e) => !!e.target.matches?.('input[type=search], input:not([type]), textarea, select');
     window.addEventListener('keydown', (e) => {
+      const alt = e.altKey && !e.ctrlKey && !e.metaKey && /^Digit([1-4])$/.exec(e.code);
+      if (alt) return e.preventDefault(), this.setView(VIEWS[Number(alt[1]) - 1]);
       if (/^F[1-8]$/.test(e.key) && !e.repeat && !typing(e)) return e.preventDefault(), this.sampler.key(e.key);
       if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'ArrowRight' && e.shiftKey) return e.preventDefault(), this.automix.mixNow();
@@ -643,6 +699,7 @@ class App {
     f.ytdlpPath.value = s.ytdlpPath || '';
     f.cookieSource.value = s.cookieSource;
     f.layoutMode.value = s.layoutMode || 'auto';
+    f.wavesMode.value = this.views.waves;
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
     f.preferSaved.checked = s.preferSaved !== false;
@@ -745,6 +802,7 @@ class App {
       this.applyLayout?.();
       this.applyRouting();
       this.applyXf();
+      this.setWaves(f.wavesMode.value);
       if (prevYtdlp !== this.settings.ytdlpPath) this.checkTools();
     });
     $('#btn-open-cache').addEventListener('click', () => window.ytdj.analysis.openCache());

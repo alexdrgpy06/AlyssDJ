@@ -39,6 +39,10 @@
       <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
       <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 6h12M4 12h9M4 18h6"/><path d="m16 15 3 3 3-3" /><path d="M19 10v8"/></symbol>
+      <symbol id="i-v-mix" viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/></symbol>
+      <symbol id="i-v-lib" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M4 13h16M4 17h16M4 21h10"/></symbol>
+      <symbol id="i-v-waves" viewBox="0 0 24 24"><path d="M2 12c2-6 3-6 5 0s3 6 5 0 3-6 5 0 3 6 5 0"/></symbol>
+      <symbol id="i-v-scroll" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12c2-4 3-4 4 0s2 4 4 0 2-4 4 0"/></symbol>
       <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
     </defs>
   </svg>
@@ -54,6 +58,15 @@
     </div>
     <div class="spacer"></div>
     <div class="status" id="tools-status"></div>
+    <div class="tb-group tb-views" role="group" aria-label="Vista de trabajo">
+      <div class="seg view-switch" id="view-switch">
+        <button type="button" data-view="mix" title="Mezcla: consola completa y librería (Alt+1)"><svg class="ic"><use href="#i-v-mix"/></svg><span>Mezcla</span></button>
+        <button type="button" data-view="library" title="Librería: decks compactos y la librería grande (Alt+2)"><svg class="ic"><use href="#i-v-lib"/></svg><span>Librería</span></button>
+        <button type="button" data-view="waves" title="Ondas: ondas grandes y una tira por deck (Alt+4)"><svg class="ic"><use href="#i-v-waves"/></svg><span>Ondas</span></button>
+      </div>
+      <button type="button" class="icon-btn" id="waves-toggle" aria-pressed="false" title="Ondas arriba o dentro de cada deck"><svg class="ic"><use href="#i-v-scroll"/></svg></button>
+    </div>
+    <span class="tb-sep" aria-hidden="true"></span>
     <div class="tb-group tb-mix" role="group" aria-label="Herramientas de la mezcla">
       <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Mezcla automática de la cola (A)"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
       <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
@@ -112,6 +125,7 @@
             <div class="sub"><span class="kchip key">—</span><span class="pitch-val">0.00%</span></div>
           </div>
         </div>
+        <div class="deck-scroll"></div>
         <canvas class="overview"></canvas>
         <div class="times"><span class="elapsed">0:00.0</span><span class="state"></span><span class="remain">-0:00.0</span></div>
         <div class="deck-body">
@@ -407,6 +421,9 @@
         </label>
         <label>Curva del crossfader
           <select name="crossfaderCurve"><option value="smooth">Suave (mezcla)</option><option value="sharp">Corte (scratch)</option></select>
+        </label>
+        <label>Ondas grandes
+          <select name="wavesMode" title="Dónde se muestran las ondas con desplazamiento en las vistas Mezcla y Librería"><option value="top">Arriba, a todo el ancho</option><option value="deck">Dentro de cada deck</option></select>
         </label>
         <label>Diseño de la interfaz
           <select name="layoutMode" title="Auto elige según el tamaño de la ventana"><option value="auto">Auto (según la pantalla)</option><option value="compact">Compacto</option><option value="normal">Normal</option><option value="wide">Amplio</option></select>
