@@ -50,7 +50,7 @@ Botón **AutoMix** (arriba) o **Radio** en cualquier pista de la librería. La c
 
 ## Playlists
 
-Pestaña **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **Importar mis playlists** copia todas (y Me gusta) a este equipo; quedan en la pestaña **Importadas**, disponibles sin conexión y para AutoMix.
+Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **Importar mis playlists** copia todas (y Me gusta) a este equipo; quedan en la pestaña **Importadas**, disponibles sin conexión y para AutoMix.
 
 ## Uso
 

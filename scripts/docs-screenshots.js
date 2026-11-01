@@ -111,7 +111,7 @@ module.exports = (win, decks) => {
       await js(`document.getElementById('btn-settings').click(); return 1`);
       await wait(900);
       await shot('17-ajustes-1.png', 'dialog[open]', 16);
-      await js(`document.querySelector('dialog[open] .settings').scrollTop = 99999; return 1`);
+      await js(`__app.setSettingsPane('library'); return 1`);
       await wait(300);
       await shot('17-ajustes-2.png', 'dialog[open]', 16);
       await closePanels();

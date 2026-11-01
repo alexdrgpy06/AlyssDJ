@@ -48,6 +48,7 @@ jobs:
           node scripts/test-ytdlp-sin-sesion.js args
           node scripts/test-bot-check.js
           node scripts/test-stream-guard.js
+          for m in video-removed tokens shell sources automix settings; do node scripts/test-rediseno.js $m; done
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
@@ -60,12 +61,16 @@ jobs:
           xvfb-run -a node scripts/test-login-flow.js
           xvfb-run -a node scripts/test-updater.js ui
           xvfb-run -a node scripts/test-brand.js e2e
+          xvfb-run -a node scripts/test-rediseno.js video-media
+          xvfb-run -a node scripts/test-rediseno.js e2e
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |
           node scripts/test-login-flow.js
           node scripts/test-updater.js ui
           node scripts/test-brand.js e2e
+          node scripts/test-rediseno.js video-media
+          node scripts/test-rediseno.js e2e
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

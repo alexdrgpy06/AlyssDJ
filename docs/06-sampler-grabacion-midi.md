@@ -17,7 +17,7 @@ El botón **REC** graba lo que sale por tu salida de audio a un MP3 de 256 kbps 
 
 ![Grabando](img/20-grabando.png)
 
-- Disponible en **Linux** (PulseAudio / PipeWire). Captura el *monitor* de la salida predeterminada; puedes elegir otra en **Ajustes → Salida de audio → Grabar desde**.
+- Disponible en **Linux** (PulseAudio / PipeWire). Captura el *monitor* de la salida predeterminada; puedes elegir otra en **Ajustes → Audio → Grabar desde**.
 - Como los decks de YouTube suenan en procesos separados, se graba **la salida del sistema** (incluye todo lo que suene por ahí, no solo AlyssDJ).
 
 ## Controladoras MIDI

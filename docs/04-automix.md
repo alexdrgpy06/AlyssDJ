@@ -6,7 +6,7 @@ AutoMix es un DJ automático: elige la siguiente pista y la **mezcla solo**, con
 
 ## Cómo iniciarlo
 
-- **Con lo que suena**: carga una pista, abre la pestaña **AutoMix** (en la librería, o el botón de la barra superior) y pulsa **Iniciar AutoMix**.
+- **Con lo que suena**: carga una pista, abre la fuente **AutoMix** (en el panel de la librería, o el botón de la barra superior) y pulsa **Iniciar AutoMix**.
 - **Desde una pista**: botón **Radio** en su fila de la librería.
 - **Desde una lista**: **AutoMix de esta lista** mezcla la lista seguida. Al acabarse sigue con la radio, salvo que lo desactives.
 - **A tu medida**: añade pistas con **+**, o **arrástralas desde la librería** a la posición que quieras dentro de la cola.
@@ -95,17 +95,16 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 
 ![Decks compactos](img/31-automix-decks-compactos.png)
 
-## Vista de video (sin decks grandes)
+## Controles por grupos
 
-Con la pestaña **AutoMix** abierta, **Vista de video** (o la tecla **V**) oculta los decks y el mezclador y deja una miniatura por deck encima de la cola, para que esta ocupe casi toda la pantalla. El audio no se interrumpe: los decks siguen ahí, solo escondidos.
+Los controles de AutoMix están agrupados por función, con título:
 
-![Vista de video de AutoMix](img/37-automix-vista-video.png)
+- **Reproducción:** iniciar o detener AutoMix y **Mezclar ahora** (**⇧→**).
+- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, mezclar en puntos óptimos.
+- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Deshacer**, **Rellenar con radio** y **Vaciar**.
+- **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.
 
-- **Siempre el video correcto.** Cada miniatura solo reproduce el video de la pista cargada en ese deck, sincronizado con el audio (posición, pausa y velocidad). Si cambia la pista, el video anterior desaparece al instante; una pista sin video musical de verdad (solo portada) muestra la portada con la etiqueta «Solo audio».
-- **Quién suena.** La miniatura del deck al aire lleva un borde de su color y la del que espera se atenúa; durante una mezcla se resaltan las dos.
-- **Tamaño.** Arrastra el asa de la esquina inferior derecha (o usa las flechas sobre ella, o **[** y **]**): de 160 a 560 px por miniatura, siempre en 16:9. Se recuerda el tamaño y si la vista estaba activa.
-- **Doble clic** en una miniatura abre la ventana de video de ese deck (para otra pantalla o proyector).
-- Fuera de la pestaña AutoMix, la consola vuelve completa.
+AutoMix no lleva video: para ver el video de un deck usa el botón **Video** de la barra superior (ventana aparte, ver [Video y segunda pantalla](05-video-y-segunda-pantalla.md)).
 
 ## Buscar y agregar desde la propia vista
 

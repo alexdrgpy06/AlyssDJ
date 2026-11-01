@@ -161,6 +161,24 @@ tests.e2e = async () => {
   console.log('e2e: OK');
 };
 
+tests.docs = async () => {
+  const docs = ['README.md', ...fs.readdirSync(path.join(root, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`)];
+  const all = docs.map((f) => [f, read(f)]);
+  // REQ-1/9: la documentación ya no habla de miniaturas de video ni de pestañas de la librería
+  for (const [f, t] of all) {
+    assert.ok(!/Vista de video|37-automix-vista-video|miniatura de video|tecla \*\*V\*\*/.test(t), `${f} aún describe la vista de miniaturas`);
+    assert.ok(!/Pestaña \*\*Playlists|pestaña \*Local\*|## Pestañas/.test(t), `${f} aún habla de pestañas de la librería`);
+  }
+  // todas las imágenes referenciadas existen
+  for (const [f, t] of all) for (const m of t.matchAll(/\((?:docs\/)?(img\/[^)]+\.png)\)/g)) assert.ok(fs.existsSync(path.join(root, 'docs', m[1])), `${f}: falta ${m[1]}`);
+  assert.ok(!fs.existsSync(path.join(root, 'docs/img/37-automix-vista-video.png')));
+  assert.ok(/Qué muestra la ventana de video/.test(read('docs/05-video-y-segunda-pantalla.md')) && /Controles por grupos/.test(read('docs/04-automix.md')));
+  // el CI corre estas pruebas
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/test-rediseno\.js \$m/.test(ci) && /test-rediseno\.js e2e/.test(ci) && /test-rediseno\.js video-media/.test(ci), 'CI ejecuta test-rediseno');
+  console.log('docs: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

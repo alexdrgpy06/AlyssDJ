@@ -13,4 +13,4 @@ Formato: `- [ ] 1.1 Descripción (REQ-1) @rol [verify: comando] [runner: claude|
 - [x] 3.3 AutoMix en cuatro grupos con interruptores (REQ-6) @ui [verify: node scripts/test-rediseno.js automix]
 - [x] 3.4 Ajustes por secciones con navegación lateral (REQ-7) @ui [verify: node scripts/test-rediseno.js settings]
 - [x] 4.1 Pruebas existentes a la nueva estructura, foco, contraste y objetivos de clic (REQ-8, REQ-9) @coder [verify: node scripts/test-rediseno.js e2e]
-- [ ] 4.2 Documentación, capturas y lista de CI (REQ-9) @coder [verify: node scripts/test-rediseno.js docs]
+- [x] 4.2 Documentación, capturas y lista de CI (REQ-9) @coder [verify: node scripts/test-rediseno.js docs]

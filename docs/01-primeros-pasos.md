@@ -7,11 +7,11 @@ npm install
 npm start
 ```
 
-`npm install` y cada `npm start` comprueban solos lo que falta y lo descargan: **yt-dlp** (binario oficial, a `bin/`) y, si no hay, **ffmpeg**. La app lo repite al abrirse. Si algo no se pudo instalar, arriba a la derecha aparece en amarillo, y **Ajustes → Instalar / actualizar herramientas** lo reintenta.
+`npm install` y cada `npm start` comprueban solos lo que falta y lo descargan: **yt-dlp** (binario oficial, a `bin/`) y, si no hay, **ffmpeg**. La app lo repite al abrirse. Si algo no se pudo instalar, aparece en amarillo en la barra superior, y **Ajustes → Instalar / actualizar herramientas** lo reintenta.
 
 ![Barra superior](img/11-barra-superior.png)
 
-De izquierda a derecha: estado de la sesión de YouTube Music, herramientas, **REC**, **Sampler**, **AutoMix**, **Video**, **MIDI learn**, **ayuda (?)** y **Ajustes**.
+Tres grupos, de izquierda a derecha: **identidad y sesión** (estado de YouTube Music), **herramientas de la mezcla** (**AutoMix**, **Sampler**, **REC**) y **sistema** (**MIDI** para MIDI learn, **Video**, **ayuda (?)** y **Ajustes**). Si falta yt-dlp o ffmpeg, se avisa en amarillo entre los dos primeros grupos; el detalle está en **Ajustes → Herramientas**.
 
 ## Iniciar sesión (YouTube Music Premium)
 
@@ -34,8 +34,8 @@ Sin sesión todo funciona, pero YouTube mete anuncios y tus playlists no aparece
 
 Hay tres formas de tener pistas en un deck:
 
-- **Buscar en YouTube Music** (pestaña *Buscar*), o tus *Me gusta* y *Playlists*.
-- **Música local**: pestaña *Local* → **Añadir carpeta…**, o arrastra archivos de audio a un deck.
+- **Buscar en YouTube Music** (fuente *Buscar*), o tus *Me gusta* y *Playlists*.
+- **Música local**: fuente *Local* → **Añadir carpeta…**, o arrastra archivos de audio a un deck.
 - **Importadas**: tus playlists copiadas al equipo.
 
 En cada fila de la librería: **A** y **B** cargan en ese deck, **Radio** arranca [AutoMix](04-automix.md) desde esa pista, **+** la añade a la cola y el último botón la analiza.

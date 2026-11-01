@@ -82,11 +82,11 @@ En el centro: **MASTER** y **PHONES** (volumen de auriculares).
 
 - **Doble clic** en un knob, en el fader de pitch o en el crossfader lo restablece.
 - **Mayús** mientras arrastras un knob da ajuste fino.
-- La curva del crossfader (suave o corte) se cambia en **Ajustes → Decks**.
+- La curva del crossfader (suave o corte) se cambia en **Ajustes → Decks y diseño**.
 
 ### Auriculares
 
-En **Ajustes → Salida de audio** elige *Dos dispositivos* (master y auriculares por separado) o *Un dispositivo de 4 canales* (1-2 master, 3-4 cue, típico de controladoras DJ).
+En **Ajustes → Audio** elige *Dos dispositivos* (master y auriculares por separado) o *Un dispositivo de 4 canales* (1-2 master, 3-4 cue, típico de controladoras DJ).
 
 ## Fuente: STREAM o LOCAL
 
