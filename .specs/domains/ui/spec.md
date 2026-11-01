@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-01-rediseno-interfaz
+last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
 ---
 # ui · spec
 
@@ -32,3 +32,7 @@ THE SYSTEM SHALL mostrar Ajustes con navegación lateral por secciones (Herramie
 ## Accesibilidad y estados
 
 THE SYSTEM SHALL mantener contraste mínimo 4.5:1 en texto, objetivos de clic de al menos 28 px en la consola y 32 px en la barra, foco visible y movimiento reducido cuando el sistema lo pide.
+
+## Vistas de trabajo
+
+THE SYSTEM SHALL ofrecer las vistas Mezcla, Librería, Automix y Ondas (Alt+1…4), la opción de ondas arriba o en el deck, recordarlas entre sesiones y, al abrir la fuente AutoMix de la librería, pasar a Librería y volver a la vista anterior al salir si el usuario no eligió otra.

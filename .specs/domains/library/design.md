@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-10-31-automix-buscar-y-agregar
+last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
 ---
 # library · design
 
@@ -13,10 +13,10 @@ last_change: 2026-10-31-automix-buscar-y-agregar
 
 `main/mixedit.js` sanea y guarda `<id>.mixedit.json`; el analizador adjunta `mixEdit` y avisa con el evento `mixedit`; `renderer/mixeditor.js` y `mixpreview.js` dan el editor y la prueba de mezcla.
 
-## .video y sincronización
-
-El video va a `<librería>/.video/<id>.mp4` (oculto para el índice); el protocolo `localvideo/` lo sirve; `LocalVideo.apply` corrige deriva mayor de 80 ms; la ventana de video carga `video.html` con una página por deck local.
-
 ## popularidad y sugeridas
 
 `ytm-library.parsePlays/popularity` (endpoint player, caché de 30 días), `mixplan.rankCandidates/bestInsertion`, `AutoMix.addSmart/suggestions/analyzeSuggestions` y `renderer/automix-add.js`.
+
+## Resolución de fuente
+
+`renderer/source.js` exporta `resolveSource({ track, analysis, preferSaved, forced })` → `{ source, origin, canSwitch, why, missing }`. `Analyzer.get` añade `savedMissing` cuando el archivo guardado ya no existe. El ajuste `preferSaved` (por defecto `true`) vive en `main/settings.js`.
