@@ -2,6 +2,7 @@ import { register } from './controls.js';
 import { makeKnob } from './knob.js';
 import { analysisWave, liveWave, recordLive, drawScroll, drawOverview } from './waveform.js';
 import { camelotColor } from './camelot.js';
+import { resolveSource, ORIGINS } from './source.js';
 
 const fmt = (t) => {
   const s = Math.max(0, t || 0);
@@ -52,6 +53,8 @@ export class Deck {
     this.analysis = null;
     this.analyzing = null;
     this.source = 'stream';
+    this.forced = null;
+    this.srcInfo = null;
     this.st = { pos: 0, dur: 0, playing: false, rate: 1, level: 0 };
     this.stAt = performance.now();
     this.wantPlay = false;
@@ -235,9 +238,12 @@ export class Deck {
       return;
     }
     this.sendLocal({ type: 'pause' });
-    this.source = track.local ? 'local' : 'stream';
     this.track = { ...track };
+    this.forced = null; // la elección manual archivo/stream vale solo para la pista cargada
     this.analysis = await window.ytdj.analysis.get(track.videoId);
+    this.srcInfo = resolveSource({ track, analysis: this.analysis, preferSaved: this.app.settings.preferSaved !== false });
+    this.source = this.srcInfo.source === 'file' ? 'local' : 'stream';
+    if (this.srcInfo.missing) this.app.toast(`${track.title || 'La pista'}: la copia guardada ya no existe; suena por streaming.`, true);
     this.analyzing = null;
     this.wave = this.analysis ? analysisWave(this.analysis) : null;
     this.tap = null;
@@ -256,8 +262,7 @@ export class Deck {
     this.streamPlayedMs = 0;
     this.saveRequested = false;
     const savedId = !track.local && this.analysis?.saved?.localId;
-    if (savedId) this.source = 'local'; // ya está guardada: se reproduce el archivo, sin streaming ni anuncios
-    if (track.local || savedId) {
+    if (this.source === 'local') {
       this.sendStream({ type: 'pause' });
       const { engine } = this.ensureLocal();
       engine.handle({ type: 'load', videoId: track.videoId, url: `/localfile/${encodeURIComponent(savedId || track.videoId)}`, startAt: this.cuePoint, play })
@@ -274,12 +279,10 @@ export class Deck {
 
   async setSource(src) {
     if (!this.track || src === this.source) return;
-    if (this.track.local) return this.app.toast('Es una pista local: solo se puede reproducir desde el archivo.');
+    if (!this.srcInfo?.canSwitch) return this.app.toast(this.srcInfo?.why || 'Esta pista solo tiene una fuente.');
+    this.forced = src === 'local' ? 'file' : 'stream';
+    this.srcInfo = resolveSource({ track: this.track, analysis: this.analysis, preferSaved: this.app.settings.preferSaved !== false, forced: this.forced });
     const savedId = this.analysis?.saved?.localId;
-    if (src === 'local' && !this.analysis?.audio && !savedId) {
-      this.app.toast('Esta pista no está guardada: analízala (o actívalo en Ajustes → Guardar en la librería) y podrás reproducir el archivo.', true);
-      return;
-    }
     const pos = this.pos();
     const playing = this.st.playing;
     if (src === 'local') {
@@ -845,7 +848,7 @@ export class Deck {
     setText(el.elapsed, fmt(pos));
     setText(el.remain, `-${fmt(dur - pos)}`);
     const loading = t && this.source === 'stream' && this.st.videoId === t.videoId && !this.st.ready;
-    setText(el.state, this.st.ad ? 'anuncio (sin Premium)' : loading ? 'cargando…' : this.track?.local ? 'ARCHIVO LOCAL' : this.source === 'local' ? 'LOCAL · GUARDADA' : this.analysis?.saved ? 'GUARDADA' : '');
+    setText(el.state, this.st.ad ? 'anuncio (sin Premium)' : loading ? 'cargando…' : t ? ORIGINS[this.srcInfo?.origin] || '' : '');
 
     el.play.classList.toggle('on', this.st.playing);
     el.cue.classList.toggle('on', !this.st.playing && Math.abs(pos - this.cuePoint) < 0.08 && !!t);
@@ -862,8 +865,11 @@ export class Deck {
     el.quant.classList.toggle('on', this.quantize);
     el.srcBtns.forEach((b) => {
       b.classList.toggle('on', b.dataset.src === this.source);
-      if (b.dataset.src === 'local') b.disabled = !(this.track?.local || this.analysis?.audio || this.analysis?.saved);
-      if (b.dataset.src === 'stream') b.disabled = !!this.track?.local;
+      const info = this.srcInfo;
+      const na = !this.track || !info?.canSwitch;
+      b.classList.toggle('na', na);
+      b.setAttribute('aria-disabled', String(na));
+      b.title = !this.track ? '' : info?.canSwitch ? (b.dataset.src === 'local' ? 'Reproducir el archivo guardado' : 'Reproducir por streaming desde YouTube Music') : info?.why || (this.track?.local ? 'Archivo local: no tiene streaming' : '');
     });
 
     const a = this.analyzing;

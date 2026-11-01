@@ -1,5 +1,6 @@
 // Librería: búsqueda, Me gusta y playlists de YouTube Music + pistas ya analizadas.
 import { camelotColor, keysCompatible, bpmCompatible } from './camelot.js';
+import { resolveSource, originChip } from './source.js';
 
 const fmtDur = (s) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -212,12 +213,14 @@ export class Library {
     const [lbl, cls] = this.analyzeLabel(r.videoId);
     const compat = this.isCompat(r);
     const kc = camelotColor(a?.camelot);
+    const info = resolveSource({ track: r, analysis: a, preferSaved: this.app.settings.preferSaved !== false });
+    const chip = `<span class="src-chip${info.origin === 'STREAM' ? '' : ' file'}" title="${info.origin === 'STREAM' ? 'Suena por streaming desde YouTube Music' : 'Suena desde un archivo en este equipo'}">${originChip(info)}</span>`;
     const art = r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : '<div class="noart">♪</div>';
     const loaded = ['A', 'B'].filter((d) => this.app.decks[d]?.track?.videoId === r.videoId).map((d) => `loaded-${d}`).join(' ');
     return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
       <td>${art}</td>
       <td title="${esc(r.title)}">${esc(r.title)}</td>
-      <td title="${esc(r.artist)}">${esc(r.artist)}</td>
+      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>

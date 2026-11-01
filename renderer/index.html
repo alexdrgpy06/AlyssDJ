@@ -98,8 +98,8 @@
             <div class="artist">—</div>
             <div class="badges">
               <div class="seg source" role="group" aria-label="Fuente de audio">
-                <button data-src="stream" class="on" data-tip="Reproduce desde YouTube Music con tu sesión Premium">STREAM</button>
-                <button data-src="local" data-tip="Reproduce el archivo (local o bajado con yt-dlp)">LOCAL</button>
+                <button data-src="stream" class="on" title="Reproducir por streaming desde YouTube Music">STREAM</button>
+                <button data-src="local" title="Reproducir el archivo">ARCHIVO</button>
               </div>
               <button class="btn sm analyze" data-tip="Descargar con yt-dlp y analizar BPM, beatgrid, tonalidad y forma de onda"><svg class="ic"><use href="#i-bars"/></svg><span>Analizar</span></button>
               <button class="btn ghost sm mix-points" data-tip="Ver y editar los puntos de entrada y salida de mezcla de esta pista">Puntos</button>
@@ -360,6 +360,7 @@
         <section class="set-pane" data-pane="library" id="sp-library" role="tabpanel" aria-labelledby="sn-library" hidden>
           <h3>Librería y música local</h3>
         <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
+        <label class="check"><input type="checkbox" name="preferSaved" /><span>Preferir la copia guardada cuando exista <small>Las pistas de YouTube que ya guardaste suenan desde el archivo (sin anuncios). Apagado, cargan por streaming aunque estén guardadas; en el deck puedes cambiar a mano.</small></span></label>
         <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
         <label>Carpeta de la librería <input name="libraryDir" readonly aria-label="Carpeta donde se guardan las pistas de YouTube" /></label>
         <div class="row-btns">

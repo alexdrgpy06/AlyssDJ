@@ -25,6 +25,8 @@ const DEFAULTS = {
   // Guardar en la librería local lo que se analiza o reproduce (el audio ya se descargó).
   saveOnAnalyze: true,
   saveOnPlay: true,
+  // Las pistas de YouTube con copia guardada suenan desde el archivo (sin anuncios) en vez de por streaming.
+  preferSaved: true,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
 };
 

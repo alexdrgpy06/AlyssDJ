@@ -643,6 +643,7 @@ class App {
     f.layoutMode.value = s.layoutMode || 'auto';
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
+    f.preferSaved.checked = s.preferSaved !== false;
     f.autoUpdate.checked = s.autoUpdate !== false;
     f.libraryDir.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
     f.autoAnalyzeCue.checked = !!s.autoAnalyzeCue;
@@ -728,6 +729,7 @@ class App {
         cookieSource: f.cookieSource.value,
         saveOnAnalyze: f.saveOnAnalyze.checked,
         saveOnPlay: f.saveOnPlay.checked,
+        preferSaved: f.preferSaved.checked,
         autoUpdate: f.autoUpdate.checked,
         libraryDir: f.libraryDir.value,
         autoAnalyzeCue: f.autoAnalyzeCue.checked,

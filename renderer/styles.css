@@ -185,6 +185,10 @@ body.learning [data-ctl].armed { outline: 2px solid var(--warn); }
 .seg button:first-child { border-radius: var(--r-2) 0 0 var(--r-2); }
 .seg button:last-child { border-radius: 0 var(--r-2) var(--r-2) 0; border-left-width: 0; }
 .seg button.on { background: var(--accent, var(--sel)); color: var(--accent-ink, var(--sel-ink)); border-color: var(--accent, var(--sel)); }
+.seg button.na { opacity: .45; cursor: help; }
+.seg button.na.on { opacity: .8; }
+.src-chip { display: inline-block; margin-left: var(--s-2); padding: 0 6px; border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--dim); vertical-align: 1px; }
+.src-chip.file { color: var(--ok); border-color: #1f5a3a; }
 .analyze.busy { color: var(--warn); border-color: #6a5420; }
 .analyze.done { color: var(--ok); border-color: #1f5a3a; }
 

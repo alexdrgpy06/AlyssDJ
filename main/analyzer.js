@@ -36,8 +36,9 @@ class Analyzer {
       const a = JSON.parse(fs.readFileSync(this.jsonPath(id), 'utf8'));
       const audio = this.audioFile(id);
       const saved = a.saved && fs.existsSync(a.saved.path) ? a.saved : undefined; // si el usuario borró el archivo, deja de contar como guardada
+      const savedMissing = a.saved && !saved ? true : undefined; // estuvo guardada y el archivo ya no está: la interfaz avisa
       const mixEdit = mixedit.read(this.cacheDir, id) || undefined;
-      return { ...a, saved, audio: audio ? path.basename(audio) : null, mixEdit };
+      return { ...a, saved, savedMissing, audio: audio ? path.basename(audio) : null, mixEdit };
     } catch {
       return null;
     }
