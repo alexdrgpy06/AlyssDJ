@@ -186,6 +186,33 @@ tests.backlog = async () => {
   console.log('backlog: OK');
 };
 
+tests['queue-ui'] = async () => {
+  const html = read('renderer/index.html'); const lib = read('renderer/library.js');
+  assert.ok(/data-tab="queue"/.test(html) && /id="cnt-queue"/.test(html) && /id="queue-view"/.test(html) && /id="btn-analyze-list"/.test(html), 'fuente, contador, vista y botón');
+  assert.ok(/data-act="an-list"/.test(lib) && /analyzePlaylist/.test(lib) && /fillCrateCounts/.test(lib), 'botón Analizar por playlist y conteo en Importadas');
+  assert.ok(/backlog\.setPriority/.test(read('renderer/app.js')), 'prioridad de los decks');
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-qui-')); const music = path.join(tmp, 'music');
+  const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
+  assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'queue-ui-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  const f = path.join(tmp, 'queue-ui.json');
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  if (process.env.QUEUE_UI_SHOT) fs.copyFileSync(path.join(tmp, 'queue.png'), process.env.QUEUE_UI_SHOT);
+  const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+  for (const [k, v] of Object.entries(r)) assert.ok(!(v && v.__err), `${k}: ${JSON.stringify(v)}`);
+  assert.strictEqual(r.btnVisible, true, '«Analizar lista» visible con pistas');
+  assert.strictEqual(r.counter, '2', 'contador de pendientes');
+  assert.deepStrictEqual([r.paused.cards, r.paused.items, r.paused.view, r.paused.table, r.paused.empty], [1, 2, true, true, true]);
+  assert.ok(/en pausa/.test(r.paused.status) && r.paused.pauseBtn === 'Reanudar', `pausa visible: ${r.paused.status}`);
+  assert.strictEqual(r.again.added, 0, 'no duplica');
+  assert.deepStrictEqual([r.done.pending, r.done.done, r.done.total], [0, 2, 2], `terminó: ${JSON.stringify(r.done)}`);
+  assert.strictEqual(r.done.card, '2/2'); assert.strictEqual(r.done.counter, '');
+  assert.ok(r.analyzed >= 2, 'quedaron analizadas');
+  assert.deepStrictEqual(r.cleared, { cards: 0, empty: true });
+  console.log('queue-ui: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

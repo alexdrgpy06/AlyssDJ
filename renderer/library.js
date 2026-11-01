@@ -30,6 +30,10 @@ export class Library {
       this.onlyCompat = e.target.checked;
       this.render(this.base);
     });
+    this.analyzeBtn = document.getElementById('btn-analyze-list');
+    this.analyzeBtn.addEventListener('click', () => this.analyzeRows(this.base || this.rows, this.listName || 'Lista'));
+    this.bl = { paused: false, pending: 0, lists: [], items: [] };
+    this.bindQueue();
     this.importBtn = document.getElementById('btn-import-pl');
     this.listBtn = document.getElementById('btn-automix-list');
     this.importBtn.addEventListener('click', () => this.importPlaylists());
@@ -77,11 +81,18 @@ export class Library {
     document.dispatchEvent(new CustomEvent('alyss:tab', { detail: tab }));
     document.querySelectorAll('.sources [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     const isAm = tab === 'automix';
+    const isQ = tab === 'queue';
     document.getElementById('am-view').hidden = !isAm;
-    document.querySelector('.table-wrap').hidden = isAm;
-    document.querySelector('.lib-toolbar').hidden = isAm;
+    document.getElementById('queue-view').hidden = !isQ;
+    document.querySelector('.table-wrap').hidden = isAm || isQ;
+    document.querySelector('.lib-toolbar').hidden = isAm || isQ;
+    this.listName = { search: query ? `Búsqueda: ${query}` : 'Resultados', liked: 'Me gusta', local: 'Música local', history: 'Historial' }[tab] || 'Lista';
+    if (isQ) {
+      this.addFolder.hidden = this.importBtn.hidden = this.listBtn.hidden = this.analyzeBtn.hidden = true;
+      return this.renderQueue();
+    }
     if (isAm) {
-      this.addFolder.hidden = this.importBtn.hidden = this.listBtn.hidden = true;
+      this.addFolder.hidden = this.importBtn.hidden = this.listBtn.hidden = this.analyzeBtn.hidden = true;
       this.setMsg('');
       return this.app.renderAutoMix();
     }
@@ -160,6 +171,7 @@ export class Library {
     const r = p.crate ? { ok: true, data: await window.ytdj.crate(p.browseId) } : await window.ytdj.lib.playlist(p.browseId);
     if (!r.ok) return this.setMsg(`Error: ${r.error}`);
     this.setMsg(`${p.title} · ${r.data.length} canciones`);
+    this.listName = p.title;
     this.render(r.data);
   }
 
@@ -168,7 +180,7 @@ export class Library {
     const tr = e.target.closest('tr[data-i]');
     if (!tr) return;
     const row = this.rows[tr.dataset.i];
-    if (row.playlist) return this.openPlaylist(row);
+    if (row.playlist) return btn?.dataset.act === 'an-list' ? this.analyzePlaylist(row) : this.openPlaylist(row);
     if (!btn) return;
     if (btn.dataset.act === 'A' || btn.dataset.act === 'B') this.app.decks[btn.dataset.act].load(row);
     if (btn.dataset.act === 'radio') {
@@ -207,7 +219,7 @@ export class Library {
 
   rowHtml(r, i) {
     if (r.playlist) {
-      return `<tr class="pl" data-i="${i}"><td>${r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : ''}</td><td>${esc(r.title)}</td><td>${esc(r.subtitle)}</td><td class="num"></td><td class="num"></td><td></td><td class="actions">Abrir ›</td></tr>`;
+      return `<tr class="pl" data-i="${i}"><td>${r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : ''}</td><td>${esc(r.title)}</td><td>${esc(r.subtitle)}</td><td class="num"></td><td class="num"></td><td></td><td class="actions"><button data-act="an-list" title="Analiza en segundo plano todas las pistas de esta lista">Analizar</button> Abrir ›</td></tr>`;
     }
     const a = this.analyzed.get(r.videoId);
     const [lbl, cls] = this.analyzeLabel(r.videoId);
@@ -273,7 +285,81 @@ export class Library {
     });
     this.body.innerHTML = rows.map((r, i) => this.rowHtml(r, i)).join('');
     this.renderEmpty(rows);
+    if (this.tab === 'imported') this.fillCrateCounts();
     this.listBtn.hidden = !rows.some((r) => r.videoId && !r.playlist);
+    this.analyzeBtn.hidden = !rows.some((r) => r.videoId && !r.playlist) || ['analyzed', 'automix', 'queue'].includes(this.tab);
+  }
+
+  // ---------- cola de análisis ----------
+  async analyzeRows(rows, name) {
+    const tracks = (rows || []).filter((r) => r.videoId && !r.playlist).map((r) => ({ videoId: r.videoId, title: r.title, artist: r.artist, thumb: r.thumb, duration: r.duration, local: !!r.local, path: r.local ? r.path : undefined }));
+    if (!tracks.length) return this.app.toast('Esta lista no tiene pistas.', true);
+    const r = await window.ytdj.backlog.add({ name, tracks });
+    this.app.toast(r.added ? `En la cola de análisis: ${r.added} pistas de «${name}»${r.skipped ? ` (${r.skipped} ya analizadas o en cola)` : ''}` : 'No hay nada nuevo que analizar: todo ya está analizado o en cola.');
+  }
+
+  async analyzePlaylist(p) {
+    this.setMsg(`Leyendo ${p.title}…`);
+    const r = p.crate ? { ok: true, data: await window.ytdj.crate(p.browseId) } : await window.ytdj.lib.playlist(p.browseId);
+    if (!r.ok) return this.setMsg(`Error: ${r.error}`);
+    this.setMsg('');
+    this.analyzeRows(r.data, p.title);
+  }
+
+  async fillCrateCounts() {
+    for (const [i, row] of this.rows.entries()) {
+      if (!row.crate) continue;
+      const tracks = await window.ytdj.crate(row.browseId);
+      if (this.tab !== 'imported' || this.rows[i] !== row) return;
+      const n = tracks.filter((t) => this.analyzed.has(t.videoId)).length;
+      const cell = this.body.querySelector(`tr[data-i="${i}"] td:nth-child(3)`);
+      if (cell) cell.textContent = `${row.subtitle} · ${n}/${tracks.length} analizadas`;
+    }
+  }
+
+  bindQueue() {
+    const api = window.ytdj.backlog;
+    const apply = (st) => {
+      this.bl = st;
+      const c = document.getElementById('cnt-queue');
+      c.textContent = st.pending || '';
+      if (this.tab === 'queue') this.renderQueue();
+    };
+    api.state().then(apply);
+    api.onEvent(apply);
+    document.getElementById('qv-pause').addEventListener('click', async () => apply(this.bl.paused ? await api.resume() : await api.pause()));
+    document.getElementById('qv-clear').addEventListener('click', async () => apply(await api.clearDone()));
+    document.getElementById('qv-lists').addEventListener('click', async (e) => {
+      const b = e.target.closest('button[data-qact]');
+      if (!b) return;
+      apply(await api[b.dataset.qact](b.dataset.list));
+    });
+  }
+
+  renderQueue() {
+    const st = this.bl;
+    const itemLabel = (i) => {
+      if (i.state === 'running') return i.stage === 'download' ? `Descargando ${Math.round((i.progress || 0) * 100)}%` : 'Analizando';
+      return { queued: 'En cola', done: 'Hecha', error: i.error || 'Error' }[i.state];
+    };
+    document.getElementById('qv-status').textContent = st.pending
+      ? `${st.pending} pendientes${st.paused ? ' · en pausa' : st.botBlocked ? ' · esperando a YouTube' : ' · analizando de a una'}`
+      : 'Nada pendiente.';
+    document.getElementById('qv-pause').textContent = st.paused ? 'Reanudar' : 'Pausar';
+    document.getElementById('qv-pause').disabled = !st.lists.length;
+    document.getElementById('qv-bot').hidden = !st.botBlocked;
+    document.getElementById('qv-empty').hidden = !!st.lists.length;
+    document.getElementById('qv-lists').innerHTML = st.lists.map((l) => {
+      const items = st.items.filter((i) => i.listId === l.id);
+      const pct = l.total ? Math.round((l.done / l.total) * 100) : 0;
+      return `<section class="qv-card">
+        <header><b title="${esc(l.name)}">${esc(l.name)}</b><span class="qv-count">${l.done}/${l.total}${l.error ? ` · ${l.error} con error` : ''}</span><span class="spacer"></span>
+          ${l.error ? `<button class="btn sm" data-qact="retry" data-list="${esc(l.id)}">Reintentar errores</button>` : ''}
+          <button class="btn ghost sm" data-qact="cancel" data-list="${esc(l.id)}" title="Quita la lista de la cola; lo ya analizado se conserva">Cancelar</button></header>
+        <div class="qv-bar"><i style="width:${pct}%"></i></div>
+        <ul class="qv-items">${items.map((i) => `<li class="qv-${i.state}"><span class="qv-t" title="${esc(i.title)}">${esc(i.title)}<small>${esc(i.artist)}</small></span><span class="qv-s" title="${esc(i.state === 'error' ? i.error : '')}">${esc(itemLabel(i))}</span></li>`).join('')}</ul>
+      </section>`;
+    }).join('');
   }
 
   // Estado vacío: qué pasa y qué hacer a continuación, según la fuente.

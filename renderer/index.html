@@ -38,6 +38,7 @@
       <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/></symbol>
       <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 6h12M4 12h9M4 18h6"/><path d="m16 15 3 3 3-3" /><path d="M19 10v8"/></symbol>
       <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
     </defs>
   </svg>
@@ -214,6 +215,7 @@
         <button data-tab="local"><svg class="ic"><use href="#i-folder"/></svg><span>Local</span></button>
         <button data-tab="analyzed"><svg class="ic"><use href="#i-bars"/></svg><span>Analizados</span><em class="cnt" id="cnt-analyzed"></em></button>
         <button data-tab="history"><svg class="ic"><use href="#i-clock"/></svg><span>Historial</span></button>
+        <button data-tab="queue" title="Análisis en segundo plano de listas enteras"><svg class="ic"><use href="#i-queue"/></svg><span>Análisis</span><em class="cnt" id="cnt-queue"></em></button>
         <button data-tab="automix" class="am-tab"><svg class="ic"><use href="#i-radio"/></svg><span>AutoMix</span></button>
       </nav>
     </aside>
@@ -225,6 +227,7 @@
       </form>
       <button class="btn sm" id="btn-import-pl" hidden title="Copia tus playlists y Me gusta de YouTube Music a este equipo"><svg class="ic"><use href="#i-plus"/></svg>Importar mis playlists</button>
       <button class="btn sm" id="btn-automix-list" hidden title="Mezclar esta lista seguida con AutoMix"><svg class="ic"><use href="#i-radio"/></svg>AutoMix de esta lista</button>
+      <button class="btn sm" id="btn-analyze-list" hidden title="Analiza en segundo plano todas las pistas de esta lista que aún no estén analizadas"><svg class="ic"><use href="#i-queue"/></svg>Analizar lista</button>
       <button class="btn sm" id="btn-add-folder" hidden><svg class="ic"><use href="#i-plus"/></svg>Añadir carpeta…</button>
       <span class="lib-msg" id="lib-msg" role="status" aria-live="polite"></span>
       <span class="spacer"></span>
@@ -238,6 +241,17 @@
         <tbody id="tracks"></tbody>
       </table>
       <div class="empty" id="lib-empty" hidden><svg class="ic"><use href="#i-search"/></svg><p id="lib-empty-text"></p></div>
+    </div>
+    <div class="queue-view" id="queue-view" hidden>
+      <div class="qv-head">
+        <div><h2>Análisis en segundo plano</h2><p class="hint" id="qv-status">Nada en cola.</p></div>
+        <span class="spacer"></span>
+        <button class="btn" id="qv-pause" type="button">Pausar</button>
+        <button class="btn ghost" id="qv-clear" type="button" title="Quita de la vista las pistas ya analizadas">Quitar terminadas</button>
+      </div>
+      <p class="qv-bot" id="qv-bot" hidden>YouTube pidió comprobar que no eres un bot: la cola espera unos minutos y sigue sola.</p>
+      <div class="qv-lists" id="qv-lists"></div>
+      <div class="empty" id="qv-empty"><svg class="ic"><use href="#i-queue"/></svg><p>No hay nada en cola. Usa «Analizar lista» en cualquier lista o «Analizar» en una playlist.</p></div>
     </div>
     <div class="am-view" id="am-view" hidden>
       <div class="am-top">

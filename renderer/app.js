@@ -112,6 +112,8 @@ class App {
 
   onDeckLoaded() {
     this.library.render();
+    // la cola de análisis atiende primero las pistas que están cargadas en un deck
+    window.ytdj.backlog.setPriority([this.decks.A, this.decks.B].map((d) => d?.track?.videoId).filter(Boolean));
   }
 
   applyXf() {

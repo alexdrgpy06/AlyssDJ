@@ -679,3 +679,22 @@ dialog#help { width: 640px; }
 .am-suggest { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .am-suggest h3 { margin: 0; font-size: 12px; letter-spacing: .06em; color: var(--dim); text-transform: uppercase; }
 .am-suggest h3 small { text-transform: none; letter-spacing: 0; color: var(--faint); margin-left: 6px; }
+
+/* ---------- vista Análisis ---------- */
+.queue-view { overflow: auto; min-height: 0; padding: var(--s-3) var(--s-4) var(--s-5); display: flex; flex-direction: column; gap: var(--s-3); scrollbar-color: var(--line-2) transparent; }
+.qv-head { display: flex; align-items: center; gap: var(--s-2); }
+.qv-head h2 { margin: 0; font-size: var(--fs-4); }
+.qv-bot { margin: 0; padding: var(--s-2) var(--s-3); border: 1px solid #6a5420; border-radius: var(--r-2); color: var(--warn); font-size: var(--fs-2); }
+.qv-lists { display: flex; flex-direction: column; gap: var(--s-3); }
+.qv-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); padding: var(--s-2) var(--s-3) var(--s-3); display: flex; flex-direction: column; gap: var(--s-2); }
+.qv-card header { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.qv-card header b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qv-count { color: var(--dim); font-family: var(--mono); font-size: var(--fs-2); white-space: nowrap; }
+.qv-bar { height: 6px; background: var(--inset); border-radius: 3px; overflow: hidden; }
+.qv-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--a), var(--b)); transition: width var(--dur-2) var(--ease); }
+.qv-items { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; display: flex; flex-direction: column; scrollbar-color: var(--line-2) transparent; }
+.qv-items li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3); padding: 3px 0; border-top: 1px solid #10141c; font-size: var(--fs-2); }
+.qv-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qv-t small { color: var(--dim); margin-left: var(--s-2); }
+.qv-s { color: var(--dim); white-space: nowrap; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; }
+.qv-running .qv-s { color: var(--warn); } .qv-done .qv-s { color: var(--ok); } .qv-error .qv-s { color: var(--err); }
