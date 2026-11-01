@@ -272,28 +272,43 @@
         </div>
         <div class="am-card am-next"><span class="lbl">SIGUE</span><div class="am-title" id="amv-next">—</div><div class="am-sub" id="amv-next-sub"></div></div>
       </div>
-      <div class="am-controls">
-        <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
-        <button class="btn" id="amv-mix" type="button" title="Busca la salida y la entrada más cercanas que suenen bien y mezcla (Mayús + →; otra pulsación cancela)"><svg class="ic"><use href="#i-skip"/></svg><span id="amv-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
-        <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
-          <button data-v="crossfade" type="button" title="Solo crossfader">Fundido</button>
-          <button data-v="bass" type="button" class="on" title="Los graves de la entrante entran a mitad">Bass swap</button>
-          <button data-v="filter" type="button" title="La saliente se cierra y la entrante se abre">Filtro</button>
-        </div>
-        <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
-        <label class="check compact" title="Descarga sin sesión, analiza y reproduce el archivo: sin anuncios y con BPM"><input type="checkbox" id="amv-local" /> Analizar y usar archivo (evita anuncios)</label>
-        <label class="check compact" title="Sale por el mejor punto de la pista (frase al empezar el outro o una rotura), no necesariamente al final"><input type="checkbox" id="amv-points" /> Mezclar en puntos óptimos</label>
-        <label class="check compact" title="Mantiene toda la cola ordenada como una cadena (BPM suave, tonalidad, energía); lo que tú colocas no se mueve"><input type="checkbox" id="amv-order" /> Orden automático</label>
-        <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar ahora</button>
-        <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
-        <span class="am-sub" id="amv-quality" aria-live="polite"></span>
-        <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
-        <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
-        <label class="check compact" title="Entre pistas que mezclan igual de bien, prefiere las más reproducidas; nunca antepone una popular que no encaje"><input type="checkbox" id="amv-pop" /> Priorizar lo popular</label>
-        <select id="amv-popw" aria-label="Peso de la popularidad" title="Cuánto pesa la popularidad frente al BPM y la tonalidad"><option value="low">Poco</option><option value="mid">Medio</option><option value="high">Mucho</option></select>
-        <span class="spacer"></span>
-        <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
-        <button class="btn ghost sm" id="amv-clear" type="button">Vaciar cola</button>
+      <div class="am-controls am-groups">
+        <fieldset class="am-group" aria-labelledby="amg-play">
+          <h3 id="amg-play">Reproducción</h3>
+          <div class="am-row">
+            <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+            <button class="btn" id="amv-mix" type="button" title="Busca la salida y la entrada más cercanas que suenen bien y mezcla (Mayús + →; otra pulsación cancela)"><svg class="ic"><use href="#i-skip"/></svg><span id="amv-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
+          </div>
+        </fieldset>
+        <fieldset class="am-group" aria-labelledby="amg-trans">
+          <h3 id="amg-trans">Transición</h3>
+          <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
+            <button data-v="crossfade" type="button" title="Solo crossfader">Fundido</button>
+            <button data-v="bass" type="button" class="on" title="Los graves de la entrante entran a mitad">Bass swap</button>
+            <button data-v="filter" type="button" title="La saliente se cierra y la entrante se abre">Filtro</button>
+          </div>
+          <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
+          <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
+          <label class="check compact" title="Sale por el mejor punto de la pista (frase al empezar el outro o una rotura), no necesariamente al final"><input type="checkbox" id="amv-points" /> Mezclar en puntos óptimos</label>
+        </fieldset>
+        <fieldset class="am-group" aria-labelledby="amg-queue">
+          <h3 id="amg-queue">Cola</h3>
+          <label class="check compact" title="Mantiene toda la cola ordenada como una cadena (BPM suave, tonalidad, energía); lo que tú colocas no se mueve"><input type="checkbox" id="amv-order" /> Orden automático</label>
+          <label class="check compact" title="Entre pistas que mezclan igual de bien, prefiere las más reproducidas; nunca antepone una popular que no encaje"><input type="checkbox" id="amv-pop" /> Priorizar lo popular
+            <select id="amv-popw" aria-label="Peso de la popularidad" title="Cuánto pesa la popularidad frente al BPM y la tonalidad"><option value="low">Poco</option><option value="mid">Medio</option><option value="high">Mucho</option></select></label>
+          <div class="am-row">
+            <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar</button>
+            <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
+            <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
+            <button class="btn ghost sm" id="amv-clear" type="button">Vaciar</button>
+          </div>
+          <span class="am-sub" id="amv-quality" aria-live="polite"></span>
+        </fieldset>
+        <fieldset class="am-group" aria-labelledby="amg-src">
+          <h3 id="amg-src">Fuente</h3>
+          <label class="check compact" title="Descarga sin sesión, analiza y reproduce el archivo: sin anuncios y con BPM"><input type="checkbox" id="amv-local" /> Analizar y usar archivo (evita anuncios)</label>
+          <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
+        </fieldset>
       </div>
       <div class="am-add">
         <label class="am-search"><svg class="ic"><use href="#i-search"/></svg><input id="amv-search" type="search" autocomplete="off" placeholder="Buscar para agregar a la cola: YouTube Music, tu librería y lo analizado (Enter agrega la primera)" aria-label="Buscar para agregar a la cola de AutoMix" /></label>

@@ -113,6 +113,18 @@ tests.sources = async () => {
   console.log('sources: OK');
 };
 
+tests.automix = async () => {
+  const html = read('renderer/index.html');
+  // REQ-6: cuatro grupos con título y todos los controles de antes
+  const groups = [...html.matchAll(/<fieldset class="am-group" aria-labelledby="(amg-\w+)">\s*<h3 id="\1">([^<]+)<\/h3>([\s\S]*?)<\/fieldset>/g)];
+  assert.deepStrictEqual(groups.map((g) => g[2]), ['Reproducción', 'Transición', 'Cola', 'Fuente']);
+  const want = { 'Reproducción': ['amv-toggle', 'amv-mix'], 'Transición': ['amv-style', 'amv-len', 'amv-tempo', 'amv-points'], 'Cola': ['amv-order', 'amv-reorder', 'amv-undo', 'amv-clear', 'amv-fill', 'amv-pop', 'amv-popw', 'amv-quality'], 'Fuente': ['amv-local', 'amv-endless'] };
+  for (const g of groups) for (const id of want[g[2]]) assert.ok(g[3].includes(`id="${id}"`), `${id} en ${g[2]}`);
+  for (const id of ['amv-cur', 'amv-next', 'amv-status', 'amv-search', 'amv-list', 'amv-suggest', 'amv-mix-label']) assert.ok(html.includes(`id="${id}"`), `${id} se conserva`);
+  assert.ok(/<kbd>⇧→<\/kbd>/.test(html), 'atajo Mayús + → visible');
+  console.log('automix: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

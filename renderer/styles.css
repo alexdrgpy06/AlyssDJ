@@ -518,10 +518,15 @@ fieldset { min-width: 0; }
 .am-status { font-weight: 600; }
 .am-bar { height: 6px; background: var(--inset); border-radius: 3px; overflow: hidden; }
 .am-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--a), var(--b)); }
-.am-controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.am-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-2); align-items: stretch; }
+.am-group { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2) var(--s-3) var(--s-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); }
+.am-group h3 { margin: 0; font-size: var(--fs-1); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.am-row { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+.am-group .seg { align-self: flex-start; }
+.am-group .check.compact select { margin-left: auto; min-height: 24px; padding: 0 var(--s-1); }
 .am-controls kbd { font-family: var(--mono); font-size: 11px; background: #0003; border: 1px solid #ffffff22; border-radius: 4px; padding: 0 5px; margin-left: 4px; }
-.am-len { display: inline-flex; align-items: center; gap: 8px; }
-.am-len input { width: 120px; }
+.am-len { display: flex; align-items: center; gap: var(--s-2); }
+.am-len input { flex: 1; min-width: 80px; }
 .am-len output { font-family: var(--mono); min-width: 38px; }
 .am-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .am-list:empty::after { content: 'La cola está vacía: la radio de YouTube Music la irá llenando, o añade pistas con + en la librería.'; color: var(--faint); padding: 14px 4px; }
