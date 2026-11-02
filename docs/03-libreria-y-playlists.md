@@ -90,6 +90,16 @@ En **Analizadas** y dentro de cualquier **playlist importada** aparece el botón
 Solo se exportan con ruta de audio las pistas que están en tu disco (locales o **guardadas**). Las que solo existen por streaming no se pueden reproducir fuera de la app: M3U8 y Rekordbox las omiten (la app avisa cuántas) y el CSV las conserva con la ruta vacía. El archivo se escribe entero o no se escribe. Traktor no está incluido.
 
 
+## Preescucha
+
+El botón **▶** al principio de las acciones de cada pista la reproduce **por los auriculares** (la salida «Auriculares» de Ajustes; si no hay, por la salida por defecto) sin cargarla en ningún deck ni tocar el master.
+
+- Empieza en el punto de entrada de mezcla de la pista (el editado, o el que marcó el análisis); sin análisis, al 25 % de su duración.
+- Suena una sola a la vez: al pulsar ▶ en otra, o ■ en la misma, la anterior se para. También se para al terminar.
+- Una barra bajo el título muestra el avance; pulsa sobre ella para saltar a otro punto.
+- Solo funciona con pistas que existen como archivo en tu equipo. Las de streaming muestran ▶ deshabilitado: guárdalas (analízalas) para preescucharlas. No se descarga nada por su cuenta.
+- Sin auriculares configurados, si un deck empieza a sonar la preescucha se para y la app te lo avisa, para que nunca se oiga encima de la mezcla.
+
 ## Géneros
 
 Cada pista puede llevar hasta cinco **géneros** (etiquetas de texto libre). Se leen solos de las **etiquetas del archivo** (ID3/MP4) o de los metadatos al analizar, y puedes escribirlos tú:

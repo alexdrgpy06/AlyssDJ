@@ -60,6 +60,8 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **Exportar:** lo analizado y tus playlists importadas salen a M3U8, CSV o Rekordbox XML (BPM, tonalidad, rejilla y marcas de mezcla).
 
+**Preescucha:** ▶ en cada pista local de la Librería la reproduce por los auriculares, sin tocar los decks ni el master, empezando en su punto de entrada.
+
 **Vistas:** Mezcla, Librería, Automix (portada grande con anillos que laten con el beat) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck, y los divisores entre ondas, decks y librería se arrastran (cada vista recuerda su tamaño).
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).

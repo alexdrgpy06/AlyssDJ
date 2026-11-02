@@ -850,3 +850,12 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 
 /* Plato sujeto: se frena y el audio sigue a la mano */
 .platter.held { cursor: grabbing; box-shadow: 0 0 0 2px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* Preescucha de la Librería */
+.tracks .actions button.pv { padding: 2px 7px; font-size: 11px; color: var(--muted, #9aa3b2); }
+.tracks .actions button.pv.on { color: var(--play); border-color: var(--play); }
+.tracks .actions button.pv:disabled { opacity: .35; cursor: not-allowed; }
+.tracks td { position: relative; }
+.pv-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255, 255, 255, .15); cursor: pointer; }
+.pv-bar:hover { height: 6px; }
+.pv-bar i { display: block; height: 100%; width: calc(var(--p, 0) * 100%); background: var(--play); }

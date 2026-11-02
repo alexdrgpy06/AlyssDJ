@@ -2,6 +2,8 @@
 import { genres, openGenreEditor, closeGenreEditor } from './genres.js';
 import { camelotColor, keysCompatible, bpmCompatible } from './camelot.js';
 import { resolveSource, originChip } from './source.js';
+import { preview } from './preview.js';
+import { fileUrl } from './mixpreview.js';
 
 const fmtDur = (s) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -22,6 +24,8 @@ export class Library {
     this.onlyCompat = false;
     this.genreSel = new Set();
     this.bindGenres();
+    app.preview = preview;
+    preview.on((e) => this.onPreview(e));
     document.querySelectorAll('.tracks th[data-sort]').forEach((th) =>
       th.addEventListener('click', () => {
         const k = th.dataset.sort;
@@ -192,7 +196,13 @@ export class Library {
     if (!tr) return;
     const row = this.rows[tr.dataset.i];
     if (row.playlist) return btn?.dataset.act === 'an-list' ? this.analyzePlaylist(row) : this.openPlaylist(row);
+    const bar = e.target.closest('.pv-bar');
+    if (bar && !btn) {
+      const r = bar.getBoundingClientRect();
+      return preview.seek((e.clientX - r.left) / r.width);
+    }
     if (!btn) return;
+    if (btn.dataset.act === 'prev') return this.togglePreview(row);
     if (btn.dataset.act === 'A' || btn.dataset.act === 'B') this.app.decks[btn.dataset.act].load(row);
     if (btn.dataset.act === 'radio') {
       this.app.automix.start({ seed: row });
@@ -248,13 +258,38 @@ export class Library {
     const loaded = ['A', 'B'].filter((d) => this.app.decks[d]?.track?.videoId === r.videoId).map((d) => `loaded-${d}`).join(' ');
     return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
       <td>${art}</td>
-      <td title="${esc(r.title)}">${esc(r.title)}</td>
+      <td title="${esc(r.title)}">${esc(r.title)}${preview.state?.id === r.videoId ? `<div class="pv-bar" style="--p:${preview.state.dur ? Math.min(1, preview.state.t / preview.state.dur) : 0}"><i></i></div>` : ''}</td>
       <td title="${esc(r.artist)}">${esc(r.artist)}${chip}${genres.chips(r.videoId)}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>
-      <td class="actions"><button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
+      <td class="actions">${this.previewBtn(r, a)}<button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
     </tr>`;
+  }
+
+  previewBtn(r, a) {
+    const on = preview.state?.id === r.videoId;
+    const ok = !!fileUrl(r, a);
+    return `<button data-act="prev" class="pv${on ? ' on' : ''}"${ok ? '' : ' disabled'} aria-pressed="${on}" aria-label="Preescuchar ${esc(r.title)}" title="${ok ? (on ? 'Parar la preescucha' : 'Preescuchar por los auriculares') : 'Solo por streaming: guarda la pista para preescucharla'}">${on ? '■' : '▶'}</button>`;
+  }
+
+  togglePreview(row) {
+    const decks = this.app.decks;
+    return preview.toggle(row, this.analyzed.get(row.videoId), {
+      cueLabel: this.app.settings.output?.cueLabel || '',
+      busy: () => [decks.A, decks.B].some((d) => d?.st?.playing),
+    });
+  }
+
+  // Repinta solo la fila que empieza o termina; el avance mueve la barra sin tocar la tabla.
+  onPreview(e) {
+    if (e.type === 'tick') {
+      const tr = this.body.querySelector(`tr[data-id="${CSS.escape(e.id)}"]`);
+      tr?.querySelector('.pv-bar')?.style.setProperty('--p', e.dur ? Math.min(1, e.t / e.dur) : 0);
+      return;
+    }
+    this.updateRow(e.id);
+    if (e.type === 'blocked') this.app.toast('Preescucha parada: suena un deck y no hay salida de auriculares.');
   }
 
   isCompat(r) {
