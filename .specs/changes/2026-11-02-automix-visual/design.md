@@ -52,4 +52,18 @@ new Visualizer({ canvas, cover, getDecks, isOn }) .start() .stop() .refresh() .d
 - El botón «Visual» usa el estilo de los demás de `.imm-controls` (`.btn.ghost` con estado activo neutro `--sel`).
 - Contraste del texto sobre el fondo ≥ 4,5:1 con los anillos al máximo; a 1366×768 la vista sigue sin desbordar.
 
+## Domain deltas
+### ui
+#### ADDED spec: Visual de la vista Automix
+THE SYSTEM SHALL dibujar en un lienzo detrás de la portada anillos que se expanden una vez por beat (con más fuerza en el primer tiempo del compás de 4), con el color del deck (A cian, B rosa), intensidad según el nivel de audio y la ganancia del canal, los dos decks a la vez en las transiciones, un anillo que respira sin BPM y anillos quietos y tenues en pausa; la portada escala hasta +1,5 % con el beat.
+#### ADDED spec: Control, movimiento reducido y rendimiento
+THE SYSTEM SHALL ofrecer el botón «Visual» (activado por defecto, recordado en `AutoMix.cfg.visual`), mostrar el visual estático con `prefers-reduced-motion`, dibujar a ≤ 30 fps solo con la vista Automix, la ventana y el visual activos, y no cambiar el audio.
+#### ADDED design: viz.js
+`renderer/viz.js` exporta `beatPhase`, `beatInBar`, `deckRings`, `vizScene`, `pulseOf` (puros) y `Visualizer` (bucle con rAF limitado, cuadro estático solo cuando cambia algo visible en movimiento reducido).
+
 ## Amendments
+
+### A1 · 2026-11-02
+Cambio: en movimiento reducido el cuadro estático se redibuja solo cuando cambia el tamaño, qué decks suenan o su ganancia (no en cada refresco de 400 ms).
+Motivo: REQ-4 pide no consumir cuadros; redibujar en cada refresco lo incumplía.
+Afecta: REQ-4.

@@ -118,7 +118,7 @@ Arriba, junto a las herramientas, el selector de vista (también **Alt+1 … Alt
 |---|---|
 | **Mezcla** (Alt+1) | La consola completa: ondas, decks, mezclador y la librería debajo |
 | **Librería** (Alt+2) | Decks compactos y la librería con casi toda la altura, para preparar y buscar |
-| **Automix** (Alt+3) | Portada grande de lo que suena, la siguiente pista, la barra de la transición y los controles de AutoMix |
+| **Automix** (Alt+3) | Portada grande con un visual de anillos al ritmo del beat, la siguiente pista, la barra de la transición y los controles de AutoMix |
 | **Ondas** (Alt+4) | Ondas grandes y una tira por deck con play, cue y sync, más el mezclador; sin librería |
 
 ![Vista Ondas](img/39-vista-ondas.png)

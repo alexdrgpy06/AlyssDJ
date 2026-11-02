@@ -78,6 +78,16 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.docs = async () => {
+  const d4 = read('docs/04-automix.md'); const d2 = read('docs/02-decks-y-mezclador.md'); const rd = read('README.md');
+  for (const k of ['El visual', 'anillos', 'beat', 'igual para pistas locales', 'botón **Visual**', '30 cuadros', 'movimiento reducido', 'No es vídeo', 'img/47-visual-automix.png']) assert.ok(d4.includes(k), `04: ${k}`);
+  assert.ok(/anillos al ritmo del beat/.test(d2) && /anillos que laten/.test(rd));
+  assert.ok(fs.existsSync(path.join(root, 'docs/img/47-visual-automix.png')), 'captura');
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in model docs; do node scripts\/test-visual\.js/.test(ci), 'CI rápida: model y docs'); assert.ok((ci.match(/test-visual\.js ui/g) || []).length === 2, 'CI con ventana: ui (Linux y resto)');
+  console.log('docs ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-visual.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

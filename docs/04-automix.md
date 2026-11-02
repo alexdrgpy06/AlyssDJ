@@ -17,6 +17,18 @@ Al abrir la fuente **AutoMix** de la librería la app pasa a la vista **Librerí
 
 ![Vista Automix](img/41-vista-automix.png)
 
+### El visual
+
+Detrás de la portada, la vista **Automix** dibuja unos **anillos que laten con el beat** del deck que suena: salen de la portada y se expanden una vez por beat, con un pulso más marcado en el primer tiempo de cada compás, y la portada «late» un poco (hasta un 1,5 %). Son cian para el deck A y rosa para el B; durante una transición se ven los dos y el color pasa de uno al otro con el crossfader.
+
+- Es **igual para pistas locales, guardadas y de stream**: solo usa el nivel de audio, el BPM y la posición del deck. Sin BPM, un anillo respira con el nivel; en pausa, los anillos quedan quietos y tenues.
+- El botón **Visual** (junto a *Ver cola*) lo enciende o apaga y se recuerda entre sesiones. Viene activado.
+- Dibuja a 30 cuadros por segundo como máximo y **solo mientras la vista Automix está visible** y la ventana no está oculta; fuera de eso no gasta procesador. No cambia el audio.
+- Si tu sistema tiene activado el **movimiento reducido**, el visual se queda estático.
+- No es vídeo (se retiró en la v0.5.0 porque no funcionaba bien) ni un analizador de espectro: los decks de stream no ofrecen espectro.
+
+![Visual de la vista Automix](img/47-visual-automix.png)
+
 Arriba, tres tarjetas: **SUENA** (con lo que falta), el estado de la mezcla con su barra de progreso y **SIGUE**. Debajo, los controles y la **cola completa**.
 
 | Control | Qué hace |
