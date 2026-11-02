@@ -17,3 +17,33 @@ export function settingsFilter(query, rows) {
   });
   return { panes, hits, active: true };
 }
+
+// Parche de ajustes que corresponde a un control del formulario (los tres de la salida de audio van juntos).
+export function settingPatch(name, f) {
+  switch (name) {
+    case 'outputMode':
+    case 'masterLabel':
+    case 'cueLabel':
+      return { output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value } };
+    case 'ytdlpPath':
+      return { ytdlpPath: f.ytdlpPath.value.trim() };
+    case 'pitchRange':
+      return { pitchRange: Number(f.pitchRange.value) };
+    case 'wavesMode':
+      return null; // no es un ajuste de main: lo guarda el estado de las vistas
+    default: {
+      const el = f[name];
+      return el ? { [name]: el.type === 'checkbox' ? el.checked : el.value } : null;
+    }
+  }
+}
+
+// Parche con los valores por defecto de las opciones de una sección.
+export function sectionDefaults(names, defaults) {
+  const patch = {};
+  for (const n of names) {
+    if (n === 'outputMode' || n === 'masterLabel' || n === 'cueLabel') patch.output = defaults.output;
+    else if (n !== 'wavesMode' && n in defaults) patch[n] = defaults[n];
+  }
+  return patch;
+}

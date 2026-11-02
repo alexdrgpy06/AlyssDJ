@@ -55,10 +55,12 @@ function get() {
 }
 
 function set(patch) {
-  cache = { ...get(), ...patch };
+  // Primero se escribe y después se acepta: si el disco falla, la memoria sigue igual que el archivo.
+  const next = { ...get(), ...patch };
   fs.mkdirSync(path.dirname(file()), { recursive: true });
-  fs.writeFileSync(file(), JSON.stringify(cache, null, 2));
+  fs.writeFileSync(file(), JSON.stringify(next, null, 2));
+  cache = next;
   return cache;
 }
 
-module.exports = { get, set };
+module.exports = { get, set, defaults: () => JSON.parse(JSON.stringify(DEFAULTS)) };

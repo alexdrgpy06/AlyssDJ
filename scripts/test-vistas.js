@@ -85,6 +85,43 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.save = async () => {
+  const { settingPatch, sectionDefaults } = await import('../renderer/settings-ui.js');
+  const f = { outputMode: { value: 'quad' }, masterLabel: { value: 'M' }, cueLabel: { value: 'C' }, ytdlpPath: { value: '  /x/yt-dlp ' }, pitchRange: { value: '16' }, preferSaved: { type: 'checkbox', checked: false }, layoutMode: { value: 'wide' } };
+  assert.deepStrictEqual(settingPatch('cueLabel', f), { output: { mode: 'quad', masterLabel: 'M', cueLabel: 'C' } });
+  assert.deepStrictEqual(settingPatch('ytdlpPath', f), { ytdlpPath: '/x/yt-dlp' });
+  assert.deepStrictEqual(settingPatch('pitchRange', f), { pitchRange: 16 });
+  assert.deepStrictEqual(settingPatch('preferSaved', f), { preferSaved: false });
+  assert.deepStrictEqual(settingPatch('layoutMode', f), { layoutMode: 'wide' });
+  assert.strictEqual(settingPatch('wavesMode', f), null); assert.strictEqual(settingPatch('nope', f), null);
+  const d = { output: { mode: 'split', masterLabel: '', cueLabel: '' }, pitchRange: 8, crossfaderCurve: 'smooth', preferSaved: true };
+  assert.deepStrictEqual(sectionDefaults(['pitchRange', 'crossfaderCurve'], d), { pitchRange: 8, crossfaderCurve: 'smooth' });
+  assert.deepStrictEqual(sectionDefaults(['outputMode', 'masterLabel', 'recordSourceX'], d), { output: d.output }, 'la salida va junta; lo desconocido se ignora');
+  assert.deepStrictEqual(sectionDefaults(['wavesMode'], d), {}, 'las vistas no son un ajuste de main');
+  const sd = require('../main/settings.js').defaults();
+  assert.strictEqual(sd.pitchRange, 8); assert.strictEqual(sd.preferSaved, true); assert.deepStrictEqual(sd.output, { mode: 'split', masterLabel: '', cueLabel: '' });
+  sd.pitchRange = 99; assert.strictEqual(require('../main/settings.js').defaults().pitchRange, 8, 'copia independiente');
+  const app = read('renderer/app.js');
+  assert.ok(!/dlg\.addEventListener\('close'/.test(app), 'ya no se guarda al cerrar');
+  assert.ok(/f\.addEventListener\('change'/.test(app) && /resetSplits/.test(app));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-ajustes-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const r = JSON.parse(fs.readFileSync(path.join(tmp, 'ajustes.json'), 'utf8'));
+  // REQ-4: se guarda al cambiar, con el diálogo abierto, y confirma
+  assert.ok(r.s1.open && r.s1.pitch === 16 && r.s1.saved === 'Guardado', JSON.stringify(r.s1));
+  assert.strictEqual(r.s2.prefer, false); assert.strictEqual(r.s3.saved, '', 'la confirmación se apaga sola');
+  if (r.canFail) assert.ok(r.fail.ctlCurve === 'smooth' && r.fail.curve === 'smooth' && r.fail.err.length === 1 && /No se pudo guardar/.test(r.fail.err[0]), JSON.stringify(r.fail));
+  // restablecer sección: cancelar no toca nada; aceptar solo cambia esa sección
+  assert.ok(r.resetNo.pitch === 16 && r.resetNo.ctlPitch === '16', 'cancelar no cambia nada');
+  assert.ok(r.resetYes.pitch === 8 && r.resetYes.ctlPitch === '8' && r.resetYes.curve === 'smooth', 'sección restablecida');
+  assert.strictEqual(r.resetYes.prefer, false, 'otra sección intacta'); assert.strictEqual(r.resetYes.ctlPrefer, false);
+  assert.strictEqual(r.resetYes.saved, 'Sección restablecida');
+  // REQ-2: restablecer vistas
+  assert.strictEqual(r.viewsReset.active, null); assert.deepStrictEqual(r.viewsReset.stored.mix, { last: null, waves: null, lib: null }); assert.strictEqual(r.viewsReset.saved, 'Vistas restablecidas');
+  console.log('save ok');
+};
+
 tests.search = async () => {
   const { settingsFilter, norm } = await import('../renderer/settings-ui.js');
   assert.strictEqual(norm('Música ACTUALIZACIÓN'), 'musica actualizacion');

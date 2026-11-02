@@ -11,7 +11,7 @@ import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
-import { settingsFilter } from './settings-ui.js';
+import { settingsFilter, settingPatch, sectionDefaults } from './settings-ui.js';
 import { SplitState, clampSplit, STORE as SPLIT_STORE, STEP, STEP_BIG } from './splits.js';
 
 const $ = (s) => document.querySelector(s);
@@ -566,6 +566,11 @@ class App {
         persist();
       });
     }
+    this.resetSplits = () => {
+      this.splits.resetAll();
+      persist();
+      this.applySplits();
+    };
     addEventListener('resize', () => this.applySplits());
   }
 
@@ -988,34 +993,101 @@ class App {
     this.bindSettingsNav();
     const dlg = $('#settings');
     const f = dlg.querySelector('form');
-    dlg.addEventListener('close', async () => {
+    // Cada opción se guarda al cambiarla; si falla, vuelve a su valor anterior y se explica junto al control.
+    let savedTimer = 0;
+    const flashSaved = (msg = 'Guardado') => {
+      const el = $('#set-saved');
+      el.textContent = msg;
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => (el.textContent = ''), 1500);
+    };
+    const showError = (control, msg) => {
+      const host = control.closest('label') || control.parentElement;
+      host.querySelector(':scope > .set-err')?.remove();
+      if (!msg) return;
+      const s = document.createElement('small');
+      s.className = 'set-err';
+      s.setAttribute('role', 'alert');
+      s.textContent = msg;
+      host.append(s);
+    };
+    this.fillSetting = async (name, s) => {
+      const el = f[name];
+      if (!el) return;
+      if (name === 'outputMode') el.value = s.output?.mode || 'split';
+      else if (name === 'masterLabel') el.value = s.output?.masterLabel || '';
+      else if (name === 'cueLabel') el.value = s.output?.cueLabel || '';
+      else if (name === 'wavesMode') el.value = this.views.waves;
+      else if (name === 'pitchRange') el.value = String(s.pitchRange || 8);
+      else if (name === 'libraryDir') el.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
+      else if (el.type === 'checkbox') el.checked = name === 'autoAnalyzeLocal' ? s[name] !== false : !!s[name];
+      else el.value = s[name] ?? '';
+    };
+    const sideEffects = (names, prevYtdlp) => {
+      if (names.includes('layoutMode')) this.applyLayout?.();
+      if (names.some((n) => ['outputMode', 'masterLabel', 'cueLabel'].includes(n))) this.applyRouting();
+      if (names.includes('crossfaderCurve')) this.applyXf();
+      if (names.includes('ytdlpPath') && prevYtdlp !== this.settings.ytdlpPath) this.checkTools();
+    };
+    this.saveSetting = async (control) => {
+      const name = control.name;
+      if (!name) return;
+      if (name === 'wavesMode') {
+        this.setWaves(control.value);
+        flashSaved();
+        return;
+      }
+      const patch = settingPatch(name, f);
+      if (!patch) return;
       const prevYtdlp = this.settings.ytdlpPath;
-      this.settings = await window.ytdj.settings.set({
-        ytdlpPath: f.ytdlpPath.value.trim(),
-        cookieSource: f.cookieSource.value,
-        saveOnAnalyze: f.saveOnAnalyze.checked,
-        saveOnPlay: f.saveOnPlay.checked,
-        preferSaved: f.preferSaved.checked,
-        autoUpdate: f.autoUpdate.checked,
-        libraryDir: f.libraryDir.value,
-        autoAnalyzeCue: f.autoAnalyzeCue.checked,
-        output: { mode: f.outputMode.value, masterLabel: f.masterLabel.value, cueLabel: f.cueLabel.value },
-        pitchRange: Number(f.pitchRange.value),
-        crossfaderCurve: f.crossfaderCurve.value,
-        layoutMode: f.layoutMode.value,
-        recordSource: f.recordSource.value,
-        autoAnalyzeLocal: f.autoAnalyzeLocal.checked,
+      showError(control, '');
+      try {
+        this.settings = await window.ytdj.settings.set(patch);
+      } catch (e) {
+        await this.fillSetting(name, this.settings);
+        showError(control, `No se pudo guardar: ${String(e?.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '').slice(0, 120)}`);
+        return;
+      }
+      sideEffects([name], prevYtdlp);
+      flashSaved();
+    };
+    f.addEventListener('change', (e) => e.target.name && this.saveSetting(e.target));
+    this.settingsDefaults = () => window.ytdj.settings.defaults();
+    // «Restablecer sección»: devuelve a sus valores por defecto solo las opciones de esa sección, tras confirmar.
+    dlg.querySelectorAll('.set-pane').forEach((pane) => {
+      const names = [...new Set([...pane.querySelectorAll('[name]')].map((x) => x.name))];
+      if (!names.length) return;
+      const row = document.createElement('div');
+      row.className = 'row-btns set-reset';
+      row.innerHTML = '<button type="button" class="btn ghost" data-reset>Restablecer sección</button>';
+      row.firstChild.addEventListener('click', async () => {
+        if (!confirm(`¿Restablecer los valores por defecto de «${pane.querySelector('h3').textContent}»?`)) return;
+        const patch = sectionDefaults(names, await this.settingsDefaults());
+        const prevYtdlp = this.settings.ytdlpPath;
+        try {
+          this.settings = await window.ytdj.settings.set(patch);
+        } catch (e) {
+          showError(row.firstChild, `No se pudo restablecer: ${String(e?.message || e).slice(0, 120)}`);
+          return;
+        }
+        if (names.includes('wavesMode')) this.setWaves('top');
+        for (const n of names) await this.fillSetting(n, this.settings);
+        sideEffects(names, prevYtdlp);
+        flashSaved('Sección restablecida');
       });
-      this.applyLayout?.();
-      this.applyRouting();
-      this.applyXf();
-      this.setWaves(f.wavesMode.value);
-      if (prevYtdlp !== this.settings.ytdlpPath) this.checkTools();
+      pane.append(row);
+    });
+    $('#btn-reset-views').addEventListener('click', () => {
+      this.resetSplits();
+      flashSaved('Vistas restablecidas');
     });
     $('#btn-open-cache').addEventListener('click', () => window.ytdj.analysis.openCache());
     $('#btn-pick-library').addEventListener('click', async () => {
       const dir = await window.ytdj.settings.pickDir();
-      if (dir) $('#settings form').libraryDir.value = dir;
+      if (dir) {
+        $('#settings form').libraryDir.value = dir;
+        $('#settings form').libraryDir.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     });
     $('#btn-check-update').addEventListener('click', () => window.ytdj.update.check());
     $('#btn-open-library').addEventListener('click', () => window.ytdj.settings.openPath($('#settings form').libraryDir.value));

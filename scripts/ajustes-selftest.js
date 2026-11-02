@@ -32,8 +32,24 @@ module.exports = (win) => {
     await js(`const b = document.querySelector('#sn-audio'); b.focus(); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); await new Promise((r) => setTimeout(r, 150)); return 1`); res.arrow = await js(state);
     // las flechas dentro del buscador no cambian de sección
     await js(`const i = document.getElementById('set-search'); i.focus(); i.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); await new Promise((r) => setTimeout(r, 150)); return 1`); res.arrowSearch = await js(state);
-    res.ext = res.ext || {};
-    try { Object.assign(res, JSON.parse(fs.readFileSync(path.join(out, 'ajustes-extra.json'), 'utf8'))); } catch {}
+    // ---- guardado al cambiar (sin cerrar el diálogo) ----
+    await js(`__app.setSettingsPane('decks'); return 1`);
+    const setv = (name, v) => js(`const el = document.querySelector('#settings form [name="${name}"]'); if (el.type === 'checkbox') el.checked = ${JSON.stringify(v)}; else el.value = ${JSON.stringify(v)}; el.dispatchEvent(new Event('change', { bubbles: true })); await new Promise((r) => setTimeout(r, 350)); return 1`);
+    const cur = () => js(`const s = await window.ytdj.settings.get(); const f = document.querySelector('#settings form'); return { pitch: s.pitchRange, curve: s.crossfaderCurve, prefer: s.preferSaved, ctlPitch: f.pitchRange.value, ctlCurve: f.crossfaderCurve.value, ctlPrefer: f.preferSaved.checked, saved: document.getElementById('set-saved').textContent, err: [...document.querySelectorAll('#settings .set-err')].map((e) => e.textContent), open: document.getElementById('settings').open }`);
+    await setv('pitchRange', '16'); res.s1 = await cur();
+    await setv('preferSaved', false); res.s2 = await cur();
+    await wait(1800); res.s3 = await cur();
+    // fallo al guardar: el control vuelve a su valor y se explica (no aplica como administrador)
+    const file = path.join(process.env.YTDJ_USERDATA, 'settings.json');
+    res.canFail = !(process.getuid && process.getuid() === 0);
+    if (res.canFail) { fs.chmodSync(file, 0o444); await setv('crossfaderCurve', 'sharp'); res.fail = await cur(); fs.chmodSync(file, 0o644); }
+    // restablecer sección: pide confirmación; sólo toca esa sección
+    await js(`window.confirm = () => false; return 1`);
+    await js(`document.querySelector('#settings .set-pane[data-pane="decks"] [data-reset]').click(); await new Promise((r) => setTimeout(r, 300)); return 1`); res.resetNo = await cur();
+    await js(`window.confirm = () => true; document.querySelector('#settings .set-pane[data-pane="decks"] [data-reset]').click(); await new Promise((r) => setTimeout(r, 500)); return 1`); res.resetYes = await cur();
+    // restablecer vistas
+    await js(`__app.splits.drag('mix', 'waves', 200); document.getElementById('btn-reset-views').click(); await new Promise((r) => setTimeout(r, 200)); return 1`);
+    res.viewsReset = await js(`return { active: __app.splits.active('mix'), stored: JSON.parse(localStorage.getItem('alyssdj.splits')), saved: document.getElementById('set-saved').textContent }`);
     fs.writeFileSync(path.join(out, 'ajustes.json'), JSON.stringify(res));
     win.close();
   });

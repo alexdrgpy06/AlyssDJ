@@ -329,6 +329,7 @@ ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));
 
 // ---------- ajustes y herramientas ----------
 ipcMain.handle('settings:get', () => settings.get());
+ipcMain.handle('settings:defaults', () => settings.defaults());
 // Carpeta donde se guardan las pistas de YouTube analizadas/reproducidas; forma parte de las carpetas de música.
 const musicHome = () => {
   try {
