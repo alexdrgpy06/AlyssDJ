@@ -35,7 +35,7 @@ El análisis de una pista de YouTube se aplica también al stream: beatgrid, BPM
 
 Botón **AutoMix** (arriba) o **Radio** en cualquier pista de la librería. La cola sale de la radio de YouTube Music (pistas parecidas a la que suena) o de una lista (**AutoMix de esta lista**, **+** para encolar). La siguiente se precarga en el deck libre y se mezcla sola:
 
-- **Estilos:** Fundido (solo crossfader), Bass swap (los graves de la entrante entran a mitad) y Filtro (la saliente se cierra y la entrante se abre). Duración de 4 a 48 s.
+- **Estilos como recetas de DJ:** *Auto* elige en cada mezcla según BPM, tonalidad y estructura entre Bass swap (el grave cambia en un inicio de frase), Filtro, Eco y corte, Corte en la caída y Fundido; los gestos van sobre la rejilla y se ven en una tira. Duración de 4 a 48 s.
 - **Tempo y fase:** si ambas pistas tienen BPM, la entrante se iguala (también a doble/mitad de tempo, hasta ±12 %), se alinea y se corrige durante la mezcla; después vuelve poco a poco a su tempo natural. Las pistas locales tienen BPM siempre; las de YouTube solo si se analizaron (opción **Analizar la siguiente con yt-dlp**), si no se hace fundido.
 - Si te vas a mano (pausar el deck, cargar otra pista), AutoMix espera; **Siguiente** fuerza la mezcla ya.
 

@@ -55,6 +55,7 @@ jobs:
           for m in cues moves plan docs; do node scripts/test-fxcues.js $m; done
           for m in model docs; do node scripts/test-visual.js $m; done
           for m in model docs; do node scripts/test-export.js $m; done
+          for m in model docs; do node --experimental-default-type=module scripts/test-recipes.js $m; done
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done

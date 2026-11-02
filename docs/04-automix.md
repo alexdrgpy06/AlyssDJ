@@ -35,7 +35,7 @@ Arriba, tres tarjetas: **SUENA** (con lo que falta), el estado de la mezcla con 
 |---|---|
 | **Iniciar / Detener AutoMix** | Enciende o apaga el DJ automático |
 | **Mezclar ahora** (**Mayús + →**) | Pasa ya a la siguiente pista **lista**, con una transición corta. Úsalo cuando el cambio sea bueno. Si aún no hay ninguna lista, se mezclará en cuanto la haya |
-| **Estilo** | *Fundido* (solo crossfader), *Bass swap* (los graves de la entrante entran a mitad) o *Filtro* (la saliente se cierra y la entrante se abre) |
+| **Estilo** | *Auto* (por defecto, elige la receta en cada mezcla), *Fundido*, *Bass swap*, *Filtro*, *Eco y corte* o *Corte* (en la caída). Ver «Recetas de DJ» |
 | **Duración** | De 4 a 48 s |
 | **Analizar y usar archivo** | Ver abajo. Activado por defecto |
 | **Igualar tempo y fase** | Necesita BPM en las dos pistas |
@@ -191,3 +191,18 @@ Con **✎** en una fila de la cola, o **Puntos** en un deck, se abre el editor d
 - Si pausas el deck a mano o cargas otra pista, AutoMix espera; **Detener AutoMix** lo apaga.
 - Para una mezcla **más rápida**, baja la duración; para pasar a otra pista ya, **Mezclar ahora** (Mayús + →): no corta a mitad de un compás, sino que busca la **salida más cercana** (un punto de la pista o un límite de frase de 8 beats, a lo sumo 12 s después), entra en la siguiente por su punto de entrada con el tempo igualado y dura compases enteros. La vista cuenta atrás («Mezclando en 3,2 s · salida en frase»); otra pulsación la **cancela**. Sin BPM en alguna de las dos hace un fundido corto de inmediato.
 - Si la radio no devuelve nada (YouTube Music aún cargando o sin red), la vista lo avisa y reintenta a los pocos segundos.
+
+
+## Recetas de DJ
+
+Cada estilo es una receta: una lista de gestos (EQ, filtro, crossfader y efectos) colocados sobre la **rejilla** de la pista que sale, con los cambios grandes en el inicio de compás o de frase. En la vista Automix, una tira bajo la barra de progreso muestra los gestos de la mezcla planificada o en curso, el activo resaltado y una marca del instante actual.
+
+| Receta | Qué hace |
+|---|---|
+| **Bass swap** | La entrante entra con el grave cortado; medios y agudos se mezclan y el grave cambia de pista en un inicio de frase (con un compás limpio antes y después) |
+| **Filtro** | La saliente cierra el paso alto en sus últimos 8 o 16 pulsos; la entrante se abre desde la entrada hasta la frase donde toma el grave |
+| **Eco y corte** | Eco a 1/2 o 3/4 de pulso en el primer tiempo del último compás y corte seco en la línea de compás; para saltos de BPM grandes, tonalidades en conflicto o pistas sin rejilla |
+| **Corte** (en la caída) | Si la saliente tiene una rotura y la entrante entra fuerte, corte en el inicio de compás con cola de reverb |
+| **Fundido** | Solo crossfader |
+
+Con **Auto**, la elección sale del análisis: sin BPM, fundido; salto de BPM grande o tonalidades en conflicto, eco y corte; rotura de la saliente con la entrante fuerte, corte; BPM algo distinto (más de un 3 %) u outro o intro cortos, filtro; BPM y tonalidad compatibles con outro e intro de al menos 8 compases, bass swap. El motivo aparece en la nota de la mezcla. Con el nivel de efectos en *Apagado* solo se ejecutan los gestos de EQ y filtro.

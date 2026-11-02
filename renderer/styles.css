@@ -819,3 +819,16 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .imm-viz[hidden] { display: none; }
 .imm-cover { will-change: transform; }
 #imm-viz-toggle.active { border-color: var(--sel); color: var(--text); }
+
+/* Receta de la mezcla: un bloque por gesto sobre la duración de la transición */
+.am-recipe { position: relative; height: 38px; margin: 6px 0 2px; background: var(--inset); border-radius: 4px; overflow: hidden; }
+.am-recipe[hidden] { display: none; }
+.am-recipe .rc { position: absolute; height: 14px; min-width: 3px; border-radius: 3px; font-size: 10px; line-height: 14px; padding: 0 4px; white-space: nowrap; overflow: hidden; opacity: .55; color: var(--text); background: var(--b); }
+.am-recipe .rc.from { top: 3px; background: var(--a); }
+.am-recipe .rc.to { top: 21px; }
+.am-recipe .rc.x { top: 12px; background: var(--muted); }
+.am-recipe .rc.on { opacity: 1; outline: 1px solid var(--text); }
+.am-recipe .rc.done { opacity: .85; }
+.am-recipe .now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); transition: left .12s linear; }
+@media (prefers-reduced-motion: reduce) { .am-recipe .now { transition: none; } }
+@media (max-width: 720px) { .am-recipe .rc { font-size: 0; padding: 0; } }

@@ -40,6 +40,8 @@ assert.ok(res.mixNow.mid, 'Mezclar ahora inicia la transición');
 assert.match(res.mixNow.mid.status, /Mezclando [AB] → [AB]/);
 assert.ok(res.mixNow.mid.barVisible, 'muestra el progreso');
 assert.ok(res.mixNow.mid.len <= 6, 'transición corta');
+assert.ok(res.mixNow.mid.recipeVisible && res.mixNow.mid.blocks >= 1, 'la tira de gestos se ve con la mezcla');
+assert.ok(res.mixNow.mid.auto && res.mixNow.mid.why, 'selector Auto y motivo del estilo');
 assert.notStrictEqual(res.afterMix.cur, res.afterMix.before, 'cambió el deck en juego');
 assert.ok(res.afterMix.curPlaying && !res.afterMix.otherPlaying && !res.afterMix.trans, 'terminó con la nueva sonando y la anterior en pausa');
 assert.ok(!res.afterMix.queue.includes('Añadida durante la mezcla'), 'la edición durante la mezcla se aplicó');

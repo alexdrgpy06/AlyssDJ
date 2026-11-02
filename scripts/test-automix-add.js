@@ -233,6 +233,21 @@ tests.engine = async () => {
     assert.deepStrictEqual(am.queue.map((t) => t.videoId), ['dup2'], 'una sola versión de cada canción, ninguna repite la que suena');
     am.radioPool = [net.radio[0], net.radio[2]]; am.libPool = [];
     assert.strictEqual(am.suggestions().length, 0, 'las sugeridas tampoco repiten canciones ya en la cola o sonando'); }
+  // recetas DJ: el estilo auto se elige por análisis y los gestos se ejecutan con el tiempo de la mezcla
+  { const { am, A, B } = engine(); const long = ana(124, '8A'); long.mix.introEnd = 40; long.duration = 300; long.mix.outroStart = 200;
+    A.analysis = { ...long, duration: 300 }; am.ana.set('CUR', A.analysis);
+    B.track = T('N1', { title: 'N1' }); B.analysis = ana(124, '9A'); B.analysis.mix.introEnd = 40; am.ana.set('N1', B.analysis); B.st = { playing: false, dur: 240, ready: true, videoId: 'N1' };
+    am.queue = [B.track]; A.pos = 200;
+    am.startTransition(A, B, { exitAt: 200, enterAt: 0, seconds: 16, style: null, tempo: true, warnings: [] });
+    assert.strictEqual(am.trans.style, 'bass', am.trans.why); assert.ok(am.trans.recipe.length >= 4); assert.ok(/bass swap/.test(am.note));
+    const x0 = am.app.xfader.value; am.trans.t0 = performance.now() - am.trans.len * 500; am.stepTransition();
+    assert.ok(am.app.xfader.value > x0 && am.app.xfader.value < 1, 'el crossfader avanza con la mezcla');
+    assert.ok(am.snapshot().trans.recipe.some((g) => g.state !== 'wait'), 'la vista ve los gestos en curso');
+    am.trans.t0 = performance.now() - am.trans.len * 1010; am.stepTransition(); assert.strictEqual(am.trans, null, 'la mezcla termina');
+    // salto de BPM grande: eco y corte, más corta que la elegida
+    A.analysis = ana(124, '8A'); B.analysis = ana(150, '8A'); am.ana.set('N1', B.analysis); am.cur = A; B.track = T('N1'); am.queue = [B.track];
+    am.startTransition(A, B, { exitAt: 200, enterAt: 0, seconds: 16, style: null, tempo: false, warnings: [] });
+    assert.strictEqual(am.trans.style, 'echo-cut'); assert.ok(am.trans.len <= 4.2, 'echo-cut dura 8 pulsos'); }
   console.log('automix-add engine: OK');
 };
 

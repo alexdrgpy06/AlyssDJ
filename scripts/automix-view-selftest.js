@@ -48,7 +48,7 @@ module.exports = (win) => {
       let mid = null;
       for (let i = 0; i < 40 && !mid; i++) {
         await wait(300);
-        mid = await js(`const am = __app.automix; return am.trans ? { status: document.getElementById('amv-status').textContent, barVisible: !document.getElementById('amv-bar-wrap').hidden, from: am.trans.from.id, to: am.trans.to.id, len: am.trans.len } : null`);
+        mid = await js(`const am = __app.automix; return am.trans ? { status: document.getElementById('amv-status').textContent, barVisible: !document.getElementById('amv-bar-wrap').hidden, from: am.trans.from.id, to: am.trans.to.id, len: am.trans.len, recipeVisible: !document.getElementById('amv-recipe').hidden, blocks: document.querySelectorAll('#amv-recipe .rc').length, auto: !!document.querySelector('#amv-style [data-v=auto]'), why: !!am.trans.why } : null`);
       }
       res.mixNow = { mid };
       if (mid) {

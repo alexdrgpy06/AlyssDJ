@@ -2,6 +2,7 @@
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
+import { chooseStyle, planRecipe, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
 import { EXIT_MODES, planTransition, planNearest, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
@@ -46,10 +47,11 @@ export class AutoMix {
     this.cueCache = new WeakMap();
     this.moves = new Map(); // agregadas sin analizar: se avisa dónde acaban cuando llega su análisis
     this.suggestBusy = new Set();
-    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, smartOrder: true, fxLevel: 'subtle' };
+    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'auto', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, smartOrder: true, fxLevel: 'subtle' };
     try {
       Object.assign(this.cfg, JSON.parse(localStorage.getItem(LS) || '{}'));
     } catch {}
+    if (this.cfg.styleV !== 2) Object.assign(this.cfg, { style: 'auto', styleV: 2 }); // el nuevo «Auto» sustituye al «Bass swap» que traían por defecto las versiones anteriores
     window.ytdj.analysis.onEvent((ev) => this.onAnalysis(ev));
   }
 
@@ -598,6 +600,16 @@ export class AutoMix {
     else if (rem <= 1.2 && this.ready(next, head)) this.startTransition(cur, next, 2);
   }
 
+  // Receta que se usaría con la mezcla planificada (para la vista); null si aún no hay plan o análisis de la siguiente.
+  previewRecipe() {
+    const head = this.queue[0], cur = this.cur && this.anaOf(this.cur), next = head && this.ana.get(head.videoId);
+    if (!this.on || !this.plan || !cur || !next?.bpm) return null;
+    const pl = { exitAt: this.plan.exitAt, enterAt: this.plan.enterAt, seconds: this.plan.seconds };
+    const pick = this.cfg.style !== 'auto' && this.plan.style ? { style: this.plan.style } : chooseStyle(cur, next, pl, this.cfg.style);
+    const rec = planRecipe({ style: pick.style, cur, plan: pl, level: this.fxLevel() });
+    return { style: pick.style, len: rec.len, gestures: rec.gestures.map((x) => ({ id: x.id, label: GESTURE_LABEL[x.id] || x.id, deck: x.deck, at: x.at, end: x.end, state: 'wait' })) };
+  }
+
   // Movimientos sobre los cues de la pista que suena (solo nivel «Marcado»): riser en las subidas y reverb en las roturas.
   fxTrack(cur) {
     this.fxm.sweep();
@@ -723,17 +735,21 @@ export class AutoMix {
     }
     to.wantPlay = true;
     to.transport({ type: 'play' });
-    const style = p.style || this.cfg.style;
-    const len = p.seconds;
-    this.knob(to, 'eqLow', style === 'bass' ? -1 : 0);
-    this.knob(to, 'filter', style === 'filter' ? 0.85 : 0);
-    this.trans = { from, to, len, t0: performance.now(), tempo, style, lastPhase: 0, swapped: false, track: to.track, kind: p.kind, warnings: p.warnings || [] };
+    // La receta (gestos sobre la rejilla de la saliente) sale del análisis; un salto de BPM brusco del plan fuerza el filtro si el estilo es fijo.
+    const curAna = this.anaOf(from);
+    const nextAna = this.anaOf(to);
+    const pick = this.cfg.style !== 'auto' && p.style ? { style: p.style, why: 'salto de BPM brusco' } : chooseStyle(curAna, nextAna, { exitAt: p.exitAt ?? posOf(from), enterAt: p.enterAt, seconds: p.seconds }, this.cfg.style);
+    const recipe = planRecipe({ style: pick.style, cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: p.seconds }, level: this.fxLevel() });
+    const style = pick.style;
+    const len = recipe.len || p.seconds;
+    this.trans = { from, to, len, t0: performance.now(), tempo, style, why: pick.why, recipe: recipe.gestures.map((x) => ({ ...x, state: 'wait', slot: null })), lastPhase: 0, track: to.track, kind: p.kind, warnings: p.warnings || [] };
     // efectos de DJ: lo que quedara de un movimiento sobre cues se suelta y se planean los de esta transición
     this.fxm.releaseAll();
     this.fxLive = null;
     this.fxWarn = '';
-    this.trans.moves = planTransitionMoves({ level: this.fxLevel(), cur: this.anaOf(from), plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null }));
-    this.note = `Mezclando ${from.id} → ${to.id}${tempo ? ' (tempo igualado)' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
+    // Las salidas del estilo ya traen su eco; la reverb de rotura solo se añade en estilos de mezcla larga.
+    this.trans.moves = ['bass', 'filter', 'crossfade'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).filter((m) => m.id !== 'echo-out').map((m) => ({ ...m, state: 'wait', slot: null })) : [];
+    this.note = `Mezclando ${from.id} → ${to.id} · ${STYLE_LABEL[style] || style} (${pick.why})${tempo ? ' · tempo igualado' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
     this.emit();
   }
 
@@ -741,15 +757,7 @@ export class AutoMix {
     const t = this.trans;
     const now = performance.now();
     const p = Math.min(1, (now - t.t0) / 1000 / t.len);
-    this.setX(side(t.from.id) + (side(t.to.id) - side(t.from.id)) * ease(p));
-    if (t.style === 'bass' && p >= 0.5 && !t.swapped) {
-      t.swapped = true;
-      this.knob(t.to, 'eqLow', 0);
-      this.knob(t.from, 'eqLow', -1);
-    } else if (t.style === 'filter') {
-      this.knob(t.from, 'filter', -0.9 * ease(p));
-      this.knob(t.to, 'filter', 0.85 * (1 - ease(p)));
-    }
+    this.recipeStep(t, (now - t.t0) / 1000);
     this.fxStep(t, p);
     // Corrige la fase con pequeños empujones mientras suenan los dos.
     if (t.tempo && p < 0.7 && now - t.lastPhase > 600) {
@@ -758,6 +766,30 @@ export class AutoMix {
       if (d != null && Math.abs(d) > 0.015) t.to.transport({ type: 'bend', amount: clamp(d * 0.12, -0.04, 0.04), ms: 500 });
     }
     if (p >= 1) this.finishTransition();
+  }
+
+  // Aplica los gestos de la receta en el instante `tm` (segundos de mezcla): EQ, filtro y crossfader directos; efectos por FxMoves.
+  recipeStep(t, tm) {
+    const x = (v) => this.setX(side(t.from.id) + (side(t.to.id) - side(t.from.id)) * v);
+    let xv = null;
+    for (const gs of t.recipe) {
+      const v = gestureValue(gs, tm);
+      if (v == null) continue;
+      if (gs.param === 'x') xv = v;
+      else if (gs.param === 'fx') {
+        if (gs.state === 'wait') {
+          const slot = this.fxm.claim(t.from, { name: gs.id, type: gs.fx, p: gs.p });
+          if (slot == null) { gs.state = 'skipped'; this.fxWarn = `sin ranura libre para ${gs.id}`; } else { gs.state = 'on'; gs.slot = slot; this.fxm.ramp(t.from, slot, { wet: gs.to }, Math.max(0.05, gs.end - gs.at)); }
+          this.emit();
+        }
+      } else {
+        const d = gs.deck === 'from' ? t.from : t.to;
+        if (gs.lastV !== v) { gs.lastV = v; this.knob(d, gs.param, v); }
+      }
+      if (gs.state === 'wait') gs.state = tm >= gs.end ? 'done' : 'on';
+      else if (gs.state === 'on' && gs.param !== 'fx' && tm >= gs.end) gs.state = 'done';
+    }
+    if (xv != null) x(xv);
   }
 
   // Movimientos de efectos de la transición: empiezan por progreso o por posición de la saliente.
@@ -789,6 +821,7 @@ export class AutoMix {
     const { from, to } = this.trans;
     // lo que sigue sonando en la saliente (eco) deja que su cola muera antes de devolver la ranura
     for (const m of this.trans.moves || []) if (m.state === 'on') this.fxm.release(from, m.slot, m.tailMs || 0);
+    for (const gs of this.trans.recipe || []) if (gs.param === 'fx' && gs.state === 'on') this.fxm.release(from, gs.slot, gs.tailMs || 0);
     this.trans = null;
     from.wantPlay = false;
     from.transport({ type: 'pause' });
@@ -860,7 +893,8 @@ export class AutoMix {
       chain: { canUndo: !!this.undoStack, total: items.reduce((x, i) => x + (i.cost || 0), 0), analyzed: items.filter((i) => i.bpm).length },
       plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, mode: this.plan.mode, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
       pos: this.cur ? posOf(this.cur) : null,
-      trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, len: t.len, warnings: t.warnings } : null,
+      trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, why: t.why, len: t.len, warnings: t.warnings, recipe: t.recipe.map((x) => ({ id: x.id, label: GESTURE_LABEL[x.id] || x.id, deck: x.deck, at: x.at, end: x.end, state: x.state })) } : null,
+      recipePreview: !t ? this.previewRecipe() : null,
       progress: t ? Math.min(1, (performance.now() - t.t0) / 1000 / t.len) : null,
       rem: this.cur ? this.cur.remaining() : null,
       pendingMix: this.pendingMix ? { ready: !!this.pendingMix.plan, kind: this.pendingMix.plan?.kind || null, waitS: this.pendingMix.plan && this.cur ? Math.max(0, this.pendingMix.plan.exitAt - posOf(this.cur)) : null, seconds: this.pendingMix.plan?.seconds ?? null } : null,

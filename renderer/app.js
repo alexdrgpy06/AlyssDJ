@@ -1,6 +1,7 @@
 import { controls, register, press } from './controls.js';
 import { makeKnob } from './knob.js';
 import { Deck } from './deck.js';
+import { STYLE_LABEL } from './recipes.js';
 import { Library } from './library.js';
 import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
@@ -473,7 +474,7 @@ class App {
     const rem = d ? d.st.dur - d.pos() : NaN;
     $('#imm-time').textContent = t && Number.isFinite(rem) ? `quedan ${mmss(rem)}` : '';
     $('#imm-status').textContent = st.trans
-      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}`
+      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${STYLE_LABEL[st.trans.style] || st.trans.style}`
       : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${st.plan ? ` · próxima mezcla de ${Math.round(st.plan.seconds)} s` : ''}`) : 'AutoMix detenido';
     const fxl = { off: 'apagados', subtle: 'sutiles', full: 'marcados' }[st.fx.level];
     $('#imm-fx').hidden = !(st.fx.active.length || (st.trans && st.fx.level !== 'off'));
@@ -646,6 +647,35 @@ class App {
     this.mixEditor.open(deck.track, deck.analysis || am.ana.get(deck.track.videoId), nana ? { track: nt, analysis: nana } : null);
   }
 
+  // Tira de gestos de la mezcla en curso (o de la planificada): un bloque por gesto y una marca del instante actual.
+  renderRecipe(st) {
+    const el = $('#amv-recipe');
+    const r = st.trans ? { len: st.trans.len, gestures: st.trans.recipe, style: st.trans.style, t: st.trans.progress * st.trans.len } : st.recipePreview ? { ...st.recipePreview, t: null } : null;
+    el.hidden = !r || !r.gestures?.length;
+    if (el.hidden) return;
+    const sig = `${r.style}|${r.len}|${r.gestures.map((g) => g.id).join(',')}`;
+    if (el.dataset.sig !== sig) {
+      el.dataset.sig = sig;
+      el.replaceChildren(...r.gestures.map((g) => {
+        const b = document.createElement('span');
+        b.className = `rc ${g.deck}`;
+        b.dataset.id = g.id;
+        b.textContent = g.label;
+        b.style.left = `${(g.at / r.len) * 100}%`;
+        b.style.width = `${Math.max(0.8, ((g.end - g.at) / r.len) * 100)}%`;
+        return b;
+      }), Object.assign(document.createElement('i'), { className: 'now' }));
+      el.setAttribute('aria-label', `Gestos de la mezcla (${STYLE_LABEL[r.style] || r.style}): ${[...new Set(r.gestures.map((g) => g.label))].join(', ')}`);
+    }
+    for (const g of r.gestures) {
+      const b = el.querySelector(`[data-id="${g.id}"]`);
+      if (b) b.classList.toggle('on', g.state === 'on'), b.classList.toggle('done', g.state === 'done');
+    }
+    const now = el.querySelector('.now');
+    now.hidden = r.t == null;
+    if (r.t != null) now.style.left = `${Math.min(100, (r.t / r.len) * 100)}%`;
+  }
+
   renderAutoMix() {
     const am = this.automix;
     const st = am.snapshot();
@@ -696,10 +726,11 @@ class App {
     $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     $('#amv-status').textContent = st.trans
-      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.fx.level !== 'off' ? ` · efectos ${{ subtle: 'sutiles', full: 'marcados' }[st.fx.level]}` : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
+      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${STYLE_LABEL[st.trans.style] || st.trans.style}${st.trans.why ? ` (${st.trans.why})` : ''}${st.trans.tempo ? ' · tempo igualado' : ''}${st.fx.level !== 'off' ? ` · efectos ${{ subtle: 'sutiles', full: 'marcados' }[st.fx.level]}` : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
       : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}${Number.isFinite(st.pendingMix.seconds) ? ` · dura ${Math.round(st.pendingMix.seconds)} s` : ''}` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${planNote(st)}`) : 'Detenido';
     $('#amv-bar-wrap').hidden = !st.trans;
     if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;
+    this.renderRecipe(st);
     $('#amv-note').textContent = st.note || '';
 
     if (this.amDragging) return; // no reconstruir la lista mientras se arrastra
