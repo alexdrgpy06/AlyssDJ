@@ -59,7 +59,7 @@ tests.ui = async () => {
   // REQ-1/4: lienzo detrás de la portada, activo por defecto y del tamaño de la vista
   assert.ok(r.start.vis && !r.start.hidden && r.start.pressed === 'true' && r.start.cfg !== false); near(r.start.cw, r.start.iw, 2, 'ancho'); near(r.start.ch, r.start.ih, 2, 'alto'); assert.strictEqual(r.start.role, 'true');
   // REQ-5: ≤ 30 fps; se detiene fuera de la vista y con la ventana oculta; vuelve al regresar
-  assert.ok(r.fps >= 5 && r.fps <= 32, `cuadros por segundo: ${r.fps}`); assert.deepStrictEqual(r.stopped, { raf: 0, drawn: 0 }, 'parado fuera de la vista Automix'); assert.ok(r.resumed.raf !== 0, 'reanuda al volver');
+  assert.ok(r.fps <= 32 && (r.rafFires < 5 || r.fps >= 5), `cuadros por segundo: ${r.fps} (rAF: ${r.rafFires})`); assert.deepStrictEqual(r.stopped, { raf: 0, drawn: 0 }, 'parado fuera de la vista Automix'); assert.ok(r.resumed.raf !== 0, 'reanuda al volver');
   assert.deepStrictEqual(r.docHidden, { raf: 0, drawn: 0 }, 'parado con la ventana oculta'); assert.ok(r.docShown.raf !== 0);
   // REQ-4: botón, recuerdo y apagado
   assert.ok(r.off.hidden && r.off.pressed === 'false' && r.off.cfg === false && r.off.raf === 0 && r.off.tf === '', 'apagado: oculto, sin bucle y portada a escala 1'); assert.strictEqual(r.offLater.frames, r.off.frames, 'apagado no dibuja');

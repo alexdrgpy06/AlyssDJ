@@ -13,6 +13,8 @@ module.exports = (win) => {
     const snap = `const v = __app.viz; const c = document.getElementById('imm-viz'); const b = document.getElementById('imm-viz-toggle'); const imm = document.getElementById('immersive').getBoundingClientRect(); const cb = c.getBoundingClientRect();
       return { frames: v.frames, raf: v.raf, hidden: c.hidden, vis: c.offsetParent !== null, cw: Math.round(cb.width), ch: Math.round(cb.height), iw: Math.round(imm.width), ih: Math.round(imm.height), pressed: b.getAttribute('aria-pressed'), cfg: __app.automix.cfg.visual, tf: document.querySelector('.imm-cover').style.transform, sw: document.documentElement.scrollWidth, w: innerWidth, sh: document.documentElement.scrollHeight, hh: innerHeight, role: c.getAttribute('aria-hidden') }`;
     R.start = await js(snap);
+    // ¿dispara requestAnimationFrame en este entorno? (ventanas sin foco u ocultas en CI no lo hacen)
+    R.rafFires = await js(`let n = 0; const t = performance.now(); await new Promise((ok) => { const f = () => { n++; performance.now() - t > 600 ? ok() : requestAnimationFrame(f); }; requestAnimationFrame(f); setTimeout(ok, 900); }); return n`);
     // 30 fps como máximo: cuadros en un segundo
     const f0 = (await js(snap)).frames; await wait(1000); const f1 = (await js(snap)).frames; R.fps = f1 - f0;
     // fuera de la vista Automix el bucle se detiene y no dibuja
