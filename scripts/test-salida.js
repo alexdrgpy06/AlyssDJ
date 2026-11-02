@@ -140,6 +140,42 @@ tests.queue = async () => {
   console.log('queue: OK');
 };
 
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const app = read('renderer/app.js');
+  assert.ok(/id="amv-exit"/.test(html) && !/id="amv-points"/.test(html), 'el selector sustituye al interruptor');
+  for (const v of ['optimal', 'intro-outro', 'outro-start', 'end']) assert.ok(html.includes(`<option value="${v}"`), v);
+  for (const id of ['amv-skip', 'amv-shuffle', 'imm-skip']) assert.ok(html.includes(`id="${id}"`), id);
+  assert.ok(/amv-exit/.test(app) && /skipNext/.test(app) && /shuffle\(\)/.test(app));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-salida-')); const music = path.join(tmp, 'music');
+  const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
+  assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 200000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'salida-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  const f = path.join(tmp, 'salida.json');
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  if (process.env.SALIDA_SHOTS) for (const n of ['automix-exit.png', 'automix-exit-lib.png']) fs.copyFileSync(path.join(tmp, n), path.join(process.env.SALIDA_SHOTS, n));
+  const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+  for (const [k, x] of Object.entries(r)) assert.ok(!(x && x.__err), `${k}: ${JSON.stringify(x)}`);
+  if (process.env.DEBUG_SALIDA) console.log(JSON.stringify(r));
+  assert.deepStrictEqual(r.start.options, ['optimal', 'intro-outro', 'outro-start', 'end']);
+  assert.strictEqual(r.start.exit, 'optimal'); assert.ok(r.start.queue.length >= 2, `cola: ${r.start.queue}`);
+  // elegir modo cambia el plan y lo guarda
+  for (const m of ['intro-outro', 'outro-start', 'end']) {
+    assert.strictEqual(r['mode_' + m].exit, m, `selector en ${m}`); assert.strictEqual(r['mode_' + m].cfgExit, m);
+    if (r['mode_' + m].plan) assert.strictEqual(r['mode_' + m].plan.mode, m, `el plan usa ${m}: ${JSON.stringify(r['mode_' + m].plan)}`);
+  }
+  assert.strictEqual(r.stored, 'end', `el modo se guarda: ${JSON.stringify(r.stored)}`);
+  // saltar
+  assert.strictEqual(r.skipped.queue.length, r.skippedBefore - 1, 'saltar quita una pista'); assert.ok(/Saltada|Cola barajada/.test(r.skipped.note), r.skipped.note);
+  // barajar
+  assert.strictEqual(r.shuffled.smart, false, 'barajar apaga «Orden automático»');
+  assert.deepStrictEqual([...r.shuffled.queue].sort(), [...r.order0].sort(), 'misma cola, otro orden');
+  assert.deepStrictEqual(r.undone, r.order0, 'Deshacer devuelve el orden');
+  // vista Automix
+  assert.strictEqual(r.imm.skip, true); assert.strictEqual(r.immAfter, r.order0.length - 2, 'saltar desde la vista Automix (ya se había saltado una)');
+  console.log('ui: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

@@ -295,7 +295,9 @@ class App {
     $('#amv-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
     $('#amv-local').addEventListener('change', (e) => am.setCfg({ preferLocal: e.target.checked }));
     $('#amv-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
-    $('#amv-points').addEventListener('change', (e) => am.setCfg({ optimalPoints: e.target.checked }));
+    $('#amv-exit').addEventListener('change', (e) => am.setCfg({ exitMode: e.target.value }));
+    $('#amv-skip').addEventListener('click', () => am.skipNext());
+    $('#amv-shuffle').addEventListener('click', () => am.shuffle());
     $('#amv-order').addEventListener('change', (e) => am.setCfg({ smartOrder: e.target.checked }));
     $('#amv-reorder').addEventListener('click', () => am.reorganizeNow());
     $('#amv-undo').addEventListener('click', () => am.undoReorder());
@@ -411,6 +413,7 @@ class App {
     $('#imm-mix').addEventListener('click', () => am.mixNow());
     $('#imm-style').addEventListener('click', (e) => e.target.dataset.v && am.setCfg({ style: e.target.dataset.v }));
     $('#imm-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
+    $('#imm-skip').addEventListener('click', () => am.skipNext());
     $('#imm-queue').addEventListener('click', () => {
       this.setView('library');
       this.library.show('automix');
@@ -454,12 +457,13 @@ class App {
     $('#imm-time').textContent = t && Number.isFinite(rem) ? `quedan ${mmss(rem)}` : '';
     $('#imm-status').textContent = st.trans
       ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}`
-      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s` : 'Mezclará en cuanto la siguiente esté lista') : 'AutoMix activo') : 'AutoMix detenido';
+      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${st.plan ? ` · próxima mezcla de ${Math.round(st.plan.seconds)} s` : ''}`) : 'AutoMix detenido';
     $('#imm-bar').style.width = st.trans ? `${Math.round(st.trans.progress * 100)}%` : '0%';
     $('#imm-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#imm-next-sub').textContent = st.next ? [st.next.artist, st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : ''].filter(Boolean).join(' · ') : '';
     $('#imm-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#imm-mix').disabled = !st.on || !!st.trans;
+    $('#imm-skip').disabled = !st.canSkip;
     $('#imm-mix-label').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
     document.querySelectorAll('#imm-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
     $('#imm-len').value = st.cfg.len;
@@ -526,6 +530,8 @@ class App {
   renderAutoMix() {
     const am = this.automix;
     const st = am.snapshot();
+    // Cuánto durará la próxima mezcla y los avisos del plan (p. ej. «sin outro marcado»)
+    const planNote = (s) => (s.plan ? ` · próxima mezcla de ${Math.round(s.plan.seconds)} s${s.plan.warnings?.some((w) => w.startsWith('sin outro')) ? ' · sin outro marcado: sale al final' : ''}` : '');
     const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
     const mmss = (sec) => (Number.isFinite(sec) && sec > 0 ? `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}` : '');
     const badge = (t) => {
@@ -549,7 +555,9 @@ class App {
     $('#amv-len-out').textContent = `${st.cfg.len} s`;
     $('#amv-local').checked = st.cfg.preferLocal;
     $('#amv-tempo').checked = st.cfg.matchTempo;
-    $('#amv-points').checked = st.cfg.optimalPoints;
+    $('#amv-exit').value = st.exitMode;
+    $('#amv-skip').disabled = !st.canSkip;
+    $('#amv-shuffle').disabled = !st.canShuffle;
     $('#amv-order').checked = st.cfg.smartOrder;
     $('#amv-undo').disabled = !st.chain.canUndo;
     $('#amv-reorder').disabled = st.queue.length < 2;
@@ -569,7 +577,7 @@ class App {
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     $('#amv-status').textContent = st.trans
       ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
-      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}` : 'Mezclará en cuanto la siguiente esté lista') : 'AutoMix activo') : 'Detenido';
+      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}${Number.isFinite(st.pendingMix.seconds) ? ` · dura ${Math.round(st.pendingMix.seconds)} s` : ''}` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${planNote(st)}`) : 'Detenido';
     $('#amv-bar-wrap').hidden = !st.trans;
     if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;
     $('#amv-note').textContent = st.note || '';

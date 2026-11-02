@@ -123,6 +123,7 @@
         <button data-v="crossfade" type="button">Fundido</button><button data-v="bass" type="button" class="on">Bass swap</button><button data-v="filter" type="button">Filtro</button>
       </div>
       <label class="am-len"><span class="lbl">Duración</span><input type="range" id="imm-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="imm-len-out">16 s</output></label>
+      <button class="btn" id="imm-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Saltar siguiente</button>
       <span class="spacer"></span>
       <button class="btn ghost" id="imm-queue" type="button" title="Abre la cola de AutoMix en la vista Librería"><svg class="ic"><use href="#i-list"/></svg>Ver cola</button>
     </div>
@@ -320,7 +321,14 @@
           </div>
           <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
           <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
-          <label class="check compact" title="Sale por el mejor punto de la pista (frase al empezar el outro o una rotura), no necesariamente al final"><input type="checkbox" id="amv-points" /> Mezclar en puntos óptimos</label>
+          <label class="am-exit"><span class="lbl">Salir</span>
+            <select id="amv-exit" aria-label="Cuándo sale la pista que suena" title="Cuándo sale la pista que suena (los puntos de salida que editaste siempre mandan)">
+              <option value="optimal" title="El mejor punto del análisis: frase al empezar el outro o una rotura">Mejor punto</option>
+              <option value="intro-outro" title="Al empezar el outro; dura lo que dure el menor entre su outro y el intro de la entrante">Outro y intro</option>
+              <option value="outro-start" title="Al empezar el outro, con la duración elegida">Inicio del outro</option>
+              <option value="end" title="Casi al final de la pista">Final de la pista</option>
+            </select>
+          </label>
         </fieldset>
         <fieldset class="am-group" aria-labelledby="amg-queue">
           <h3 id="amg-queue">Cola</h3>
@@ -330,6 +338,8 @@
           <div class="am-row">
             <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar</button>
             <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
+            <button class="btn sm" id="amv-shuffle" type="button" title="Ordena al azar lo que no está fijado; apaga «Orden automático»">Barajar</button>
+            <button class="btn sm" id="amv-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Saltar siguiente</button>
             <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
             <button class="btn ghost sm" id="amv-clear" type="button">Vaciar</button>
           </div>
