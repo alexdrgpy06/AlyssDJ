@@ -160,7 +160,7 @@ tests.e2e = async () => {
   const { createRequire } = await import('node:module');
   const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-queue-'));
-  spawnSync(createRequire(import.meta.url)('electron'), ['.'], { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/queue-order-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...createRequire(import.meta.url)('./headless.js')(['.']), { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/queue-order-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'queue.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.QUEUE_SHOT) fs.copyFileSync(path.join(tmp, 'queue.png'), process.env.QUEUE_SHOT);

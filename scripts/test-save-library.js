@@ -112,7 +112,7 @@ tests.e2e = async () => {
   const root = path.join(__dirname, '..');
   const dir = tmp();
   const lib = path.join(dir, 'lib');
-  const r = spawnSync(path.join(root, 'node_modules/.bin/electron'), ['.'], {
+  const r = spawnSync(...require('./headless.js')(['.']), {
     cwd: root, timeout: 420000, encoding: 'utf8',
     env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'save-library-selftest.js'), YTDJ_USERDATA: path.join(dir, 'data'), YTDJ_SELFTEST_OUT: dir, YTDJ_SAVE_LIB: lib, YTDJ_SAVE_SHOTS: process.env.YTDJ_SAVE_SHOTS || '' },
   });
