@@ -82,7 +82,7 @@ En el centro: **MASTER** y **PHONES** (volumen de auriculares).
 
 - **Doble clic** en un knob, en el fader de pitch o en el crossfader lo restablece.
 - **Mayús** mientras arrastras un knob da ajuste fino.
-- La curva del crossfader (suave o corte) se cambia en **Ajustes → Decks y diseño**.
+- La curva del crossfader (suave o corte) se cambia en **Ajustes → Decks**.
 
 ### Auriculares
 
@@ -111,9 +111,15 @@ Arriba, junto a las herramientas, el selector de vista (también **Alt+1 … Alt
 
 ![Vista Ondas](img/39-vista-ondas.png)
 
-El botón junto al selector (o **Ajustes → Decks y diseño → Ondas grandes**) elige dónde van las ondas con desplazamiento en las vistas Mezcla y Librería: **arriba**, a todo el ancho, o **dentro de cada deck**, encima de su vista general; así la franja superior libera su altura.
+El botón junto al selector (o **Ajustes → General → Ondas grandes**) elige dónde van las ondas con desplazamiento en las vistas Mezcla y Librería: **arriba**, a todo el ancho, o **dentro de cada deck**, encima de su vista general; así la franja superior libera su altura.
 
 ![Ondas en el deck](img/40-ondas-en-el-deck.png)
+
+### Cambiar el tamaño de las zonas
+
+En **Mezcla** y **Librería** hay un divisor bajo las ondas y otro sobre la librería. Arrástralos para dar más o menos altura a las ondas o a la librería; **doble clic** restablece la vista. Con el teclado: enfoca el divisor y usa **↑ / ↓** (8 px; **Mayús** 32 px). Cada vista recuerda su tamaño, y *Ajustes → General → Restablecer vistas* los devuelve a todos al original. Manda el último divisor que muevas: el otro cede el espacio sobrante. Los decks y el mezclador mantienen su alto, y cada zona deja a la otra un mínimo (ondas 90 px, librería 150 px).
+
+![Divisores de vistas](img/43-divisores.png)
 
 La vista y la opción de ondas se recuerdan entre sesiones. Al abrir la fuente **AutoMix** de la librería se pasa a la vista Librería y, al salir, vuelve la anterior (salvo que hayas elegido otra mientras tanto).
 

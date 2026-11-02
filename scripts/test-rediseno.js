@@ -85,10 +85,10 @@ tests.automix = async () => {
 tests.settings = async () => {
   const html = read('renderer/index.html');
   const dlg = html.slice(html.indexOf('<dialog id="settings"'), html.indexOf('</dialog>', html.indexOf('<dialog id="settings"')));
-  // REQ-7: seis secciones, una visible a la vez
+  // REQ-7 (actualizado por vistas-y-ajustes): seis secciones por tema, una visible a la vez
   const panes = [...dlg.matchAll(/<section class="set-pane" data-pane="(\w+)"[^>]*?( hidden)?>/g)];
-  assert.deepStrictEqual(panes.map((m) => m[1]), ['tools', 'library', 'audio', 'decks', 'midi', 'account']);
-  assert.deepStrictEqual(panes.filter((m) => !m[2]).map((m) => m[1]), ['tools'], 'solo Herramientas visible al abrir');
+  assert.deepStrictEqual(panes.map((m) => m[1]), ['general', 'tools', 'library', 'audio', 'decks', 'midi']);
+  assert.deepStrictEqual(panes.filter((m) => !m[2]).map((m) => m[1]), ['general'], 'solo General visible al abrir');
   const nav = dlg.slice(dlg.indexOf('set-nav'), dlg.indexOf('set-panes'));
   assert.strictEqual((nav.match(/role="tab"/g) || []).length, 6, 'seis pestañas');
   assert.ok(/role="tablist"/.test(nav) && /aria-selected/.test(nav), 'semántica de pestañas');
@@ -113,7 +113,7 @@ tests.e2e = async () => {
     assert.strictEqual(r[k].sources, 0, `${k}: botones de fuentes bajos`);
   }
   assert.strictEqual(r.empty.hidden, false, 'estado vacío visible sin pistas'); assert.ok(r.empty.text.length > 10);
-  assert.deepStrictEqual(r.settings.a, ['tools']); assert.deepStrictEqual(r.settings.b, ['library']); assert.strictEqual(r.settings.sel, 'library');
+  assert.deepStrictEqual(r.settings.a, ['general']); assert.deepStrictEqual(r.settings.b, ['audio']); assert.strictEqual(r.settings.sel, 'audio');
   assert.ok(r.focusRule, 'anillo de foco global');
   console.log('e2e: OK');
 };

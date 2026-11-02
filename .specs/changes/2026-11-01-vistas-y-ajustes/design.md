@@ -49,4 +49,30 @@ IPC nuevo: `settings:defaults` → objeto con los valores por defecto (los de `m
 - Confirmación «Guardado»: texto pequeño `--ok` en la esquina del encabezado, sin desplazar el diseño.
 - Contraste ≥ 4.5:1; foco visible en divisores y buscador; mínimo 1366×768 sin desbordes.
 
+## Domain deltas
+### ui
+#### ADDED spec: Divisores de vistas
+THE SYSTEM SHALL mostrar en Mezcla y Librería un divisor bajo las ondas y otro sobre la librería, arrastrables, con doble clic para restablecer y flechas (8 px; Mayús 32 px); el divisor de ondas fija su altura y el de librería la suya (manda el último movido, la zona contraria absorbe el resto), con mínimos de 90 px (ondas) y 150 px (librería) y sin desbordar la ventana; cada vista guarda su tamaño en `alyssdj.splits` y se recorta a la ventana sin perder el valor guardado.
+#### ADDED spec: Ajustes por secciones con búsqueda
+THE SYSTEM SHALL organizar Ajustes en General, Audio, Decks, Librería y música, MIDI y Herramientas y cuenta; ofrecer un buscador (/ o Ctrl+F; Esc limpia) que filtra por etiqueta y ayuda sin tildes ni mayúsculas y muestra «Sin resultados»; recordar la última sección durante la sesión.
+#### ADDED spec: Guardado al cambiar y restablecer
+WHEN el usuario cambia una opción THE SYSTEM SHALL guardarla al instante y mostrar «Guardado»; IF falla THEN restaura el control y explica el motivo; «Restablecer sección» (con confirmación) y «Restablecer vistas» devuelven sus valores por defecto.
+#### ADDED design: SplitState y helpers de Ajustes
+`renderer/splits.js` (`SplitState`, `clampSplit(which, px, inner, fixed)`), `renderer/settings-ui.js` (`settingsFilter`, `settingPatch`, `sectionDefaults`); IPC `settings:defaults`; `settings.set` escribe antes de actualizar la caché.
+
 ## Amendments
+
+### A1 · 2026-11-02
+Cambio: las coincidencias de la búsqueda no se resaltan con `mark`; se ocultan las opciones que no coinciden y se atenúan las secciones sin resultados.
+Motivo: el filtrado ya deja visibles solo las coincidencias; el resaltado no aporta y complica el DOM de las etiquetas.
+Afecta: REQ-3 (sin cambio de comportamiento).
+
+### A2 · 2026-11-02
+Cambio: el máximo de cada zona es lo que deja libre la barra y la consola sin quitar el mínimo a la otra zona (además del 45 % / 55 % de la ventana), calculado desde el DOM.
+Motivo: con solo el porcentaje, ondas + consola + librería podían superar la ventana y desbordar.
+Afecta: REQ-1 (límites por zona).
+
+### A3 · 2026-11-02
+Cambio: `settings.set` en el proceso principal escribe el archivo antes de actualizar la caché en memoria.
+Motivo: con el guardado inmediato, un fallo de disco dejaba la memoria distinta del archivo; ahora el valor anterior se conserva.
+Afecta: REQ-4 (reversión en error).

@@ -48,13 +48,13 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 1. **Iniciar sesión** con tu cuenta de YouTube Music Premium. Sin sesión hay anuncios.
 2. Busca, o usa *Me gusta*, *Playlists* o **Local** (*Añadir carpeta…*). Carga con **A**/**B**, arrastrando a un deck (también archivos del explorador) o con doble clic.
 3. En la librería, las pistas analizadas muestran su tonalidad con color Camelot y se resaltan las **compatibles** con el deck en juego (clave armónica y BPM dentro de ±6 %).
-4. **Ajustes:** salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader y carpetas de música.
+4. **Ajustes** (con buscador; se guardan al cambiar): salida master y de auriculares (dos dispositivos, o uno de 4 canales), cookies para yt-dlp, rango de pitch, curva del crossfader y carpetas de música.
 
 **Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista. La fuente (archivo local, copia guardada o streaming) se decide sola y se ve en cada deck y en cada fila.
 
 **AutoMix:** elige cuándo sale la pista que suena (mejor punto, outro e intro, inicio del outro o final), salta la siguiente y baraja la cola.
 
-**Vistas:** Mezcla, Librería, Automix (portada grande) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck.
+**Vistas:** Mezcla, Librería, Automix (portada grande) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck, y los divisores entre ondas, decks y librería se arrastran (cada vista recuerda su tamaño).
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).
 

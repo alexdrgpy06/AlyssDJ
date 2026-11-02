@@ -792,3 +792,6 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .set-saved { color: var(--ok); font-size: var(--fs-2); min-height: 1em; }
 .set-err { grid-column: 1 / -1; color: var(--err); font-size: var(--fs-2); }
 .set-reset { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.splitter { background: linear-gradient(var(--line-2), var(--line-2)) center / 40px 3px no-repeat; }
+.splitter:hover, .splitter:focus-visible, .splitter.drag { background-image: linear-gradient(var(--sel), var(--sel)); }
+.set-nav button[data-pane] { text-align: left; }

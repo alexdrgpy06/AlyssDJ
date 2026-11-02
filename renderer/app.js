@@ -502,8 +502,14 @@ class App {
     };
     // Alto que no es de ondas ni de librería (barra superior, consola): el resto se reparte entre las dos.
     const fixedH = () => {
-      const h = (el) => (el.offsetParent === null ? 0 : el.getBoundingClientRect().height);
-      return innerHeight - h(zone('waves')) - h(zone('lib'));
+      let sum = 0;
+      for (const el of document.body.children) {
+        if (el === zone('waves') || el === zone('lib')) continue;
+        const cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.position === 'fixed' || cs.position === 'absolute') continue;
+        sum += el.getBoundingClientRect().height;
+      }
+      return sum;
     };
     this.applySplits = (view = this.views.view, waves = this.views.effectiveWaves()) => {
       const a = view === 'mix' || view === 'library' ? this.splits.active(view) : null;

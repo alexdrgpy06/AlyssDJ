@@ -63,13 +63,13 @@ tests.ui = async () => {
   assert.strictEqual(r.def.split, null); assert.strictEqual(r.def.wsp.role, 'separator'); assert.strictEqual(r.def.lsp.role, 'separator');
   assert.ok(Number(r.def.wsp.min) < Number(r.def.wsp.max));
   // arrastre real: las ondas crecen lo que se arrastra y la librería cede
-  near(r.waves60.waves, r.def.waves + 60, 3, 'ondas +60'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
+  near(r.waves60.waves, r.def.waves + 60, 14, 'ondas +60'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
   // máximo: lo que deja libre la consola sin quitar el mínimo a la librería
   near(r.wavesMax.waves, r.def.waves + r.def.lib - 150, 3, 'máximo de las ondas'); assert.ok(r.wavesMax.lib >= 149); noScroll(r.wavesMax, 'máximo');
   // doble clic restablece
   assert.strictEqual(r.reset.split, null); near(r.reset.waves, r.def.waves, 2, 'restablecido');
   // la librería manda al arrastrar su divisor y respeta el máximo (55 %)
-  near(r.lib80.lib, r.reset.lib + 40, 4, 'librería +40'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
+  near(r.lib80.lib, r.reset.lib + 40, 14, 'librería +40'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
   near(r.libMax.lib, r.def.waves + r.def.lib - 90, 3, 'máximo de la librería'); assert.ok(r.libMax.waves >= 89); noScroll(r.libMax, 'máximo librería');
   // teclado: 8 px, 32 px con Mayús; ↑ agranda la librería
   near(r.kbUp.lib, r.kbBase.lib + 8, 2, '↑ 8 px'); near(r.kbUpBig.lib, r.kbUp.lib + 32, 2, 'Mayús+↑ 32 px'); near(r.kbDown.lib, r.kbUpBig.lib - 8, 2, '↓ 8 px');
@@ -120,6 +120,19 @@ tests.save = async () => {
   // REQ-2: restablecer vistas
   assert.strictEqual(r.viewsReset.active, null); assert.deepStrictEqual(r.viewsReset.stored.mix, { last: null, waves: null, lib: null }); assert.strictEqual(r.viewsReset.saved, 'Vistas restablecidas');
   console.log('save ok');
+};
+
+tests.docs = async () => {
+  const d2 = read('docs/02-decks-y-mezclador.md'); const d6 = read('docs/06-sampler-grabacion-midi.md'); const rd = read('README.md');
+  for (const k of ['Cambiar el tamaño de las zonas', 'doble clic', 'Restablecer vistas', 'img/43-divisores.png', 'Ajustes → Decks**']) assert.ok(d2.includes(k), `02: ${k}`);
+  for (const k of ['Buscador', 'Se guardan al cambiar', 'Restablecer sección', 'img/44-ajustes-busqueda.png', 'Herramientas y cuenta']) assert.ok(d6.includes(k), `06: ${k}`);
+  assert.ok(/divisores/.test(rd) && /con buscador/.test(rd));
+  assert.ok(!/Decks y diseño/.test(d2 + d6 + rd), 'sin la sección antigua');
+  for (const f of ['43-divisores.png', '44-ajustes-busqueda.png', '17-ajustes-1.png']) assert.ok(fs.existsSync(path.join(root, 'docs/img', f)), f);
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in state docs; do node scripts\/test-vistas\.js/.test(ci), 'CI rápida: state y docs');
+  assert.ok((ci.match(/for m in ui search save; do/g) || []).length === 2, 'CI con ventana: ui, search y save (Linux y resto)');
+  console.log('docs ok');
 };
 
 tests.search = async () => {

@@ -106,10 +106,15 @@ module.exports = (win, decks) => {
       await closePanels();
       await js(`document.getElementById('btn-settings').click(); return 1`);
       await wait(900);
+      await js(`__app.setSettingsPane('general'); return 1`);
       await shot('17-ajustes-1.png', 'dialog[open]', 16);
       await js(`__app.setSettingsPane('library'); return 1`);
       await wait(300);
       await shot('17-ajustes-2.png', 'dialog[open]', 16);
+      await js(`const i = document.getElementById('set-search'); i.value = 'pitch'; i.dispatchEvent(new Event('input', { bubbles: true })); return 1`);
+      await wait(300);
+      await shot('44-ajustes-busqueda.png', 'dialog[open]', 16);
+      await js(`__app.clearSettingsSearch(); return 1`);
       await closePanels();
       await js(`document.getElementById('btn-help').click(); return 1`);
       await wait(400);
@@ -144,6 +149,9 @@ module.exports = (win, decks) => {
       await js(`__app.library.show('local'); __app.setView('mix'); __app.setWaves('top'); const A=__app.decks.A; A.seek(40); return 1`);
       await wait(800);
       await shot('37-vista-mezcla.png');
+      await js(`__app.splits.drag('mix', 'waves', 190); __app.applySplits(); return 1`); await wait(500);
+      await shot('43-divisores.png');
+      await js(`__app.resetSplits(); return 1`); await wait(300);
       await js(`__app.setView('library'); return 1`); await wait(700);
       await shot('38-vista-libreria.png');
       await js(`__app.setView('waves'); return 1`); await wait(700);
