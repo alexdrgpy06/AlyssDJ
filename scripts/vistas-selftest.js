@@ -10,12 +10,15 @@ module.exports = (win) => {
     win.setContentSize(1600, 960); await wait(2500);
     await js(`__app.masterGain = 0; localStorage.clear(); __app.setView('mix'); __app.setWaves('top'); return 1`); await wait(400);
     const probe = `const h = (s) => { const e = document.querySelector(s); return e && e.offsetParent !== null ? Math.round(e.getBoundingClientRect().height) : null; };
-      const sp = (w) => { const e = document.querySelector('.splitter[data-split="' + w + '"]'); if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, role: e.getAttribute('role'), now: e.getAttribute('aria-valuenow'), min: e.getAttribute('aria-valuemin'), max: e.getAttribute('aria-valuemax') }; };
+      const sp = (w) => { const e = document.querySelector('.splitter[data-split="' + w + '"]'); if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { which: w, x: b.x + b.width / 2, y: b.y + b.height / 2, role: e.getAttribute('role'), now: e.getAttribute('aria-valuenow'), min: e.getAttribute('aria-valuemin'), max: e.getAttribute('aria-valuemax') }; };
       return { view: document.body.dataset.view, split: document.body.dataset.split || null, waves: h('.waves'), lib: h('.library'), con: h('.console'), sw: document.documentElement.scrollWidth, w: innerWidth, sh: document.documentElement.scrollHeight, ih: innerHeight, wsp: sp('waves'), lsp: sp('lib'), stored: JSON.parse(localStorage.getItem('alyssdj.splits') || 'null') }`;
     const mouse = async (type, x, y, extra = {}) => { wc.sendInputEvent({ type, x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, ...extra }); await wait(80); };
-    const once = async (sp, dy) => { win.focus(); wc.focus(); await mouse('mouseMove', sp.x, sp.y); await wait(150); await mouse('mouseDown', sp.x, sp.y); for (let i = 1; i <= 6; i++) await mouse('mouseMove', sp.x, sp.y + (dy * i) / 6, { modifiers: ['leftButtonDown'] }); for (let k = 0; k < 2; k++) await mouse('mouseMove', sp.x, sp.y + dy, { modifiers: ['leftButtonDown'] }); await mouse('mouseUp', sp.x, sp.y + dy); await wait(250); };
-    // El primer gesto con el ratón sintético a veces se pierde mientras la ventana toma el foco: se repite si nada cambió.
-    const drag = async (sp, dy) => { for (let n = 0; n < 3; n++) { const a = await js('return JSON.stringify(__app.splits.toJSON())'); await once(sp, dy); if (a !== (await js('return JSON.stringify(__app.splits.toJSON())'))) return; } };
+    // Gesto con eventos de puntero sobre el propio divisor (el ratón del sistema no es fiable entre plataformas y sin foco).
+    const drag = async (sp, dy) => {
+      const which = sp.which;
+      await js(`const h = document.querySelector('.splitter[data-split="${which}"]'); const b = h.getBoundingClientRect(); const x = b.x + b.width / 2, y = b.y + b.height / 2; const ev = (t, yy) => h.dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 9, clientX: x, clientY: yy }));
+        ev('pointerdown', y); for (let i = 1; i <= 6; i++) { ev('pointermove', y + (${dy} * i) / 6); await new Promise((r) => setTimeout(r, 20)); } ev('pointerup', y + ${dy}); await new Promise((r) => setTimeout(r, 250)); return 1`);
+    };
 
     res.def = await js(probe);
     await drag(res.def.wsp, 60); res.waves60 = await js(probe);

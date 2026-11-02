@@ -542,7 +542,9 @@ class App {
       h.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
         e.preventDefault();
-        h.setPointerCapture(e.pointerId);
+        try {
+          h.setPointerCapture(e.pointerId);
+        } catch {} // puntero sintético (pruebas) o ya liberado
         h.classList.add('drag');
         const top = zone('waves').getBoundingClientRect().top;
         const move = (ev) => set(h, which === 'waves' ? ev.clientY - top : innerHeight - ev.clientY);
