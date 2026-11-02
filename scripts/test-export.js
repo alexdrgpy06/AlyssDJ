@@ -41,7 +41,7 @@ function parseCsv(text) {
 
 function fixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-export-'));
-  const f1 = path.join(dir, 'Uno & "Dos" <3.m4a'); const f2 = path.join(dir, 'ñandú, año.mp3');
+  const f1 = path.join(dir, "Uno & Dos 'tres' #4 %20.m4a"); const f2 = path.join(dir, 'ñandú, año.mp3');
   fs.writeFileSync(f1, 'x'); fs.writeFileSync(f2, 'x');
   const exp = require('../main/export.js');
   const res = (id) => ({ a: f1, b: f2 }[id] || '');
@@ -79,7 +79,7 @@ tests.model = async () => {
   assert.ok(x.text.includes('<TEMPO Inizio="0.123" Bpm="124.50" Metro="4/4" Battito="1"/>')); assert.ok(!/<TRACK[^>]*Name="Sin análisis"[^>]*>\s*<TEMPO/.test(x.text), 'sin BPM no hay TEMPO');
   assert.ok(x.text.includes('<POSITION_MARK Name="Mezcla" Type="0" Start="16.500" Num="0"/>') && x.text.includes('Name="Intro" Type="0" Start="15.200" Num="1"') && x.text.includes('Name="Salida" Type="0" Start="200.000" Num="2"'));
   assert.ok(x.text.includes('Name="Mi &quot;lista&quot; &amp; más"') && x.text.includes('<TRACK Key="1"/>') && x.text.includes('<TRACK Key="2"/>') && !x.text.includes('Key="3"'));
-  const loc = /Location="([^"]+)"/.exec(x.text)[1].replace(/&amp;/g, '&'); assert.ok(loc.startsWith('file://localhost/')); assert.ok(loc.endsWith('/' + encodeURIComponent(path.basename(f1))), loc); assert.ok(!/[ "<>]/.test(loc));
+  const loc = /Location="([^"]+)"/.exec(x.text)[1].replace(/&apos;/g, "'").replace(/&amp;/g, '&'); assert.ok(loc.startsWith('file://localhost/')); assert.ok(loc.endsWith('/' + encodeURIComponent(path.basename(f1))), loc); assert.ok(!/[ "<>]/.test(loc));
   assert.strictEqual(exp.fileUri('C:\\Música\\a b.mp3'), 'file://localhost/C:/M%C3%BAsica/a%20b.mp3', 'ruta de Windows');
   assert.strictEqual(exp.esc('a\u0001b\u0008<'), 'ab&lt;', 'caracteres de control');
   // REQ-4: escritura atómica y nombre seguro
