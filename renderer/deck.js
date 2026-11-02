@@ -256,11 +256,12 @@ export class Deck {
     }
   }
   // Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2.
-  fxSet(slot, patch) {
-    return this.fxc.set(slot, patch);
+  // `owner` 'auto' marca el cambio como de AutoMix: si el usuario toca después la ranura, vuelve a 'user' y AutoMix la suelta.
+  fxSet(slot, patch, owner = 'user') {
+    return this.fxc.set(slot, patch, { owner });
   }
-  fxRamp(slot, target, seconds) {
-    return this.fxc.ramp(slot, target, seconds);
+  fxRamp(slot, target, seconds, owner = 'user') {
+    return this.fxc.ramp(slot, target, seconds, { owner });
   }
   setMix(patch) {
     Object.assign(this.mix, patch);

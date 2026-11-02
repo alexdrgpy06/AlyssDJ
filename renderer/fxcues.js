@@ -51,3 +51,89 @@ export function fxCues(ana) {
   const order = { build: 0, drop: 1, break: 2 };
   return cues.sort((x, y) => x.t - y.t || order[x.kind] - order[y.kind]);
 }
+
+// Reserva y devuelve ranuras de la cadena de efectos de los decks para los movimientos de AutoMix.
+// Solo usa ranuras apagadas; si el usuario toca una que está usando, la suelta sin restaurar (manda el usuario).
+export class FxMoves {
+  constructor({ timer = (fn, ms) => setTimeout(fn, ms), clear = (id) => clearTimeout(id) } = {}) {
+    this.timer = timer;
+    this.clear = clear;
+    this.claims = new Map(); // `${deck.id}:${slot}` → { deck, slot, prev, name, timer }
+    this.skipped = []; // movimientos omitidos por falta de ranura libre (para la nota)
+  }
+
+  key(deck, slot) {
+    return `${deck.id}:${slot}`;
+  }
+
+  // want: { name, type, p } → índice de la ranura reservada o null (sin ranura libre)
+  claim(deck, want) {
+    const chain = deck.fxc;
+    for (let i = 0; i < chain.slots.length; i++) {
+      if (chain.slots[i].on || this.claims.has(this.key(deck, i))) continue;
+      const prev = { ...chain.slots[i] };
+      deck.fxSet(i, { type: want.type, p: want.p ?? 0.5, wet: 0, on: true }, 'auto');
+      this.claims.set(this.key(deck, i), { deck, slot: i, prev, name: want.name, timer: null });
+      return i;
+    }
+    this.skipped.push(want.name);
+    return null;
+  }
+
+  // ¿Sigue siendo de AutoMix? Si el usuario la tocó, se olvida (sin restaurar).
+  owned(deck, slot) {
+    const c = this.claims.get(this.key(deck, slot));
+    if (!c) return false;
+    if (deck.fxc.owners[slot] !== 'auto') {
+      this.clear(c.timer);
+      this.claims.delete(this.key(deck, slot));
+      return false;
+    }
+    return true;
+  }
+
+  set(deck, slot, patch) {
+    if (!this.owned(deck, slot)) return false;
+    deck.fxSet(slot, patch, 'auto');
+    return true;
+  }
+
+  ramp(deck, slot, target, seconds) {
+    if (!this.owned(deck, slot)) return false;
+    deck.fxRamp(slot, target, seconds, 'auto');
+    return true;
+  }
+
+  // Devuelve la ranura a como estaba, ya o tras `afterMs` (la cola del eco).
+  release(deck, slot, afterMs = 0) {
+    const c = this.claims.get(this.key(deck, slot));
+    if (!c) return;
+    this.clear(c.timer);
+    if (afterMs > 0) {
+      c.timer = this.timer(() => this.release(deck, slot, 0), afterMs);
+      return;
+    }
+    if (deck.fxc.owners[slot] === 'auto') deck.fxc.set(slot, c.prev, { owner: 'user' });
+    this.claims.delete(this.key(deck, slot));
+  }
+
+  releaseAll() {
+    for (const c of [...this.claims.values()]) this.release(c.deck, c.slot, 0);
+  }
+
+  // Quita las reservas que el usuario tomó.
+  sweep() {
+    for (const c of [...this.claims.values()]) this.owned(c.deck, c.slot);
+  }
+
+  active() {
+    this.sweep();
+    return [...this.claims.values()].map((c) => c.name);
+  }
+
+  takeSkipped() {
+    const s = this.skipped;
+    this.skipped = [];
+    return s;
+  }
+}

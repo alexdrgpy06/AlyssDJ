@@ -24,6 +24,7 @@ export class FxChain {
     this.selected = 0;
     this.onChange = onChange || (() => {});
     this.ramps = new Array(SLOTS).fill(null);
+    this.owners = new Array(SLOTS).fill('user'); // quién tocó la ranura por última vez: 'user' o 'auto' (AutoMix)
   }
 
   select(i) {
@@ -32,12 +33,13 @@ export class FxChain {
   }
 
   // Cambia una ranura; cancela su rampa si el cambio toca los mismos parámetros que ella mueve.
-  set(i, patch = {}, { fromRamp = false } = {}) {
+  set(i, patch = {}, { fromRamp = false, owner = 'user' } = {}) {
     if (!(i >= 0 && i < SLOTS)) return null;
     const cur = this.slots[i];
     const next = clampSlot({ ...cur, ...patch }, i);
     if (!fromRamp && this.ramps[i] && ('wet' in patch || 'p' in patch)) this.cancel(i);
     this.slots[i] = next;
+    this.owners[i] = owner;
     this.onChange(i, next);
     return next;
   }
@@ -50,12 +52,12 @@ export class FxChain {
 
   // Rampa lineal de wet y/o p durante `seconds`. `now()` da el reloj en ms y `schedule(fn)` agenda el siguiente paso
   // (por defecto, performance.now y requestAnimationFrame): así se prueba sin tiempo real.
-  ramp(i, target = {}, seconds = 0, { now = () => performance.now(), schedule = (fn) => requestAnimationFrame(fn) } = {}) {
+  ramp(i, target = {}, seconds = 0, { now = () => performance.now(), schedule = (fn) => requestAnimationFrame(fn), owner = 'user' } = {}) {
     if (!(i >= 0 && i < SLOTS)) return null;
     this.cancel(i);
     const keys = ['wet', 'p'].filter((k) => target[k] != null && Number.isFinite(+target[k]));
     if (!keys.length) return null;
-    if (!(seconds > 0)) return this.set(i, Object.fromEntries(keys.map((k) => [k, target[k]])));
+    if (!(seconds > 0)) return this.set(i, Object.fromEntries(keys.map((k) => [k, target[k]])), { owner });
     const from = Object.fromEntries(keys.map((k) => [k, this.slots[i][k]]));
     const to = Object.fromEntries(keys.map((k) => [k, clamp01(target[k], this.slots[i][k])]));
     const t0 = now();
@@ -64,7 +66,7 @@ export class FxChain {
     const step = () => {
       if (ramp.stopped) return;
       const k = Math.min(1, (now() - t0) / (seconds * 1000));
-      this.set(i, Object.fromEntries(keys.map((key) => [key, from[key] + (to[key] - from[key]) * k])), { fromRamp: true });
+      this.set(i, Object.fromEntries(keys.map((key) => [key, from[key] + (to[key] - from[key]) * k])), { fromRamp: true, owner });
       if (k >= 1) this.ramps[i] = null;
       else schedule(step);
     };

@@ -51,6 +51,49 @@ tests.cues = async () => {
   console.log('cues ok');
 };
 
+tests.moves = async () => {
+  const { FxChain } = await import('../renderer/fxchain.js');
+  const { FxMoves } = await import('../renderer/fxcues.js');
+  // un deck de mentira con la misma interfaz que Deck (fxc, fxSet, fxRamp) y reloj inyectable para las rampas
+  let t = 0; const q = [];
+  const mk = (id) => { const d = { id, fxc: new FxChain(null), fxSet(s, p, o = 'user') { return this.fxc.set(s, p, { owner: o }); }, fxRamp(s, tg, sec, o = 'user') { return this.fxc.ramp(s, tg, sec, { owner: o, now: () => t, schedule: (fn) => q.push(fn) }); } }; return d; };
+  const timers = []; const mv = () => new FxMoves({ timer: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clear: () => {} });
+  // owner: set de usuario vs de AutoMix
+  const c = new FxChain(null); assert.deepStrictEqual(c.owners, ['user', 'user', 'user']);
+  c.set(0, { on: true }, { owner: 'auto' }); assert.strictEqual(c.owners[0], 'auto'); c.set(0, { wet: 0.2 }); assert.strictEqual(c.owners[0], 'user', 'un cambio normal es del usuario');
+  c.ramp(1, { wet: 1 }, 0, { owner: 'auto' }); assert.strictEqual(c.owners[1], 'auto');
+  // reservar: primera ranura apagada; configura el efecto y guarda el estado previo
+  let a = mk('A'); let m = mv();
+  const s0 = m.claim(a, { name: 'eco de salida', type: 'echo', p: 0.5 });
+  assert.strictEqual(s0, 0); assert.deepStrictEqual(a.fxc.slots[0], { type: 'echo', on: true, wet: 0, p: 0.5 }); assert.strictEqual(a.fxc.owners[0], 'auto');
+  // REQ-5: nunca toca una ranura encendida por el usuario
+  a = mk('A'); m = mv(); a.fxc.set(0, { type: 'flanger', on: true, wet: 0.7 }); a.fxc.set(1, { on: true });
+  assert.strictEqual(m.claim(a, { name: 'x', type: 'reverb' }), 2, 'salta las encendidas'); assert.deepStrictEqual(a.fxc.slots[0], { type: 'flanger', on: true, wet: 0.7, p: 0.5 }, 'la del usuario intacta');
+  assert.strictEqual(m.claim(a, { name: 'riser', type: 'phaser' }), null, 'sin ranura libre → null'); assert.deepStrictEqual(m.takeSkipped(), ['riser']); assert.deepStrictEqual(m.takeSkipped(), []);
+  // dos reservas no comparten ranura
+  a = mk('A'); m = mv(); assert.strictEqual(m.claim(a, { name: 'a', type: 'echo' }), 0); assert.strictEqual(m.claim(a, { name: 'b', type: 'reverb' }), 1); assert.deepStrictEqual(m.active(), ['a', 'b']);
+  // mover y rampa solo mientras es suya
+  assert.ok(m.set(a, 0, { wet: 0.4 })); assert.strictEqual(a.fxc.slots[0].wet, 0.4);
+  t = 0; assert.ok(m.ramp(a, 1, { wet: 0.6 }, 2)); t = 2000; q.shift()(); assert.ok(Math.abs(a.fxc.slots[1].wet - 0.6) < 1e-9); assert.strictEqual(a.fxc.owners[1], 'auto', 'la rampa de AutoMix sigue siendo de AutoMix');
+  // el usuario toca la ranura 0 → AutoMix la suelta y no la restaura ni la vuelve a mover
+  a.fxc.set(0, { wet: 0.9 });
+  assert.strictEqual(m.set(a, 0, { wet: 0.1 }), false); assert.strictEqual(a.fxc.slots[0].wet, 0.9, 'manda el usuario'); assert.deepStrictEqual(m.active(), ['b']);
+  m.releaseAll(); assert.strictEqual(a.fxc.slots[0].wet, 0.9, 'lo del usuario no se restaura'); assert.strictEqual(a.fxc.slots[0].on, true);
+  // restaurar: estado previo completo (tipo, cantidad, P, apagada)
+  a = mk('B'); m = mv(); a.fxc.set(1, { type: 'crush', wet: 0.8, p: 0.1, on: false }); a.fxc.set(0, { on: true });
+  const sl = m.claim(a, { name: 'riser', type: 'phaser', p: 0.7 }); assert.strictEqual(sl, 1); m.set(a, 1, { wet: 0.5 });
+  m.release(a, 1); assert.deepStrictEqual(a.fxc.slots[1], { type: 'crush', on: false, wet: 0.8, p: 0.1 }); assert.strictEqual(a.fxc.owners[1], 'user'); assert.deepStrictEqual(m.active(), []);
+  // cola del eco: se suelta tras el retardo, no antes
+  a = mk('A'); m = mv(); timers.length = 0; m.claim(a, { name: 'eco de salida', type: 'echo' }); m.set(a, 0, { wet: 0.6 }); m.release(a, 0, 4000);
+  assert.strictEqual(a.fxc.slots[0].on, true, 'sigue sonando la cola'); assert.strictEqual(timers[0].ms, 4000); timers[0].fn(); assert.strictEqual(a.fxc.slots[0].on, false); assert.deepStrictEqual(m.active(), []);
+  // releaseAll limpia todo, incluso rampas en curso
+  a = mk('A'); const b = mk('B'); m = mv(); m.claim(a, { name: '1', type: 'echo' }); m.claim(b, { name: '2', type: 'reverb' }); m.ramp(a, 0, { wet: 1 }, 5); t = 0;
+  m.releaseAll(); assert.ok(!a.fxc.slots[0].on && !b.fxc.slots[0].on); assert.deepStrictEqual(m.active(), []); assert.strictEqual(a.fxc.ramps[0], null, 'la rampa se canceló');
+  // varios decks y ranuras independientes
+  a = mk('A'); const b2 = mk('B'); m = mv(); assert.strictEqual(m.claim(a, { name: 'x', type: 'echo' }), 0); assert.strictEqual(m.claim(b2, { name: 'y', type: 'echo' }), 0);
+  console.log('moves ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fxcues.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });
