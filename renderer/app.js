@@ -817,7 +817,7 @@ class App {
     nav.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       const tabs = [...nav.querySelectorAll('button')];
-      const i = tabs.indexOf(document.activeElement);
+      const i = tabs.indexOf(e.target.closest('button'));
       const next = tabs[(i + (e.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length];
       e.preventDefault();
       this.setSettingsPane(next.dataset.pane);
