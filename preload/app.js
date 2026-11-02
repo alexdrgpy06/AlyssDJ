@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld('ytdj', {
     crates: () => ipcRenderer.invoke('crates:list'),
     crate: (id) => ipcRenderer.invoke('crates:get', id),
   },
+  crates: () => ipcRenderer.invoke('crates:list'),
+  crate: (id) => ipcRenderer.invoke('crates:get', id),
+  export: { run: (source, format) => ipcRenderer.invoke('export:run', source, format) },
   analysis: {
     request: (id, opts) => ipcRenderer.invoke('analysis:request', id, opts),
     cancel: (id) => ipcRenderer.invoke('analysis:cancel', id),

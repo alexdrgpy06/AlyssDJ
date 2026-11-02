@@ -91,6 +91,36 @@ tests.model = async () => {
   console.log('model ok');
 };
 
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const lib = read('renderer/library.js'); const pre = read('preload/app.js'); const main = read('main/main.js');
+  assert.ok(/id="btn-export"[^>]*aria-haspopup="menu"/.test(html) && /id="export-menu" role="menu"/.test(html) && ['m3u8', 'csv', 'rekordbox'].every((f) => html.includes(`data-fmt="${f}"`)), 'botón y menú');
+  assert.ok(/export:run/.test(pre) && /ipcMain\.handle\('export:run'/.test(main));
+  const { spawnSync } = require('child_process');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-exportui-')); const data = path.join(tmp, 'data'); const cache = path.join(data, 'cache'); fs.mkdirSync(cache, { recursive: true });
+  const mk = (id, extra, audio) => { fs.writeFileSync(path.join(cache, `${id}.json`), JSON.stringify({ id, title: `Pista ${id}`, artist: 'Ñu', duration: 180, trackDuration: 180, analyzedAt: new Date().toISOString(), ...extra })); if (audio) fs.writeFileSync(path.join(cache, `${id}.m4a`), 'x'); };
+  mk('aaaaaaaaaaa', { bpm: 124, offset: 0.2, key: 'A minor', camelot: '8A', mix: { mixIn: 16, introEnd: 15, outroStart: 160 } }, true);
+  mk('bbbbbbbbbbb', { bpm: 128, offset: 0, key: 'C major', camelot: '8B', mix: null }, true);
+  mk('ccccccccccc', { bpm: 100 }, false);
+  fs.writeFileSync(path.join(data, 'playlists.json'), JSON.stringify([{ id: 'PL1', title: 'Mi lista', thumb: '', importedAt: new Date().toISOString(), tracks: [{ videoId: 'aaaaaaaaaaa', title: 'Pista A', artist: 'Ñu', duration: 180 }, { videoId: 'zzzzzzzzzzz', title: 'Solo stream', artist: 'Y', duration: 99 }] }]));
+  const target = path.join(tmp, 'salida.out');
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'export-selftest.js'), YTDJ_USERDATA: data, YTDJ_SELFTEST_OUT: tmp, YTDJ_EXPORT_FILE: target } });
+  const f = path.join(tmp, 'export.json'); assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  const r = JSON.parse(fs.readFileSync(f, 'utf8')); assert.ok(!r.__err, JSON.stringify(r.__err));
+  // REQ-4: el botón solo está en «analizadas» y en una playlist importada abierta
+  assert.strictEqual(r.search.btn, false, 'oculto en búsqueda'); assert.strictEqual(r.analyzed.btn, true, 'visible en analizadas'); assert.strictEqual(r.imported.btn, false, 'oculto en la lista de playlists'); assert.strictEqual(r.crate.btn, true, 'visible dentro de una playlist importada'); assert.strictEqual(r.after.btn, false);
+  // menú accesible: abre con foco en la primera opción, flechas, Escape devuelve el foco al botón, clic fuera cierra
+  assert.deepStrictEqual([r.open.menu, r.open.expanded, r.open.items, r.open.focus], [true, 'true', 3, 'm3u8']); assert.strictEqual(r.down.focus, 'csv'); assert.deepStrictEqual([r.esc.menu, r.esc.expanded, r.esc.focus], [false, 'false', 'btn-export']); assert.strictEqual(r.outside.menu, false);
+  // REQ-1/2/3: los tres formatos desde «todo lo analizado»: dos con audio, una sin
+  const m = r.files.m3u8; assert.ok(m.text.startsWith('#EXTM3U') && (m.text.match(/#EXTINF/g) || []).length === 2 && !m.text.includes('Pista ccccccccccc'), 'm3u8'); assert.ok(/Exportadas 2 pistas a salida\.out · 1 sin audio/.test(m.snap.msg), m.snap.msg); assert.strictEqual(m.tmp, false);
+  const c = parseCsv(r.files.csv.text); assert.strictEqual(c.length, 4, 'csv: cabecera y 3 pistas'); assert.ok(c.some((x) => x[0] === 'Pista aaaaaaaaaaa' && x[3] === '124.00' && x[5] === '8A' && x[6].endsWith('aaaaaaaaaaa.m4a')));
+  const x = r.files.rekordbox.text; wellFormed(x); assert.ok(x.includes('<COLLECTION Entries="2">') && x.includes('Name="Mezcla" Type="0" Start="16.000"') && x.includes('Bpm="128.00"'), 'rekordbox');
+  // REQ-4: fallo de escritura → mensaje claro y nada a medias
+  assert.ok(/No se pudo exportar/.test(r.fail.msg), r.fail.msg); assert.ok(!fs.existsSync(path.join(tmp, 'no')));
+  // playlist importada: la pista con audio sale, la de stream no se puede reproducir y se avisa
+  const cc = parseCsv(r.crateCsv); assert.strictEqual(cc.length, 3); assert.ok(cc.some((y) => y[0] === 'Pista A' || y[0] === 'Pista aaaaaaaaaaa')); assert.ok(cc.some((y) => y[0] === 'Solo stream' && y[6] === ''), 'CSV conserva la de stream sin ruta');
+  console.log('ui ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('Uso: node scripts/test-export.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

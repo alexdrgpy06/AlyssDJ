@@ -359,6 +359,11 @@ input.vfader::-webkit-slider-thumb {
 #search-form { position: relative; flex: 0 1 380px; margin-left: 10px; }
 #search-form .ic { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
 #search { width: 100%; padding-left: 30px; }
+.export-wrap { position: relative; }
+.export-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 190px; display: flex; flex-direction: column; padding: 4px; background: var(--panel, #15181d); border: 1px solid var(--line, #2a2f37); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.export-menu[hidden] { display: none; }
+.export-menu button { text-align: left; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text, #e8eaed); font: inherit; font-size: 12px; cursor: pointer; }
+.export-menu button:hover, .export-menu button:focus-visible { background: var(--hover, rgba(255, 255, 255, .08)); outline: none; }
 .lib-msg { color: var(--dim); margin-left: 8px; font-size: 12px; }
 .legend { color: var(--faint); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
 .compat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }

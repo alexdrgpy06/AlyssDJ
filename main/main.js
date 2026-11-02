@@ -9,6 +9,7 @@ const { Analyzer } = require('./analyzer');
 const { Backlog } = require('./analysis-backlog');
 const { YtmLibrary } = require('./ytm-library');
 const ytdlp = require('./ytdlp');
+const exporter = require('./export');
 const tools = require('./tools');
 const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
@@ -308,6 +309,33 @@ ipcMain.handle('lib:import-playlists', wrap(async () => {
 }));
 ipcMain.handle('crates:list', () => readCrates().map(({ tracks, ...l }) => ({ ...l, count: tracks.length })));
 ipcMain.handle('crates:get', (_e, id) => readCrates().find((c) => c.id === id)?.tracks || []);
+
+// ---------- exportar a otros programas (M3U8, CSV, Rekordbox XML) ----------
+ipcMain.handle('export:run', wrap(async (source, format) => {
+  const fmt = exporter.FORMATS[format];
+  if (!fmt) throw new Error('Formato de exportación no válido');
+  let name = 'Todo lo analizado'; let rows;
+  if (source === 'all') {
+    rows = analyzer.list().map((a) => ({ videoId: a.id, title: a.title, artist: a.artist, duration: a.trackDuration || a.duration }));
+  } else if (/^crate:/.test(String(source))) {
+    const c = readCrates().find((x) => x.id === source.slice(6));
+    if (!c) throw new Error('Esa playlist ya no está importada');
+    name = c.title; rows = c.tracks;
+  } else throw new Error('Origen de exportación no válido');
+  const resolve = (id, _rec, a) => (a.saved?.path && fs.existsSync(a.saved.path) ? a.saved.path : localLib.pathOf(id) || analyzer.audioFile(id) || '');
+  const entries = rows.map((r) => exporter.normalize(r, analyzer.get(r.videoId), resolve));
+  if (!entries.length) throw new Error('No hay pistas que exportar');
+  const selftest = process.env.YTDJ_SELFTEST && process.env.YTDJ_EXPORT_FILE;
+  let file = selftest;
+  if (!file) {
+    const r = await dialog.showSaveDialog(win, { title: `Exportar (${fmt.label})`, defaultPath: path.join(app.getPath('documents'), `${exporter.safeName(name)}.${fmt.ext}`), filters: [{ name: fmt.label, extensions: [fmt.ext] }] });
+    if (r.canceled || !r.filePath) return { canceled: true };
+    file = r.filePath;
+  }
+  const out = fmt.make(entries, name);
+  exporter.writeAtomic(file, out.text);
+  return { file, written: out.written, skipped: out.skipped };
+}));
 
 // ---------- análisis (yt-dlp, siempre a pedido) ----------
 ipcMain.handle('backlog:add', (_e, list) => backlog.addList(list || {}));

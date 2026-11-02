@@ -34,6 +34,10 @@ export class Library {
     this.analyzeBtn.addEventListener('click', () => this.analyzeRows(this.base || this.rows, this.listName || 'Lista'));
     this.bl = { paused: false, pending: 0, lists: [], items: [] };
     this.bindQueue();
+    this.exportBtn = document.getElementById('btn-export');
+    this.exportMenu = document.getElementById('export-menu');
+    this.exportSrc = null;
+    this.bindExport();
     this.importBtn = document.getElementById('btn-import-pl');
     this.listBtn = document.getElementById('btn-automix-list');
     this.importBtn.addEventListener('click', () => this.importPlaylists());
@@ -78,6 +82,9 @@ export class Library {
 
   async show(tab, query) {
     this.tab = tab;
+    this.exportSrc = tab === 'analyzed' ? 'all' : null;
+    this.closeExport();
+    this.exportBtn.hidden = true;
     document.dispatchEvent(new CustomEvent('alyss:tab', { detail: tab }));
     document.querySelectorAll('.sources [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     const isAm = tab === 'automix';
@@ -172,6 +179,7 @@ export class Library {
     if (!r.ok) return this.setMsg(`Error: ${r.error}`);
     this.setMsg(`${p.title} · ${r.data.length} canciones`);
     this.listName = p.title;
+    this.exportSrc = p.crate ? `crate:${p.browseId}` : null;
     this.render(r.data);
   }
 
@@ -287,7 +295,53 @@ export class Library {
     this.renderEmpty(rows);
     if (this.tab === 'imported') this.fillCrateCounts();
     this.listBtn.hidden = !rows.some((r) => r.videoId && !r.playlist);
+    this.exportBtn.hidden = !this.exportSrc || !rows.some((r) => r.videoId && !r.playlist);
     this.analyzeBtn.hidden = !rows.some((r) => r.videoId && !r.playlist) || ['analyzed', 'automix', 'queue'].includes(this.tab);
+  }
+
+  // ---------- exportar a otros programas ----------
+  bindExport() {
+    const items = () => [...this.exportMenu.querySelectorAll('[role=menuitem]')];
+    this.exportBtn.addEventListener('click', () => {
+      if (this.exportMenu.hidden) {
+        this.exportMenu.hidden = false;
+        this.exportBtn.setAttribute('aria-expanded', 'true');
+        items()[0].focus();
+      } else this.closeExport(true);
+    });
+    this.exportMenu.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-fmt]');
+      if (b) this.runExport(b.dataset.fmt);
+    });
+    this.exportMenu.addEventListener('keydown', (e) => {
+      const list = items(); const i = list.indexOf(document.activeElement);
+      if (e.key === 'Escape') { e.preventDefault(); this.closeExport(true); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); list[(i + 1) % list.length].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); list[(i - 1 + list.length) % list.length].focus(); }
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (!this.exportMenu.hidden && !e.target.closest('.export-wrap')) this.closeExport();
+    });
+  }
+
+  closeExport(refocus) {
+    if (!this.exportMenu) return;
+    this.exportMenu.hidden = true;
+    this.exportBtn.setAttribute('aria-expanded', 'false');
+    if (refocus) this.exportBtn.focus();
+  }
+
+  async runExport(format) {
+    this.closeExport(true);
+    if (!this.exportSrc) return;
+    this.setMsg('Exportando…');
+    const r = await window.ytdj.export.run(this.exportSrc, format);
+    if (!r.ok) { this.setMsg(`No se pudo exportar: ${r.error}`); return this.app.toast(`No se pudo exportar: ${r.error}`, true); }
+    if (r.data.canceled) return this.setMsg('');
+    const { file, written, skipped } = r.data;
+    const msg = `Exportadas ${written} pistas a ${file.split(/[\\/]/).pop()}${skipped ? ` · ${skipped} sin audio en el disco omitidas` : ''}`;
+    this.setMsg(msg);
+    this.app.toast(msg);
   }
 
   // ---------- cola de análisis ----------
