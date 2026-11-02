@@ -18,6 +18,9 @@ tests.state = async () => {
   assert.strictEqual(clampSplit('lib', 10, 900), 150);
   assert.strictEqual(clampSplit('lib', 900, 900), 495, 'máximo = 55 %');
   assert.strictEqual(clampSplit('lib', 900, 200), 150, 'en una ventana pequeña vale el mínimo');
+  // el resto de la ventana manda: barra + consola fijas, y cada zona deja a la otra su mínimo
+  assert.strictEqual(clampSplit('waves', 900, 960, 587), 223, '960 − 587 − 150');
+  assert.strictEqual(clampSplit('lib', 900, 960, 587), 283, '960 − 587 − 90');
   // arrastrar: manda el último
   const s = new SplitState();
   assert.strictEqual(s.active('mix'), null, 'sin tocar: tamaño por defecto');
@@ -43,6 +46,43 @@ tests.state = async () => {
   s.resetAll();
   assert.strictEqual(s.active('library'), null);
   console.log('state ok');
+};
+
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const css = read('renderer/styles.css'); const app = read('renderer/app.js');
+  assert.ok(html.includes('data-split="waves"') && html.includes('data-split="lib"') && (html.match(/role="separator"/g) || []).length >= 2, 'dos separadores accesibles');
+  assert.ok(/bindSplits/.test(app) && /dblclick/.test(app) && /ArrowDown/.test(app) && /alyssdj\.splits|SPLIT_STORE/.test(app));
+  assert.ok(/--split-waves/.test(css) && /--split-lib/.test(css) && /row-resize/.test(css));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-vistas-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'vistas-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const r = JSON.parse(fs.readFileSync(path.join(tmp, 'vistas.json'), 'utf8'));
+  const near = (a, b, tol, m) => assert.ok(Math.abs(a - b) <= tol, `${m}: ${a} vs ${b}`);
+  const noScroll = (x, m) => assert.ok(x.sw <= x.w && x.sh <= x.ih + 1, `${m}: sin scroll (${x.sw}x${x.sh} en ${x.w}x${x.ih})`);
+  // REQ-1: por defecto, accesibles y sin personalizar
+  assert.strictEqual(r.def.split, null); assert.strictEqual(r.def.wsp.role, 'separator'); assert.strictEqual(r.def.lsp.role, 'separator');
+  assert.ok(Number(r.def.wsp.min) < Number(r.def.wsp.max));
+  // arrastre real: las ondas crecen lo que se arrastra y la librería cede
+  near(r.waves60.waves, r.def.waves + 60, 3, 'ondas +60'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
+  // máximo: lo que deja libre la consola sin quitar el mínimo a la librería
+  near(r.wavesMax.waves, r.def.waves + r.def.lib - 150, 3, 'máximo de las ondas'); assert.ok(r.wavesMax.lib >= 149); noScroll(r.wavesMax, 'máximo');
+  // doble clic restablece
+  assert.strictEqual(r.reset.split, null); near(r.reset.waves, r.def.waves, 2, 'restablecido');
+  // la librería manda al arrastrar su divisor y respeta el máximo (55 %)
+  near(r.lib80.lib, r.reset.lib + 40, 4, 'librería +40'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
+  near(r.libMax.lib, r.def.waves + r.def.lib - 90, 3, 'máximo de la librería'); assert.ok(r.libMax.waves >= 89); noScroll(r.libMax, 'máximo librería');
+  // teclado: 8 px, 32 px con Mayús; ↑ agranda la librería
+  near(r.kbUp.lib, r.kbBase.lib + 8, 2, '↑ 8 px'); near(r.kbUpBig.lib, r.kbUp.lib + 32, 2, 'Mayús+↑ 32 px'); near(r.kbDown.lib, r.kbUpBig.lib - 8, 2, '↓ 8 px');
+  // REQ-2: cada vista tiene su tamaño; se guarda en localStorage
+  assert.strictEqual(r.libViewDefault.split, null, 'la vista Librería no hereda el tamaño de Mezcla');
+  assert.strictEqual(r.mixBack.split, 'lib'); near(r.mixBack.lib, r.kbDown.lib, 2, 'Mezcla recuerda su tamaño');
+  assert.ok(r.mixBack.stored?.mix?.lib > 0, 'guardado');
+  // ondas en el deck: solo el divisor de la librería; en la vista Ondas ninguno
+  assert.strictEqual(r.deckWaves.wsp, null); assert.ok(r.deckWaves.lsp); assert.strictEqual(r.wavesView.wsp, null); assert.strictEqual(r.wavesView.lsp, null);
+  // REQ-5: ventana pequeña: recortado sin perder lo guardado ni desbordar
+  assert.ok(r.small.waves < 430 && r.small.lib >= 149, `recortado: ${r.small.waves}`); noScroll(r.small, '1366×768');
+  assert.strictEqual(r.stored.waves, 430, 'el valor guardado se conserva');
+  console.log('ui ok');
 };
 
 const which = process.argv[2];

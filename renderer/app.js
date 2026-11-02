@@ -11,6 +11,7 @@ import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
+import { SplitState, clampSplit, STORE as SPLIT_STORE, STEP, STEP_BIG } from './splits.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -403,6 +404,7 @@ class App {
       if (b) this.setView(b.dataset.view);
     });
     $('#waves-toggle').addEventListener('click', () => this.setWaves(this.views.waves === 'deck' ? 'top' : 'deck'));
+    this.bindSplits();
     this.applyView();
   }
 
@@ -482,9 +484,94 @@ class App {
   }
 
   // Aplica la vista al <body>; las ondas «en el deck» mueven el mismo canvas dentro de cada deck (no hay segundo dibujo).
+  // Divisores arrastrables: el tamaño se guarda por vista y se recorta a la ventana sin perder el valor guardado.
+  bindSplits() {
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(SPLIT_STORE) || '{}');
+    } catch {}
+    this.splits = new SplitState(saved);
+    const body = document.body;
+    const handles = [...document.querySelectorAll('.splitter')];
+    const zone = (which) => document.querySelector(which === 'waves' ? '.waves' : '.library');
+    const persist = () => {
+      try {
+        localStorage.setItem(SPLIT_STORE, JSON.stringify(this.splits));
+      } catch {}
+    };
+    // Alto que no es de ondas ni de librería (barra superior, consola): el resto se reparte entre las dos.
+    const fixedH = () => {
+      const h = (el) => (el.offsetParent === null ? 0 : el.getBoundingClientRect().height);
+      return innerHeight - h(zone('waves')) - h(zone('lib'));
+    };
+    this.applySplits = (view = this.views.view, waves = this.views.effectiveWaves()) => {
+      const a = view === 'mix' || view === 'library' ? this.splits.active(view) : null;
+      const ok = a && !(a.which === 'waves' && waves === 'deck');
+      const px = ok ? clampSplit(a.which, a.px, innerHeight, fixedH()) : null;
+      if (ok) {
+        body.dataset.split = a.which;
+        body.style.setProperty(a.which === 'waves' ? '--split-waves' : '--split-lib', `${px}px`);
+      } else {
+        delete body.dataset.split;
+      }
+      for (const h of handles) {
+        const which = h.dataset.split;
+        const now = zone(which).getBoundingClientRect().height;
+        h.setAttribute('aria-valuenow', String(Math.round(now)));
+        h.setAttribute('aria-valuemin', String(clampSplit(which, 0, innerHeight, fixedH())));
+        h.setAttribute('aria-valuemax', String(clampSplit(which, 1e6, innerHeight, fixedH())));
+      }
+    };
+    const set = (h, px) => {
+      const which = h.dataset.split;
+      const v = clampSplit(which, px, innerHeight, fixedH());
+      this.splits.drag(this.views.view, which, v);
+      this.applySplits();
+      h.dataset.px = String(v);
+      return v;
+    };
+    for (const h of handles) {
+      const which = h.dataset.split;
+      h.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        h.setPointerCapture(e.pointerId);
+        h.classList.add('drag');
+        const top = zone('waves').getBoundingClientRect().top;
+        const move = (ev) => set(h, which === 'waves' ? ev.clientY - top : innerHeight - ev.clientY);
+        const up = () => {
+          h.classList.remove('drag');
+          h.removeEventListener('pointermove', move);
+          h.removeEventListener('pointerup', up);
+          h.removeEventListener('pointercancel', up);
+          persist();
+        };
+        h.addEventListener('pointermove', move);
+        h.addEventListener('pointerup', up);
+        h.addEventListener('pointercancel', up);
+      });
+      h.addEventListener('dblclick', () => {
+        this.splits.reset(this.views.view);
+        persist();
+        this.applySplits();
+      });
+      h.addEventListener('keydown', (e) => {
+        const dir = { ArrowDown: 1, ArrowUp: -1 }[e.key];
+        if (!dir) return;
+        e.preventDefault();
+        const now = zone(which).getBoundingClientRect().height;
+        const step = (e.shiftKey ? STEP_BIG : STEP) * (which === 'waves' ? dir : -dir);
+        set(h, now + step);
+        persist();
+      });
+    }
+    addEventListener('resize', () => this.applySplits());
+  }
+
   applyView() {
     const v = this.views;
     const body = document.body;
+    this.applySplits?.(v.view, v.effectiveWaves());
     const where = v.effectiveWaves();
     body.dataset.view = v.view;
     body.dataset.waves = where;

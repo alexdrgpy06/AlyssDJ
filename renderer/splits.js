@@ -7,9 +7,12 @@ export const STEP_BIG = 32;
 const MIN = { waves: 90, lib: 150 };
 const MAX_FRAC = { waves: 0.45, lib: 0.55 };
 
-// Recorta `px` a los límites de la zona para una ventana de `inner` px de alto.
-export function clampSplit(which, px, inner) {
-  const max = Math.max(MIN[which], Math.round(inner * MAX_FRAC[which]));
+// Recorta `px` a los límites de la zona para una ventana de `inner` px de alto. `fixed` es lo que ocupan la barra superior
+// y la consola: ondas y librería se reparten el resto, y cada una deja a la otra su mínimo.
+export function clampSplit(which, px, inner, fixed = 0) {
+  const other = which === 'waves' ? 'lib' : 'waves';
+  const room = inner - fixed - MIN[other];
+  const max = Math.max(MIN[which], Math.min(Math.round(inner * MAX_FRAC[which]), Math.round(room)));
   return Math.max(MIN[which], Math.min(max, Math.round(px)));
 }
 

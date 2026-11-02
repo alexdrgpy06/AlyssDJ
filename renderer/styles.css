@@ -761,3 +761,22 @@ body[data-view='automix'] .waves, body[data-view='automix'] .console, body[data-
 .imm-go { min-height: 40px; padding-inline: var(--s-5); }
 .imm-controls kbd { font-family: var(--mono); font-size: 11px; background: #0003; border: 1px solid #ffffff22; border-radius: 4px; padding: 0 5px; margin-left: 4px; }
 @media (max-width: 900px) { .imm-main { flex-direction: column; } .imm-cover { width: min(34vh, 60vw); } }
+
+/* ---------- divisores de vistas ---------- */
+.waves, .library { position: relative; }
+.splitter { display: none; position: absolute; left: 0; right: 0; height: 8px; z-index: 5; cursor: row-resize; touch-action: none; outline: none; }
+.splitter::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line-2); transform: translateY(-50%); transition: height var(--dur-1) var(--ease), background var(--dur-1) var(--ease); }
+.splitter:hover::before, .splitter:focus-visible::before, .splitter.drag::before { height: 3px; background: var(--sel); }
+.splitter[data-split='waves'] { bottom: -4px; }
+.splitter[data-split='lib'] { top: -4px; }
+.splitter.drag::after { content: attr(data-px) ' px'; position: absolute; right: var(--s-3); top: -22px; padding: 1px var(--s-2); font: var(--fs-1)/1.4 var(--mono); background: var(--raised-2); border: 1px solid var(--line-2); border-radius: var(--r-1); color: var(--text); pointer-events: none; }
+body[data-view='mix'] .splitter, body[data-view='library'] .splitter { display: block; }
+body[data-view='mix'] .splitter[data-split='lib'], body[data-view='library'] .splitter[data-split='lib'] { top: -4px; }
+body { --tb: 44px; }
+body[data-layout='compact'] { --tb: 40px; }
+:is(body[data-view='mix'], body[data-view='library'])[data-split='waves'][data-waves='top'] { grid-template-rows: var(--tb) var(--split-waves) auto minmax(150px, 1fr); }
+:is(body[data-view='mix'], body[data-view='library'])[data-split='lib'][data-waves='top'] { grid-template-rows: var(--tb) minmax(90px, 1fr) auto var(--split-lib); }
+:is(body[data-view='mix'], body[data-view='library'])[data-split='lib'][data-waves='deck'] { grid-template-rows: var(--tb) auto var(--split-lib); }
+:is(body[data-view='mix'], body[data-view='library'])[data-split][data-waves='top'] .waves { display: grid; grid-template-rows: 1fr 1fr; min-height: 0; }
+:is(body[data-view='mix'], body[data-view='library'])[data-split][data-waves='top'] .wave-row { height: auto; min-height: 0; }
+body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
