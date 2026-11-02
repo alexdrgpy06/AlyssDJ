@@ -27,7 +27,7 @@ module.exports = (win) => {
     await js(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); __app.viz.refresh(); return 1`); await wait(300); R.docShown = await js(snap);
     // botón Visual: apaga, recuerda y enciende
     await js(`document.getElementById('imm-viz-toggle').click(); await new Promise((r) => setTimeout(r, 400)); return 1`); R.off = await js(snap); await wait(500); R.offLater = await js(snap);
-    await reload(); await js(`__app.setView('automix'); return 1`); await wait(800); R.offPersisted = await js(snap);
+    await reload(); await js(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); __app.viz.forceReduced = false; __app.setView('automix'); return 1`); await wait(800); R.offPersisted = await js(snap);
     await js(`document.getElementById('imm-viz-toggle').click(); await new Promise((r) => setTimeout(r, 400)); return 1`); R.on = await js(snap);
     // movimiento reducido: sin bucle; un cuadro estático y no más
     await js(`__app.viz.forceReduced = true; __app.viz.refresh(); return 1`); await wait(300); const r0 = await js(snap); await wait(600); const r1 = await js(snap); R.reduced = { raf: r1.raf, drawn: r1.frames - r0.frames, hasFrame: r0.frames > 0 };
