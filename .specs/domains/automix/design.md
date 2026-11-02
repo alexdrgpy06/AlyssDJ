@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-31-automix-vista-video
+last_change: 2026-11-01-automix-modo-salida
 ---
 # automix · design
 
@@ -24,3 +24,7 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## Vista de video (MiniStage)
 
 `body.am-stage` oculta `.console` y `.waves` sin sacarlos del DOM; `#stage` muestra dos teselas. `airWeights` usa fader² × crossfader (sin volumen general) y resalta ambas con mezcla en curso (> 0,15 en los dos).
+
+## planTransition por modos
+
+`renderer/mixplan.js` exporta `EXIT_MODES` e `introOutroSeconds`; `planTransition(cur, next, { len, exitMode, optimal, pos })` deriva el modo (`exitMode` o, si falta, `optimal === false` → `end`) y devuelve `mode`. `AutoMix.exitMode()` deriva el modo del ajuste guardado; `skipNext()` y `shuffle(rng)` operan sobre la cola; `snapshot()` expone `exitMode`, `canSkip` y `canShuffle`.

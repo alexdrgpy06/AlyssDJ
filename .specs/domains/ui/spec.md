@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
+last_change: 2026-11-01-automix-modo-salida
 ---
 # ui · spec
 
@@ -36,3 +36,7 @@ THE SYSTEM SHALL mantener contraste mínimo 4.5:1 en texto, objetivos de clic de
 ## Vistas de trabajo
 
 THE SYSTEM SHALL ofrecer las vistas Mezcla, Librería, Automix y Ondas (Alt+1…4), la opción de ondas arriba o en el deck, recordarlas entre sesiones y, al abrir la fuente AutoMix de la librería, pasar a Librería y volver a la vista anterior al salir si el usuario no eligió otra.
+
+## Controles de salida, saltar y barajar
+
+THE SYSTEM SHALL mostrar el selector «Salir» en el grupo Transición, los botones «Barajar» y «Saltar siguiente» en el grupo Cola y «Saltar siguiente» en la vista Automix.

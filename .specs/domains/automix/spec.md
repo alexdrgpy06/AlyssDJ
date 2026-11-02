@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-10-31-automix-vista-video
+last_change: 2026-11-01-automix-modo-salida
 ---
 # automix · spec
 
@@ -40,3 +40,15 @@ WHEN el usuario busca y agrega desde la vista de AutoMix THE SYSTEM SHALL coloca
 ## Vista de video sin decks grandes
 
 WHEN el usuario activa «Vista de video» en la pestaña AutoMix THE SYSTEM SHALL ocultar los decks y el mezclador, mostrar una miniatura por deck con título, tiempo restante y progreso, y resaltar el deck al aire; al desactivarla o salir de la pestaña SHALL restaurar la consola sin perder el estado de los decks.
+
+## Modo de salida
+
+THE SYSTEM SHALL ofrecer el selector «Salir» con los modos Mejor punto (por defecto), Outro y intro, Inicio del outro y Final de la pista; los puntos de salida editados mandan en cualquier modo; sin outro marcado sale como en Final de la pista y lo avisa; el ajuste heredado «puntos óptimos» se traduce (activado → Mejor punto, apagado → Final de la pista).
+
+## Duración adaptada
+
+WHILE el modo es «Outro y intro» THE SYSTEM SHALL durar el menor entre el outro restante de la saliente y el intro de la entrante (si solo se conoce uno, ese; si ninguno, la duración elegida), entre 4 y 48 s y sin pasar del outro de la entrante, y mostrar la duración de la próxima mezcla en el estado.
+
+## Saltar siguiente y barajar
+
+THE SYSTEM SHALL permitir quitar la pista que sigue (no durante una transición ni con menos de dos pistas) y barajar al azar las pistas no fijadas sin mover las fijadas ni la que ya se prepara, apagando «Orden automático» y permitiendo «Deshacer».
