@@ -3,6 +3,8 @@ import { makeKnob } from './knob.js';
 import { analysisWave, liveWave, recordLive, drawScroll, drawOverview } from './waveform.js';
 import { camelotColor } from './camelot.js';
 import { resolveSource, ORIGINS } from './source.js';
+import { FxChain, STORE as FX_STORE } from './fxchain.js';
+import { mountFxPanel } from './fxpanel.js';
 
 const fmt = (t) => {
   const s = Math.max(0, t || 0);
@@ -71,12 +73,18 @@ export class Deck {
     this.syncLock = false;
     this.taps = [];
     this.tap = null; // { bpm, offset } cuando no hay análisis
-    this.mix = { trim: 0, low: 0, mid: 0, high: 0, filter: 0, fader: 1, pfl: false };
+    this.mix = { trim: 0, low: 0, mid: 0, high: 0, filter: 0, res: app.settings.filterRes ?? 0.07, fader: 1, pfl: false };
     this.xf = 1;
     this.local = null;
     this.ovCache = {};
     this.trimTouched = false;
-    this.fx = { on: false, type: 'echo', wet: 0.5, div: 0.75 };
+    let savedFx = null;
+    if (app.settings.fxRemember !== false) {
+      try {
+        savedFx = JSON.parse(localStorage.getItem(FX_STORE + this.id) || 'null');
+      } catch {}
+    }
+    this.fxc = new FxChain(savedFx, { onChange: () => this.onFxChange() });
     this.playedMs = 0;
     this.lastRender = performance.now();
     this.logged = false;
@@ -219,12 +227,31 @@ export class Deck {
     return this.channelGain() > 0.05;
   }
   pushMix() {
-    const { trim, low, mid, high, filter, pfl } = this.mix;
+    const { trim, low, mid, high, filter, res, pfl } = this.mix;
     this.lastFxBpm = this.effBpm() || 0;
     this.broadcast({
-      type: 'mix', trim, low, mid, high, filter, pfl: pfl ? this.app.cueVol : 0, fader: this.channelGain(),
-      fxType: this.fx.type, fxWet: this.fx.on ? this.fx.wet : 0, fxDiv: this.fx.div, bpm: this.lastFxBpm || 120,
+      type: 'mix', trim, low, mid, high, filter, res, pfl: pfl ? this.app.cueVol : 0, fader: this.channelGain(),
+      fx: this.fxc.snapshot(), bpm: this.lastFxBpm || 120,
     });
+  }
+  // Cambio en la cadena de efectos: al motor al instante y a disco (con retraso) si se recuerda entre sesiones.
+  onFxChange() {
+    this.pushMix();
+    this.fxPanel?.sync();
+    if (this.app.settings.fxRemember === false) return;
+    clearTimeout(this.fxSave);
+    this.fxSave = setTimeout(() => {
+      try {
+        localStorage.setItem(FX_STORE + this.id, JSON.stringify(this.fxc));
+      } catch {}
+    }, 300);
+  }
+  // Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2.
+  fxSet(slot, patch) {
+    return this.fxc.set(slot, patch);
+  }
+  fxRamp(slot, target, seconds) {
+    return this.fxc.ramp(slot, target, seconds);
   }
   setMix(patch) {
     Object.assign(this.mix, patch);
@@ -669,29 +696,8 @@ export class Deck {
     click(q('.loop-half'), `${P}.loopHalf`, () => this.loopScale(0.5));
     click(q('.loop-double'), `${P}.loopDouble`, () => this.loopScale(2));
     click(q('.grid-set'), `${P}.gridSet`, () => this.setGridHere());
-    // FX
-    const fxOn = q('.fx-on');
-    click(fxOn, `${P}.fxOn`, () => {
-      this.fx.on = !this.fx.on;
-      this.pushMix();
-    });
-    root.querySelectorAll('[data-fx]').forEach((b) =>
-      click(b, `${P}.fx.${b.dataset.fx}`, () => {
-        this.fx.type = b.dataset.fx;
-        root.querySelectorAll('[data-fx]').forEach((x) => x.classList.toggle('on', x === b));
-        this.pushMix();
-      }),
-    );
-    const wet = q('.fx-wet');
-    wet.addEventListener('input', () => {
-      this.fx.wet = Number(wet.value);
-      this.pushMix();
-    });
-    register(`${P}.fxWet`, { kind: 'range', setNorm: (n) => ((wet.value = n), (this.fx.wet = n), this.pushMix()) }, wet);
-    q('.fx-div').addEventListener('change', (e) => {
-      this.fx.div = Number(e.target.value);
-      this.pushMix();
-    });
+    // FX: tres ranuras, XY pad y MIDI (ver fxpanel.js)
+    this.fxPanel = mountFxPanel({ pane: q('.fxpane'), chain: this.fxc, id: this.id, register, learning: () => this.app.learning, holdMode: () => this.app.settings.fxHold !== false });
     this.setBank('loop');
     el.viewYtm.addEventListener('click', () => this.app.toggleYtmView(this.id));
     el.mixPoints.addEventListener('click', () => this.app.editDeckPoints(this));
@@ -781,6 +787,7 @@ export class Deck {
     knob('mid', 'MID', {}, 'eqMid');
     knob('low', 'LOW', {}, 'eqLow');
     knob('filter', 'FILTER', {}, 'filter');
+    this.resKnob = knob('res', 'RES', { min: 0, max: 1, value: this.mix.res, def: this.app.settings.filterRes ?? 0.07, format: (v) => (v <= 0.075 ? 'RES' : `${Math.round(v * 100)}`) }, 'res');
     const pfl = document.createElement('button');
     pfl.className = 'pfl';
     pfl.textContent = 'CUE';
@@ -859,8 +866,7 @@ export class Deck {
     });
     el.loopBtns.forEach((b) => b.classList.toggle('on', this.loop?.beats === Number(b.dataset.beats)));
     el.sync.classList.toggle('on', this.syncLock);
-    this.el.root.querySelector('.fx-on').classList.toggle('on', this.fx.on);
-    if (this.fx.on && Math.abs((this.effBpm() || 0) - this.lastFxBpm) > 0.2) this.pushMix();
+    if (this.fxc.slots.some((s) => s.on) && Math.abs((this.effBpm() || 0) - this.lastFxBpm) > 0.2) this.pushMix();
     el.keylock.classList.toggle('on', this.keylock);
     el.quant.classList.toggle('on', this.quantize);
     el.srcBtns.forEach((b) => {

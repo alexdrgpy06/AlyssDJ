@@ -90,6 +90,44 @@ tests.engine = async () => {
   console.log('engine ok');
 };
 
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const css = read('renderer/styles.css'); const deck = read('renderer/deck.js');
+  assert.ok(/class="pane fxpane" data-pane="fx" hidden><\/div>/.test(html), 'el panel FX se monta desde fxpanel.js');
+  assert.ok(/mountFxPanel/.test(deck) && /fxRamp/.test(deck) && /fxSet/.test(deck) && !/this\.fx\./.test(deck), 'deck usa la cadena');
+  assert.ok(/\.xy-pad/.test(css) && /\.fx-slot/.test(css));
+  const r = electronRun('fx-ui-selftest.js', 'fx-ui.json');
+  assert.ok(!r.__err, JSON.stringify(r.__err));
+  const near = (a, b, t, m) => assert.ok(Math.abs(a - b) <= t, `${m}: ${a} vs ${b}`);
+  // REQ-1/3: tres ranuras; por defecto como hoy
+  assert.deepStrictEqual(r.start.pads, ['ECO', 'REVERB', 'FILTRO']); assert.deepStrictEqual(r.start.pows, [false, false, false]); assert.deepStrictEqual(r.start.selSlot, [true, false, false]);
+  assert.deepStrictEqual(r.start.slots[0], { type: 'echo', on: false, wet: 0.5, p: 0.5 });
+  assert.ok(r.start.pane && r.start.pad && r.start.pad.w >= 56 && Math.abs(r.start.pad.w - r.start.pad.h) < 24, JSON.stringify(r.start.pad));
+  assert.ok(r.start.sw <= r.start.w && r.start.sh <= r.start.ih + 1, 'sin desbordes'); assert.ok(r.start.lib.h >= 150, `la librería conserva su mínimo (${r.start.lib.h})`);
+  assert.strictEqual(r.start.role, 'slider'); assert.ok(/Cantidad 50 %, P 50 %/.test(r.start.vt), r.start.vt); assert.ok(/Pad XY deck A/.test(r.start.padLabel));
+  // interruptor, selección, tipo y deslizadores llegan al motor en el mensaje mix
+  assert.strictEqual(r.pow.slots[0].on, true); assert.strictEqual(r.pow.last.fx[0].on, true); assert.strictEqual(r.pow.last.fx.length, 3);
+  assert.strictEqual(r.pick.sel, 1); assert.strictEqual(r.pick.slots[1].type, 'phaser'); assert.strictEqual(r.pick.pads[1], 'PHASER'); assert.strictEqual(r.pick.last.fx[1].type, 'phaser');
+  near(r.sliders.slots[1].wet, 0.33, 0.001, 'cantidad'); near(r.sliders.slots[1].p, 0.77, 0.001, 'P');
+  // REQ-3: XY pad con modo mantener
+  assert.strictEqual(r.padDown.slots[1].on, true, 'se enciende al pulsar'); near(r.padDown.slots[1].wet, 0.8, 0.02, 'X = cantidad'); near(r.padDown.slots[1].p, 0.25, 0.02, 'Y = P');
+  near(r.padMove.slots[1].wet, 0.9, 0.02, 'sigue el puntero'); near(r.padMove.slots[1].p, 0.6, 0.02, 'sigue el puntero (Y)');
+  assert.strictEqual(r.padUp.slots[1].on, false, 'se apaga al soltar'); near(r.padUp.slots[1].wet, 0.9, 0.02, 'conserva el valor');
+  assert.strictEqual(r.padNoHold.slots[1].on, true, 'sin «mantener» se queda encendida');
+  assert.strictEqual(r.padWasOn.slots[1].on, true, 'si ya estaba encendida, sigue encendida');
+  near(r.kRight.slots[1].wet, 0.52, 0.005, '→ +0,02'); near(r.kUp.slots[1].p, 0.6, 0.005, 'Mayús+↑ +0,1'); near(r.kMix.slots[1].wet, 0.52 - 0.1 - 0.0, 0.03, 'teclado combinado');
+  near(r.dbl.slots[1].wet, 0.5, 0.001, 'doble clic'); near(r.dbl.slots[1].p, 0.5, 0.001, 'doble clic');
+  // REQ-4: RES en el mezclador
+  assert.ok(r.res0.has); near(r.res0.mix, 0.07, 0.001, 'RES por defecto'); near(r.res1.mix, 0.5, 0.001, 'RES'); near(r.res1.sent, 0.5, 0.001, 'RES llega al motor'); near(r.res2, 0.07, 0.001, 'doble clic = valor por defecto');
+  // REQ-5: MIDI y la interfaz para AutoMix
+  assert.ok(r.midi.have.every(Boolean), JSON.stringify(r.midi.have)); assert.strictEqual(r.midi.learnAttr, 'deckA.fx1On');
+  near(r.midi.s[0].wet, 0.31, 0.001, 'fx1Wet'); assert.strictEqual(r.midi.s[0].type, 'crush', 'fx.<tipo> apunta a la ranura 1'); assert.strictEqual(r.midi.s[0].on, true, 'fxOn alterna la ranura 1'); near(r.midi.s[2].p, 0.12, 0.001, 'fx3P'); assert.strictEqual(r.midi.s[1].on, true); near(r.midi.res, 0.4, 0.001, 'MIDI RES');
+  assert.deepStrictEqual([r.api0.type, r.api0.on, r.api0.wet, r.api0.p], ['filter', true, 0.9, 0.2], 'fxSet'); assert.ok(r.api1.wet < 0.05, `fxRamp llega al destino (${r.api1.wet})`);
+  assert.deepStrictEqual(r.stored.map((s) => s.type), ['gate', 'crush', 'filter']); assert.deepStrictEqual(r.reloaded.slice(0, 2), r.stored.slice(0, 2), 'se recuerda entre sesiones');
+  assert.deepStrictEqual(r.noRemember[0], { type: 'echo', on: false, wet: 0.5, p: 0.5 }, 'sin «recordar», cadena por defecto'); assert.strictEqual(r.loadKeeps, true, 'cargar una pista conserva la cadena');
+  assert.ok(r.small.sw <= r.small.w && r.small.sh <= r.small.ih + 1, `1366×768 sin desbordes (${r.small.sw}x${r.small.sh})`);
+  console.log('ui ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fx.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

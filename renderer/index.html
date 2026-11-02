@@ -203,16 +203,7 @@
             <button class="roll" data-roll="0.25" title="Loop roll ¼ de beat">¼</button>
             <button class="roll" data-roll="0.125" title="Loop roll ⅛ de beat">⅛</button>
           </div>
-          <div class="pane fxpane" data-pane="fx" hidden>
-            <button class="fx-on" title="Activar el efecto de este deck">FX</button>
-            <div class="seg fx-types" role="group" aria-label="Tipo de efecto">
-              <button data-fx="echo" class="on">ECO</button><button data-fx="reverb">REVERB</button><button data-fx="flanger">FLANGER</button><button data-fx="gate">GATE</button>
-            </div>
-            <input type="range" class="fx-wet" min="0" max="1" step="0.01" value="0.5" aria-label="Cantidad de efecto" />
-            <select class="fx-div" aria-label="División del eco" title="Tiempo del eco en beats">
-              <option value="0.25">¼</option><option value="0.5">½</option><option value="0.75" selected>¾</option><option value="1">1</option>
-            </select>
-          </div>
+          <div class="pane fxpane" data-pane="fx" hidden></div>
           <div class="pane gridpane" data-pane="grid" hidden>
             <button class="tap" data-tip="Tap tempo (para pistas sin analizar)">TAP</button>
             <button class="grid-l" aria-label="Mover beatgrid −5 ms" data-tip="Mover beatgrid −5 ms"><svg class="ic"><use href="#i-left"/></svg></button>
