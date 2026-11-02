@@ -50,6 +50,46 @@ tests.model = async () => {
   console.log('model ok');
 };
 
+const electronRun = (selftest, name) => {
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-fx-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, selftest), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const f = path.join(tmp, name);
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  return JSON.parse(fs.readFileSync(f, 'utf8'));
+};
+
+tests.engine = async () => {
+  const r = electronRun('fx-selftest.js', 'fx.json');
+  assert.ok(!r.__err, r.__err);
+  assert.deepStrictEqual(r.types, ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter']); assert.strictEqual(r.slots, 3);
+  // REQ-1: transparente con ranuras apagadas o con wet 0, y sin efectos montados
+  assert.ok(r.offDist < 1e-6, `apagadas: ${r.offDist}`); assert.ok(r.wet0Dist < 1e-3, `wet 0: ${r.wet0Dist}`);
+  assert.deepStrictEqual(r.offMounted, [null, null, null]); assert.deepStrictEqual(r.wet0Mounted, [null, null, null], 'wet 0 no monta nada');
+  // cada tipo altera la señal y es estable
+  for (const t of ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter']) {
+    const e = r.each[t];
+    assert.ok(e.dist > 0.01, `${t} altera la señal (${e.dist})`); assert.ok(!e.nan, `${t} sin NaN`); assert.ok(e.peak < 4, `${t} sin desbordes (${e.peak})`); assert.strictEqual(e.mounted, t);
+  }
+  // serie y repetición
+  assert.ok(r.orderDist > 0.005, `el orden importa (${r.orderDist})`); assert.ok(r.twoEchoDist > 0.005, 'el mismo tipo en dos ranuras suma'); assert.deepStrictEqual(r.twoMounted, ['echo', 'echo', null]);
+  // REQ-2: P por tipo y BPM
+  assert.ok(r.clickTail.large > r.clickTail.small * 2, `reverb: P = tamaño (${JSON.stringify(r.clickTail)})`);
+  assert.ok(r.crushUniq.high < r.crushUniq.low / 4, `crush: P = bits (${JSON.stringify(r.crushUniq)})`);
+  assert.ok(r.filterRms.closed < r.filterRms.dry * 0.5 && r.filterRms.open > r.filterRms.closed * 1.5, `filtro: P = corte (${JSON.stringify(r.filterRms)})`);
+  assert.ok(r.gateQuiet > 1.5, `gate: el nivel pulsa con el ritmo (${r.gateQuiet})`);
+  assert.ok(r.bpmDist > 0.01, 'el eco sigue el BPM'); assert.ok(r.gateBpmDist > 0.01, 'el gate sigue el BPM');
+  // montaje bajo demanda y límites
+  assert.deepStrictEqual(r.mount, [[null, null, null], ['echo', null, null], ['phaser', 'crush', null], [null, null, null]]);
+  assert.deepStrictEqual(r.clamped, { type: 'phaser', on: true, wet: 1, p: 0 }, 'tipo inválido conserva el anterior; valores acotados'); assert.deepStrictEqual(r.after, ['phaser', null, null]);
+  // REQ-4: resonancia
+  assert.ok(r.res.diff > 0.005, 'la resonancia cambia el sonido'); assert.ok(!r.res.nan);
+  assert.ok(r.res.lo1 < r.res.lo0 * 2.5, `ganancia limitada (${JSON.stringify(r.res)})`); assert.ok(r.res.hiPeak < 4, `pico del pasa-altos resonante (${r.res.hiPeak})`);
+  assert.ok(r.res.neutralDist < 1e-3, `el centro del filtro es neutro con cualquier resonancia (${r.res.neutralDist})`);
+  assert.ok(r.chainFxDist > 0.01, 'el mensaje mix con fx llega al motor');
+  console.log('engine ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fx.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

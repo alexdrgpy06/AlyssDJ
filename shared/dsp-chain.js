@@ -5,6 +5,7 @@
   else root.YTDJChain = factory(root.YTDJFx);
 })(typeof self !== 'undefined' ? self : this, function (Fx) {
   const SMOOTH = 0.015;
+  const RES_DEFAULT = 0.07;
 
   // Knob de EQ en [-1, 1]: -1 = kill, 0 = plano, +1 = +6 dB.
   function eqDb(v) {
@@ -44,6 +45,7 @@
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = nyq;
+    const comp = ctx.createGain(); // compensa la subida de nivel de la resonancia del filtro
     const fx = Fx.create(ctx);
     const post = ctx.createGain();
     const fader = ctx.createGain();
@@ -53,7 +55,7 @@
     const meter = ctx.createAnalyser();
     meter.fftSize = 1024;
 
-    input.connect(trim).connect(low).connect(mid).connect(high).connect(hp).connect(lp).connect(fx.input);
+    input.connect(trim).connect(low).connect(mid).connect(high).connect(hp).connect(lp).connect(comp).connect(fx.input);
     fx.output.connect(post);
     post.connect(fader);
     post.connect(pfl);
@@ -69,30 +71,42 @@
       param.setTargetAtTime(value, ctx.currentTime, SMOOTH);
     }
 
+    // Filtro bipolar con resonancia: res 0–1 → Q 0,707–8 (0,07 ≈ el Q 1,2 de siempre). Sobre ese Q se baja la ganancia.
+    let filterV = 0;
+    let resV = RES_DEFAULT;
+    function applyFilter() {
+      const f = filterV;
+      const q = 0.707 + resV * 7.3;
+      if (f < -0.02) {
+        ramp(lp.frequency, Math.min(nyq, 20000 * Math.pow(10, 3 * f)));
+        ramp(hp.frequency, 10);
+        lp.Q.value = q;
+        hp.Q.value = 0.707;
+      } else if (f > 0.02) {
+        ramp(hp.frequency, Math.min(nyq * 0.9, 10 * Math.pow(10, 3.3 * f)));
+        ramp(lp.frequency, nyq);
+        hp.Q.value = q;
+        lp.Q.value = 0.707;
+      } else {
+        ramp(lp.frequency, nyq);
+        ramp(hp.frequency, 10);
+        lp.Q.value = hp.Q.value = 0.707;
+      }
+      const active = Math.abs(f) > 0.02;
+      ramp(comp.gain, active && q > 1.2 ? Math.sqrt(1.2 / q) : 1);
+    }
+
     function setMix(m) {
       if (m.trim != null) ramp(trim.gain, Math.pow(10, m.trim / 20));
       if (m.low != null) ramp(low.gain, eqDb(m.low));
       if (m.mid != null) ramp(mid.gain, eqDb(m.mid));
       if (m.high != null) ramp(high.gain, eqDb(m.high));
-      if (m.filter != null) {
-        const f = m.filter;
-        if (f < -0.02) {
-          ramp(lp.frequency, Math.min(nyq, 20000 * Math.pow(10, 3 * f)));
-          ramp(hp.frequency, 10);
-          lp.Q.value = 1.2;
-        } else if (f > 0.02) {
-          ramp(hp.frequency, Math.min(nyq * 0.9, 10 * Math.pow(10, 3.3 * f)));
-          ramp(lp.frequency, nyq);
-          hp.Q.value = 1.2;
-        } else {
-          ramp(lp.frequency, nyq);
-          ramp(hp.frequency, 10);
-          lp.Q.value = hp.Q.value = 0.707;
-        }
-      }
+      if (m.filter != null) filterV = m.filter;
+      if (m.res != null) resV = Math.max(0, Math.min(1, +m.res || 0));
+      if (m.filter != null || m.res != null) applyFilter();
       if (m.fader != null) ramp(fader.gain, m.fader);
       if (m.pfl != null) ramp(pfl.gain, m.pfl === true ? 1 : +m.pfl || 0);
-      if (m.fxType != null || m.fxWet != null || m.bpm != null || m.fxDiv != null) fx.set({ type: m.fxType, wet: m.fxWet, bpm: m.bpm, div: m.fxDiv });
+      if (m.fx != null || m.bpm != null) fx.set({ slots: m.fx, bpm: m.bpm });
     }
 
     function teardown() {
