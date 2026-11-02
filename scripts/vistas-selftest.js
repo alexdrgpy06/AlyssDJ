@@ -33,9 +33,14 @@ module.exports = (win) => {
     const k = (key, shift) => js(`document.querySelector('.splitter[data-split="lib"]').dispatchEvent(new KeyboardEvent('keydown', { key: '${key}', shiftKey: ${!!shift}, bubbles: true, cancelable: true })); await new Promise((r) => setTimeout(r, 200)); return 1`);
     await js(`document.querySelector('.splitter[data-split="lib"]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); return 1`); await wait(300);
     res.kbBase = await js(probe);
-    await k('ArrowUp'); res.kbUp = await js(probe);
-    await k('ArrowUp', true); res.kbUpBig = await js(probe);
-    await k('ArrowDown'); res.kbDown = await js(probe);
+    // se empieza hacia donde hay margen (en ventanas pequeñas la base puede estar en el máximo)
+    const dir = res.kbBase.lsp && Number(res.kbBase.lsp.now) + 40 <= Number(res.kbBase.lsp.max) ? 'ArrowUp' : 'ArrowDown';
+    const back = dir === 'ArrowUp' ? 'ArrowDown' : 'ArrowUp';
+    res.kbDir = dir;
+    await k(dir); res.kb1 = await js(probe);
+    await k(dir, true); res.kb2 = await js(probe);
+    await k(back); res.kb3 = await js(probe);
+    await k(back, true); res.kb4 = await js(probe);
     // memoria por vista
     await js(`__app.setView('library'); return 1`); await wait(400); res.libViewDefault = await js(probe);
     await js(`__app.setView('mix'); return 1`); await wait(400); res.mixBack = await js(probe);

@@ -9,6 +9,8 @@ module.exports = (win) => {
     const reload = async () => { const p = new Promise((r) => wc.once('did-finish-load', r)); wc.reloadIgnoringCache(); await p; await wait(2500); await js('__app.masterGain = 0; return 1'); };
     const res = {};
     win.setContentSize(1600, 960); await wait(2500);
+    // layout normal fijo: en pantallas pequeñas (CI de macOS) el auto elige compacto y oculta los bancos
+    await js(`await window.ytdj.settings.set({ layoutMode: 'normal' }); __app.settings = await window.ytdj.settings.get(); __app.applyLayout?.(); return 1`); await wait(300);
     await js(`__app.masterGain = 0; localStorage.clear(); __app.setView('mix'); __app.setWaves('top'); window.__sent = []; for (const d of [__app.decks.A, __app.decks.B]) { const b = d.broadcast.bind(d); d.broadcast = (c) => { if (c.type === 'mix') window.__sent.push({ id: d.id, ...JSON.parse(JSON.stringify(c)) }); b(c); }; } __app.decks.A.setBank('fx'); return 1`); await wait(500);
     const probe = `const A = __app.decks.A; const r = (s) => { const e = document.querySelector(s); if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height), x: b.x, y: b.y }; };
       const last = (window.__sent || []).filter((m) => m.id === 'A').pop();
@@ -57,7 +59,7 @@ module.exports = (win) => {
     // cargar una pista no toca la cadena
     await js(`const A = __app.decks.A; A.fxc.set(0, { type: 'flanger', on: true }); const before = JSON.stringify(A.fxc.snapshot()); await A.load({ videoId: 'FXTEST1', title: 'Prueba', artist: 'x', duration: 100 }); window.__same = before === JSON.stringify(A.fxc.snapshot()); return 1`); res.loadKeeps = await js(`return window.__same`);
     // ventana pequeña: el panel no desborda
-    await js(`__app.decks.A.setBank('fx'); return 1`); win.setContentSize(1366, 768); await wait(900); res.small = await js(probe);
+    await js(`await window.ytdj.settings.set({ layoutMode: 'auto' }); __app.settings = await window.ytdj.settings.get(); __app.applyLayout?.(); __app.decks.A.setBank('fx'); return 1`); win.setContentSize(1366, 768); await wait(900); res.small = await js(probe);
     fs.writeFileSync(path.join(out, 'fx-ui.json'), JSON.stringify(res));
     win.close();
   };

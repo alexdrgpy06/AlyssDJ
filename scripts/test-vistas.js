@@ -56,26 +56,27 @@ tests.ui = async () => {
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-vistas-'));
   spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'vistas-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
-  const r = JSON.parse(fs.readFileSync(path.join(tmp, 'vistas.json'), 'utf8'));
+  const r = JSON.parse(fs.readFileSync(path.join(tmp, 'vistas.json'), 'utf8')); if (process.env.DBG) for (const k of ['def','reset','libMax','kbBase','kb1','kb2','kb3','kb4']) console.log(k, r[k].split, r[k].waves, r[k].lib, r[k].con);
   const near = (a, b, tol, m) => assert.ok(Math.abs(a - b) <= tol, `${m}: ${a} vs ${b}`);
   const noScroll = (x, m) => assert.ok(x.sw <= x.w && x.sh <= x.ih + 1, `${m}: sin scroll (${x.sw}x${x.sh} en ${x.w}x${x.ih})`);
   // REQ-1: por defecto, accesibles y sin personalizar
   assert.strictEqual(r.def.split, null); assert.strictEqual(r.def.wsp.role, 'separator'); assert.strictEqual(r.def.lsp.role, 'separator');
   assert.ok(Number(r.def.wsp.min) < Number(r.def.wsp.max));
   // arrastre real: las ondas crecen lo que se arrastra y la librería cede
-  near(r.waves60.waves, Math.min(r.def.waves + 60, r.def.waves + r.def.lib - 150), 14, 'ondas +60 (o el máximo que deja la consola)'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
+  near(r.waves60.waves, Math.min(r.def.waves + 60, r.def.waves + r.def.lib - 150, Math.round(r.def.ih * 0.45)), 14, 'ondas +60 (o el máximo que deja la consola)'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
   // máximo: lo que deja libre la consola sin quitar el mínimo a la librería
-  near(r.wavesMax.waves, r.def.waves + r.def.lib - 150, 3, 'máximo de las ondas'); assert.ok(r.wavesMax.lib >= 149); noScroll(r.wavesMax, 'máximo');
+  near(r.wavesMax.waves, Math.min(r.def.waves + r.def.lib - 150, Math.round(r.def.ih * 0.45)), 3, 'máximo de las ondas'); assert.ok(r.wavesMax.lib >= 149); noScroll(r.wavesMax, 'máximo');
   // doble clic restablece
   assert.strictEqual(r.reset.split, null); near(r.reset.waves, r.def.waves, 2, 'restablecido');
   // la librería manda al arrastrar su divisor y respeta el máximo (55 %)
-  near(r.lib80.lib, Math.min(r.reset.lib + 40, r.reset.waves + r.reset.lib - 90), 14, 'librería +40 (o el máximo)'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
-  near(r.libMax.lib, r.def.waves + r.def.lib - 90, 3, 'máximo de la librería'); assert.ok(r.libMax.waves >= 89); noScroll(r.libMax, 'máximo librería');
-  // teclado: 8 px, 32 px con Mayús; ↑ agranda la librería
-  near(r.kbUp.lib, r.kbBase.lib + 8, 2, '↑ 8 px'); near(r.kbUpBig.lib, r.kbUp.lib + 32, 2, 'Mayús+↑ 32 px'); near(r.kbDown.lib, r.kbUpBig.lib - 8, 2, '↓ 8 px');
+  near(r.lib80.lib, Math.min(r.reset.lib + 40, r.reset.waves + r.reset.lib - 90, Math.round(r.def.ih * 0.55)), 14, 'librería +40 (o el máximo)'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
+  near(r.libMax.lib, Math.min(r.def.waves + r.def.lib - 90, Math.round(r.def.ih * 0.55)), 3, 'máximo de la librería'); assert.ok(r.libMax.waves >= 89); noScroll(r.libMax, 'máximo librería');
+  // teclado: 8 px, 32 px con Mayús; ↑ agranda la librería y ↓ la achica
+  const sg = r.kbDir === 'ArrowUp' ? 1 : -1;
+  near(r.kb1.lib, r.kbBase.lib + sg * 8, 2, `${r.kbDir} 8 px`); near(r.kb2.lib, r.kb1.lib + sg * 32, 2, `Mayús+${r.kbDir} 32 px`); near(r.kb3.lib, r.kb2.lib - sg * 8, 2, 'sentido contrario 8 px'); near(r.kb4.lib, r.kb3.lib - sg * 32, 2, 'sentido contrario Mayús 32 px');
   // REQ-2: cada vista tiene su tamaño; se guarda en localStorage
   assert.strictEqual(r.libViewDefault.split, null, 'la vista Librería no hereda el tamaño de Mezcla');
-  assert.strictEqual(r.mixBack.split, 'lib'); near(r.mixBack.lib, r.kbDown.lib, 2, 'Mezcla recuerda su tamaño');
+  assert.strictEqual(r.mixBack.split, 'lib'); near(r.mixBack.lib, r.kb4.lib, 2, 'Mezcla recuerda su tamaño');
   assert.ok(r.mixBack.stored?.mix?.lib > 0, 'guardado');
   // ondas en el deck: solo el divisor de la librería; en la vista Ondas ninguno
   assert.strictEqual(r.deckWaves.wsp, null); assert.ok(r.deckWaves.lsp); assert.strictEqual(r.wavesView.wsp, null); assert.strictEqual(r.wavesView.lsp, null);
