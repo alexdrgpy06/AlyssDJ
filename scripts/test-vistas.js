@@ -148,7 +148,7 @@ tests.search = async () => {
   const html = read('renderer/index.html');
   // REQ-3: secciones por tema y cada opción en una sola
   const panes = [...html.matchAll(/<section class="set-pane" data-pane="(\w+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual(panes.sort(), ['audio', 'decks', 'general', 'library', 'midi', 'tools']);
+  assert.deepStrictEqual(panes.sort(), ['audio', 'decks', 'fx', 'general', 'library', 'midi', 'tools']);
   const names = [...html.slice(html.indexOf('id="settings"')).matchAll(/name="(\w+)"/g)].map((m) => m[1]);
   assert.strictEqual(new Set(names).size, names.length, 'cada opción aparece una vez');
   assert.ok(html.includes('id="set-search"') && html.includes('id="set-empty"') && html.includes('id="btn-reset-views"'));
@@ -157,7 +157,7 @@ tests.search = async () => {
   spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const r = JSON.parse(fs.readFileSync(path.join(tmp, 'ajustes.json'), 'utf8'));
   assert.ok(r.first.open && r.first.tabs[0] === 'general*' && r.first.panes.join() === 'general', JSON.stringify(r.first.tabs));
-  assert.deepStrictEqual(r.first.tabs.map((t) => t.replace(/[*~]/g, '')), ['general', 'audio', 'decks', 'library', 'midi', 'tools']);
+  assert.deepStrictEqual(r.first.tabs.map((t) => t.replace(/[*~]/g, '')), ['general', 'audio', 'decks', 'fx', 'library', 'midi', 'tools']);
   assert.ok(r.first.sw <= r.first.cw && r.first.h <= r.first.ih, 'cabe en 1366×768');
   assert.deepStrictEqual(r.pitch.panes, ['decks']); assert.strictEqual(r.pitch.shown.length, 1); assert.ok(/pitch/i.test(r.pitch.shown[0]));
   assert.ok(r.pitch.tabs.some((t) => t.startsWith('general') && t.endsWith('~')), 'las secciones sin resultados se atenúan');

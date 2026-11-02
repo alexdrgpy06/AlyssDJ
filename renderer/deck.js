@@ -246,6 +246,15 @@ export class Deck {
       } catch {}
     }, 300);
   }
+  // El valor por defecto de la resonancia cambió en Ajustes: vale para el doble clic y, si no se movió, para el canal.
+  applyResDefault() {
+    const v = this.app.settings.filterRes ?? 0.07;
+    this.resKnob?.setDef(v);
+    if (!this.resTouched) {
+      this.resKnob?.set(v);
+      this.resTouched = false; // lo movió la app, no el usuario
+    }
+  }
   // Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2.
   fxSet(slot, patch) {
     return this.fxc.set(slot, patch);
@@ -776,6 +785,7 @@ export class Deck {
         ...opts,
         onChange: (v) => {
           if (key === 'trim') this.trimTouched = true;
+          if (key === 'res') this.resTouched = true;
           this.setMix({ [key]: v });
         },
       });
@@ -787,7 +797,7 @@ export class Deck {
     knob('mid', 'MID', {}, 'eqMid');
     knob('low', 'LOW', {}, 'eqLow');
     knob('filter', 'FILTER', {}, 'filter');
-    this.resKnob = knob('res', 'RES', { min: 0, max: 1, value: this.mix.res, def: this.app.settings.filterRes ?? 0.07, format: (v) => (v <= 0.075 ? 'RES' : `${Math.round(v * 100)}`) }, 'res');
+    this.resKnob = knob('res', 'RES', { min: 0, max: 1, value: this.mix.res, def: this.app.settings.filterRes ?? 0.07, format: (v) => (v <= (this.app.settings.filterRes ?? 0.07) + 0.005 ? 'RES' : `${Math.round(v * 100)}`) }, 'res');
     const pfl = document.createElement('button');
     pfl.className = 'pfl';
     pfl.textContent = 'CUE';

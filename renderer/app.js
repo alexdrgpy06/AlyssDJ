@@ -870,6 +870,9 @@ class App {
     f.ytdlpPath.value = s.ytdlpPath || '';
     f.cookieSource.value = s.cookieSource;
     f.layoutMode.value = s.layoutMode || 'auto';
+    f.fxHold.checked = s.fxHold !== false;
+    f.fxRemember.checked = s.fxRemember !== false;
+    f.filterRes.value = s.filterRes ?? 0.07;
     f.wavesMode.value = this.views.waves;
     f.saveOnAnalyze.checked = s.saveOnAnalyze !== false;
     f.saveOnPlay.checked = s.saveOnPlay !== false;
@@ -1026,13 +1029,14 @@ class App {
       else if (name === 'wavesMode') el.value = this.views.waves;
       else if (name === 'pitchRange') el.value = String(s.pitchRange || 8);
       else if (name === 'libraryDir') el.value = s.libraryDir || (await window.ytdj.settings.libraryDir());
-      else if (el.type === 'checkbox') el.checked = name === 'autoAnalyzeLocal' ? s[name] !== false : !!s[name];
+      else if (el.type === 'checkbox') el.checked = name === 'autoAnalyzeLocal' || name === 'fxHold' || name === 'fxRemember' ? s[name] !== false : !!s[name];
       else el.value = s[name] ?? '';
     };
     const sideEffects = (names, prevYtdlp) => {
       if (names.includes('layoutMode')) this.applyLayout?.();
       if (names.some((n) => ['outputMode', 'masterLabel', 'cueLabel'].includes(n))) this.applyRouting();
       if (names.includes('crossfaderCurve')) this.applyXf();
+      if (names.includes('filterRes')) this.eachDeck((d) => d.applyResDefault());
       if (names.includes('ytdlpPath') && prevYtdlp !== this.settings.ytdlpPath) this.checkTools();
     };
     this.saveSetting = async (control) => {

@@ -27,6 +27,10 @@ const DEFAULTS = {
   saveOnPlay: true,
   // Las pistas de YouTube con copia guardada suenan desde el archivo (sin anuncios) en vez de por streaming.
   preferSaved: true,
+  // Efectos: los instantáneos (pad XY) se apagan al soltar; la cadena se recuerda; resonancia por defecto del filtro (0–1).
+  fxHold: true,
+  fxRemember: true,
+  filterRes: 0.07,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
 };
 

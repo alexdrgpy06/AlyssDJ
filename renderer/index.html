@@ -387,6 +387,7 @@
           <button type="button" role="tab" id="sn-general" data-pane="general" aria-controls="sp-general" class="on" aria-selected="true">General</button>
           <button type="button" role="tab" id="sn-audio" data-pane="audio" aria-controls="sp-audio" aria-selected="false">Audio</button>
           <button type="button" role="tab" id="sn-decks" data-pane="decks" aria-controls="sp-decks" aria-selected="false">Decks</button>
+          <button type="button" role="tab" id="sn-fx" data-pane="fx" aria-controls="sp-fx" aria-selected="false">Efectos y filtros</button>
           <button type="button" role="tab" id="sn-library" data-pane="library" aria-controls="sp-library" aria-selected="false">Librería y música</button>
           <button type="button" role="tab" id="sn-midi" data-pane="midi" aria-controls="sp-midi" aria-selected="false">MIDI</button>
           <button type="button" role="tab" id="sn-tools" data-pane="tools" aria-controls="sp-tools" aria-selected="false">Herramientas y cuenta</button>
@@ -429,6 +430,13 @@
         </div>
                   <h4>Cuenta</h4>
         <button type="button" class="btn ghost" id="btn-logout">Cerrar sesión de YouTube Music</button>
+        </section>
+        <section class="set-pane" data-pane="fx" id="sp-fx" role="tabpanel" aria-labelledby="sn-fx" hidden>
+          <h3>Efectos y filtros</h3>
+        <label class="check"><input type="checkbox" name="fxHold" /><span>Efectos instantáneos (mantener) <small>El pad XY enciende el efecto mientras lo mantienes pulsado y lo apaga al soltar. Apagado, el efecto se queda como lo dejaste.</small></span></label>
+        <label class="check"><input type="checkbox" name="fxRemember" /><span>Recordar la cadena de efectos entre sesiones <small>Cada deck conserva sus tres ranuras (tipo, cantidad y parámetro) al volver a abrir la app.</small></span></label>
+        <label>Resonancia del filtro por defecto <input type="range" name="filterRes" min="0" max="1" step="0.01" aria-label="Resonancia del filtro por defecto" title="Valor inicial del knob RES del mezclador; doble clic en el knob vuelve a él" /></label>
+        <p class="hint">El knob RES de cada canal ajusta la resonancia del filtro (FILTER). Con el valor por defecto el filtro suena como siempre.</p>
         </section>
         <section class="set-pane" data-pane="library" id="sp-library" role="tabpanel" aria-labelledby="sn-library" hidden>
           <h3>Librería y música local</h3>

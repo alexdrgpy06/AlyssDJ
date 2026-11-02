@@ -14,7 +14,8 @@ function arc(a0, a1, r) {
   return `M${x0} ${y0} A${r} ${r} 0 ${large} ${a1 > a0 ? 1 : 0} ${x1} ${y1}`;
 }
 
-export function makeKnob(slot, { label, min = -1, max = 1, value = 0, def = value, onChange, format }) {
+export function makeKnob(slot, { label, min = -1, max = 1, value = 0, def: def0 = value, onChange, format }) {
+  let def = def0;
   const el = document.createElement('div');
   el.className = 'knob';
   el.innerHTML = `<svg viewBox="0 0 40 40"><circle class="k-bg" cx="20" cy="20" r="15"/><path class="k-arc"/><line class="k-ptr" x1="20" y1="20"/></svg><span class="k-lbl"></span>`;
@@ -66,6 +67,7 @@ export function makeKnob(slot, { label, min = -1, max = 1, value = 0, def = valu
   return {
     el,
     set,
+    setDef: (d) => (def = d),
     get: () => v,
     setNorm: (n) => set(min + n * (max - min)),
   };

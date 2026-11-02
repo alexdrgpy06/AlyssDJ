@@ -33,7 +33,8 @@ export function settingPatch(name, f) {
       return null; // no es un ajuste de main: lo guarda el estado de las vistas
     default: {
       const el = f[name];
-      return el ? { [name]: el.type === 'checkbox' ? el.checked : el.value } : null;
+      if (!el) return null;
+      return { [name]: el.type === 'checkbox' ? el.checked : el.type === 'range' ? Number(el.value) : el.value };
     }
   }
 }

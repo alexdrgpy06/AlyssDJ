@@ -128,6 +128,23 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.settings = async () => {
+  const sd = require('../main/settings.js').defaults();
+  assert.strictEqual(sd.fxHold, true); assert.strictEqual(sd.fxRemember, true); assert.strictEqual(sd.filterRes, 0.07);
+  const html = read('renderer/index.html');
+  for (const n of ['fxHold', 'fxRemember', 'filterRes']) assert.ok(new RegExp(`name="${n}"`).test(html), n);
+  assert.ok(/data-pane="fx"/.test(html) && />Efectos y filtros</.test(html));
+  const r = electronRun('fx-settings-selftest.js', 'fx-settings.json');
+  assert.ok(!r.__err, JSON.stringify(r.__err));
+  assert.strictEqual(r.start.tab, 'Efectos y filtros'); assert.deepStrictEqual(r.start.pane, ['fx']);
+  assert.deepStrictEqual(r.start.s, { fxHold: true, fxRemember: true, filterRes: 0.07 }); assert.deepStrictEqual(r.start.ctl, { fxHold: true, fxRemember: true, filterRes: 0.07 });
+  assert.strictEqual(r.hold.s.fxHold, false, 'se guarda al cambiar'); assert.strictEqual(r.remember.s.fxRemember, false);
+  assert.strictEqual(r.res.s.filterRes, 0.3); assert.strictEqual(r.res.resA, 0.3, 'el deck sin tocar toma el nuevo valor'); assert.strictEqual(r.res.resB, 0.9, 'el RES movido se respeta'); assert.strictEqual(r.dbl, 0.3, 'doble clic = nuevo valor por defecto');
+  assert.deepStrictEqual(r.search.pane, ['fx'], 'el buscador encuentra la opción');
+  assert.deepStrictEqual(r.reset.s, { fxHold: true, fxRemember: true, filterRes: 0.07 }, 'restablecer sección'); assert.deepStrictEqual(r.reset.ctl, { fxHold: true, fxRemember: true, filterRes: 0.07 }); assert.strictEqual(r.reset.resA, 0.07);
+  console.log('settings ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fx.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

@@ -85,12 +85,12 @@ tests.automix = async () => {
 tests.settings = async () => {
   const html = read('renderer/index.html');
   const dlg = html.slice(html.indexOf('<dialog id="settings"'), html.indexOf('</dialog>', html.indexOf('<dialog id="settings"')));
-  // REQ-7 (actualizado por vistas-y-ajustes): seis secciones por tema, una visible a la vez
+  // REQ-7 (actualizado por vistas-y-ajustes y fx-cadena): siete secciones por tema, una visible a la vez
   const panes = [...dlg.matchAll(/<section class="set-pane" data-pane="(\w+)"[^>]*?( hidden)?>/g)];
-  assert.deepStrictEqual(panes.map((m) => m[1]), ['general', 'tools', 'library', 'audio', 'decks', 'midi']);
+  assert.deepStrictEqual(panes.map((m) => m[1]), ['general', 'tools', 'fx', 'library', 'audio', 'decks', 'midi']);
   assert.deepStrictEqual(panes.filter((m) => !m[2]).map((m) => m[1]), ['general'], 'solo General visible al abrir');
   const nav = dlg.slice(dlg.indexOf('set-nav'), dlg.indexOf('set-panes'));
-  assert.strictEqual((nav.match(/role="tab"/g) || []).length, 6, 'seis pestañas');
+  assert.strictEqual((nav.match(/role="tab"/g) || []).length, 7, 'siete pestañas');
   assert.ok(/role="tablist"/.test(nav) && /aria-selected/.test(nav), 'semántica de pestañas');
   // se conservan todos los campos y botones de antes (settings.js y app.js los leen por nombre)
   const names = ['ytdlpPath', 'cookieSource', 'saveOnAnalyze', 'saveOnPlay', 'autoUpdate', 'libraryDir', 'autoAnalyzeCue', 'outputMode', 'masterLabel', 'recordSource', 'cueLabel', 'pitchRange', 'crossfaderCurve', 'layoutMode', 'autoAnalyzeLocal'];
