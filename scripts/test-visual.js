@@ -47,6 +47,37 @@ tests.model = async () => {
   console.log('model ok');
 };
 
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const app = read('renderer/app.js'); const css = read('renderer/styles.css');
+  assert.ok(html.includes('id="imm-viz"') && html.includes('id="imm-viz-toggle"') && /aria-hidden="true"/.test(html.slice(html.indexOf('id="imm-viz"') - 40, html.indexOf('id="imm-viz"') + 60)), 'lienzo oculto a lectores de pantalla y botón');
+  assert.ok(/new Visualizer/.test(app) && /visual: am\.cfg\.visual === false/.test(app) && /\.imm-viz/.test(css));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-visual-'));
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'visual-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const f = path.join(tmp, 'visual.json'); assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  const r = JSON.parse(fs.readFileSync(f, 'utf8')); assert.ok(!r.__err, JSON.stringify(r.__err));
+  // REQ-1/4: lienzo detrás de la portada, activo por defecto y del tamaño de la vista
+  assert.ok(r.start.vis && !r.start.hidden && r.start.pressed === 'true' && r.start.cfg !== false); near(r.start.cw, r.start.iw, 2, 'ancho'); near(r.start.ch, r.start.ih, 2, 'alto'); assert.strictEqual(r.start.role, 'true');
+  // REQ-5: ≤ 30 fps; se detiene fuera de la vista y con la ventana oculta; vuelve al regresar
+  assert.ok(r.fps >= 5 && r.fps <= 32, `cuadros por segundo: ${r.fps}`); assert.deepStrictEqual(r.stopped, { raf: 0, drawn: 0 }, 'parado fuera de la vista Automix'); assert.ok(r.resumed.raf !== 0, 'reanuda al volver');
+  assert.deepStrictEqual(r.docHidden, { raf: 0, drawn: 0 }, 'parado con la ventana oculta'); assert.ok(r.docShown.raf !== 0);
+  // REQ-4: botón, recuerdo y apagado
+  assert.ok(r.off.hidden && r.off.pressed === 'false' && r.off.cfg === false && r.off.raf === 0 && r.off.tf === '', 'apagado: oculto, sin bucle y portada a escala 1'); assert.strictEqual(r.offLater.frames, r.off.frames, 'apagado no dibuja');
+  assert.ok(r.offPersisted.hidden && r.offPersisted.cfg === false, 'recordado entre sesiones'); assert.ok(!r.on.hidden && r.on.pressed === 'true' && r.on.raf !== 0, 'se vuelve a encender');
+  assert.strictEqual(r.reduced.raf, 0, 'movimiento reducido: sin bucle'); assert.strictEqual(r.reduced.drawn, 0, 'y sin más cuadros'); assert.ok(r.reduced.hasFrame, 'con un cuadro estático');
+  // REQ-1: color por deck (A cian: azul > rojo · B rosa: rojo > azul) y contenido
+  assert.ok(r.onlyA.n > 500 && r.onlyA.b > r.onlyA.r + 20, `A cian ${JSON.stringify(r.onlyA)}`); assert.ok(r.onlyB.n > 500 && r.onlyB.r > r.onlyB.b - 10 && r.onlyB.r > r.onlyA.r + 40, `B rosa ${JSON.stringify(r.onlyB)}`);
+  assert.ok(r.both.n >= Math.max(r.onlyA.n, r.onlyB.n), 'los dos a la vez');
+  // REQ-2: en pausa tenue, sin BPM un anillo
+  assert.ok(r.paused.n > 0 && r.paused.n < r.onlyA.n, 'pausa: tenue'); assert.ok(r.noBpm.n > 0 && r.noBpm.n < r.onlyA.n, 'sin BPM: un anillo');
+  // REQ-6: la portada late con el beat y vuelve a 1 entre beats
+  const sc = (t) => Number((/scale\(([\d.]+)\)/.exec(t) || [])[1] || 1); assert.ok(sc(r.beat) > 1.01 && sc(r.beat) <= 1.0151, `latido ${r.beat}`); assert.ok(sc(r.offBeat) < sc(r.beat), 'entre beats, menos');
+  // REQ-5: rendimiento
+  assert.ok(r.perf.avg < 8, `un cuadro tarda ${r.perf.avg.toFixed(2)} ms de media (${r.perf.w}×${r.perf.h})`);
+  assert.ok(r.small.sw <= r.small.w && r.small.sh <= r.small.hh + 1, '1366×768 sin desbordes');
+  console.log('ui ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-visual.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

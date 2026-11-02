@@ -11,6 +11,7 @@ import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
+import { Visualizer } from './viz.js';
 import { settingsFilter, settingPatch, sectionDefaults } from './settings-ui.js';
 import { SplitState, clampSplit, STORE as SPLIT_STORE, STEP, STEP_BIG } from './splits.js';
 
@@ -422,6 +423,14 @@ class App {
       this.setView('library');
       this.library.show('automix');
     });
+    // Visualizador: anillos al ritmo del beat de los decks (nivel, BPM, posición y ganancia: igual para local y stream)
+    this.viz = new Visualizer({
+      canvas: $('#imm-viz'),
+      cover: $('.imm-cover'),
+      isOn: () => am.cfg.visual !== false,
+      getDecks: () => [this.decks.A, this.decks.B].map((d) => ({ id: d.id, level: d.st.level || 0, gain: d.channelGain(), bpm: d.effBpm?.() || 0, pos: d.pos(), offset: d.analysis?.offset || 0, playing: !!d.st.playing && !!d.track })),
+    });
+    $('#imm-viz-toggle').addEventListener('click', () => am.setCfg({ visual: am.cfg.visual === false }));
     const live = () => document.body.dataset.view === 'automix' && this.renderImmersive();
     am.subscribe(live);
     setInterval(live, 400);
@@ -429,6 +438,10 @@ class App {
 
   renderImmersive() {
     const st = this.automix.snapshot();
+    const vizOn = st.cfg.visual !== false;
+    $('#imm-viz-toggle').setAttribute('aria-pressed', String(vizOn));
+    $('#imm-viz-toggle').classList.toggle('active', vizOn);
+    this.viz?.refresh();
     const pick = () => {
       if (st.cur && this.decks[st.curDeck]?.track) return this.decks[st.curDeck];
       const [a, b] = [this.decks.A, this.decks.B];
@@ -481,6 +494,7 @@ class App {
     this.views.set(view);
     this.applyView();
     if (view === 'automix') this.renderImmersive();
+    else this.viz?.refresh();
   }
 
   setWaves(waves) {
