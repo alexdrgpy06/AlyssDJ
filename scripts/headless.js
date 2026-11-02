@@ -8,5 +8,6 @@ let has;
 module.exports = (args = ['.']) => {
   const electron = require('electron');
   if (has === undefined) has = process.platform === 'linux' && !process.env.CI && !process.env.YTDJ_VISIBLE && spawnSync('which', ['xvfb-run']).status === 0;
-  return has ? ['xvfb-run', ['-a', electron, ...args]] : [electron, args];
+  // En Wayland Electron ignora la pantalla virtual y dibuja en el escritorio real: se le quita WAYLAND_DISPLAY y se fuerza X11.
+  return has ? ['env', ['-u', 'WAYLAND_DISPLAY', '-u', 'XDG_SESSION_TYPE', 'xvfb-run', '-a', electron, '--ozone-platform=x11', ...args]] : [electron, args];
 };

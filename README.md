@@ -52,7 +52,7 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista. La fuente (archivo local, copia guardada o streaming) se decide sola y se ve en cada deck y en cada fila.
 
-**AutoMix:** elige cuándo sale la pista que suena (mejor punto, outro e intro, inicio del outro o final), salta la siguiente y baraja la cola.
+**AutoMix:** elige cuándo sale la pista que suena (mejor punto, outro e intro, inicio del outro o final), salta la siguiente y baraja la cola, y pone efectos como un DJ (eco de salida, reverb en las roturas, risers en las subidas) según los cues que deduce del análisis.
 
 **Efectos:** cadena de tres efectos por deck (eco, reverb, flanger, gate, phaser, crush y filtro resonante), pad XY con modo instantáneo y resonancia del filtro del canal; todo con MIDI learn.
 

@@ -196,6 +196,17 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.docs = async () => {
+  const d4 = read('docs/04-automix.md'); const rd = read('README.md');
+  for (const k of ['Efectos de DJ en AutoMix', 'eco de salida', 'reverb de rotura', 'riser', 'subidas', 'caídas', 'roturas', 'solo usa ranuras de efecto apagadas', 'sin ranura libre', 'img/46-automix-efecto.png', '**Efectos** (apagado, sutil o marcado)']) assert.ok(d4.toLowerCase().includes(k.toLowerCase()), `04: ${k}`);
+  assert.ok(/risers en las subidas/.test(rd));
+  assert.ok(fs.existsSync(path.join(root, 'docs/img/46-automix-efecto.png')), 'captura');
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in cues moves plan docs; do node scripts\/test-fxcues\.js/.test(ci), 'CI rápida: cues, moves, plan y docs');
+  assert.ok((ci.match(/for m in engine ui; do (xvfb-run -a )?node scripts\/test-fxcues\.js/g) || []).length === 2, 'CI con ventana: engine y ui (Linux y resto)');
+  console.log('docs ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fxcues.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

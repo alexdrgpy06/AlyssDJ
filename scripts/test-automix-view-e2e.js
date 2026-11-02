@@ -11,7 +11,7 @@ const root = path.join(__dirname, '..');
 const demo = path.join(root, 'docs/demo-audio');
 if (!fs.existsSync(path.join(demo, 'Neon Drive.mp3'))) spawnSync('node', [path.join(__dirname, 'make-demo-audio.js'), demo], { stdio: 'ignore' });
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-am-'));
-const r = spawnSync(path.join(root, 'node_modules/.bin/electron'), ['.'], {
+const r = spawnSync(...require('./headless.js')(['.']), {
   cwd: root, timeout: 480000, encoding: 'utf8',
   env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'automix-view-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: demo, YTDJ_SAVE_LIB: path.join(tmp, 'lib'), YTDJ_AM_SHOTS: process.env.YTDJ_AM_SHOTS || '' },
 });

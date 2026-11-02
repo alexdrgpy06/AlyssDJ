@@ -74,6 +74,28 @@ El selector **Salir** (grupo Transición) ofrece cuatro modos, inspirados en los
 - Con un plan listo, el estado muestra cuánto durará la próxima mezcla («próxima mezcla de 12 s»).
 - Quien tenía guardado «Mezclar en puntos óptimos» lo conserva: activado equivale a *Mejor punto* y apagado a *Final de la pista*.
 
+## Efectos de DJ en AutoMix
+
+El selector **Efectos** (grupo Transición) decide si AutoMix usa la cadena de efectos de los decks, como haría un DJ:
+
+| Nivel | Qué hace |
+|---|---|
+| **Apagado** | Nada: solo crossfader, graves o filtro, como antes |
+| **Sutil** (por defecto) | En cada transición: **eco de salida** (en el último cuarto de la mezcla sube un eco sincronizado en la pista que sale; su cola suena hasta 4 s y se apaga) y **reverb de rotura** (si la pista que sale tiene una rotura dentro de la transición y el estilo no es *Filtro*) |
+| **Marcado** | Además, mientras suena la pista: un **riser** (un phaser que sube durante una subida y se corta de golpe en la caída) y una **reverb** en cada rotura |
+
+Los momentos salen del análisis que ya existe: de la energía de cada frase se deducen las **subidas** (varias frases seguidas creciendo), las **caídas** (un salto de energía que destaca) y las **roturas** (la energía cae y se queda baja). No hace falta volver a analizar nada. Una pista sin BPM o con muy pocas frases no tiene cues y se mezcla como siempre.
+
+Reglas de seguridad:
+
+- AutoMix **solo usa ranuras de efecto apagadas**; nunca toca una que tengas encendida. Si no hay ninguna libre, omite el efecto y lo dice en la nota («sin ranura libre para eco de salida»).
+- Si **tocas a mano** una ranura que AutoMix está usando, la suelta y no vuelve a moverla en ese movimiento.
+- Al terminar un movimiento, al detener AutoMix o al saltar de pista, las ranuras vuelven a como estaban (tipo, cantidad, P y apagadas). No quedan efectos colgados.
+- Un solo movimiento a la vez sobre la pista que suena, con al menos una frase entre uno y otro, y ninguno en los 8 s previos a la salida. Si mueves la aguja a mano, se suelta el efecto.
+- La nota de la mezcla y la vista **Automix** muestran el efecto en curso («Efecto: eco de salida»).
+
+![Vista Automix con un efecto de salida](img/46-automix-efecto.png)
+
 ## El BPM siempre cuenta
 
 Con **Ordenar por compatibilidad** (activado), AutoMix pone **primero la pista que mejor encaja** con la que suena entre las que están listas:
@@ -120,7 +142,7 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 Los controles de AutoMix están agrupados por función, con título:
 
 - **Reproducción:** iniciar o detener AutoMix y **Mezclar ahora** (**⇧→**).
-- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase y **Salir** (cuándo sale la pista que suena).
+- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, **Salir** (cuándo sale la pista que suena) y **Efectos** (apagado, sutil o marcado).
 - **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Saltar siguiente**, **Rellenar con radio** y **Vaciar**.
   - **Barajar** ordena al azar lo que no está fijado (no mueve lo fijado a mano ni la pista que ya se está preparando), apaga «Orden automático» para que no rehaga el orden y se puede **Deshacer**.
   - **Saltar siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.

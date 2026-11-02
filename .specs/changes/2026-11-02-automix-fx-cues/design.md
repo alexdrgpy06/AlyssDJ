@@ -54,4 +54,31 @@ deck.fxSet(slot, patch, owner = 'user') ; deck.fxRamp(slot, target, seconds, own
 - El selector «Efectos» sigue el patrón de «Salir» (`label.am-exit`, `select`), con las opciones en español y descripción en `title`.
 - En la vista Automix, una etiqueta pequeña (`.imm-chip`) bajo la barra de la transición con el movimiento en curso, en color neutro (no cian/rosa), visible solo mientras hay movimiento.
 
+## Domain deltas
+### analysis
+#### ADDED spec: Cues musicales derivados de la energía por frase
+THE SYSTEM SHALL derivar de `mix.phrases` (sin reanalizar) cues `build`, `drop` y `break` alineados a la rejilla: caída = salto ≥ 30 % y ≥ 12 puntos que destaca (≥ 1,8× la media de los demás saltos) dentro de un tramo creciente; rotura = caída ≥ 30 % y ≥ 12 puntos que se queda baja una frase más; subida = ≥ 3 frases crecientes que suman ≥ 25 %, que termina en su caída; vacío sin BPM, rejilla o con menos de 4 frases.
+#### ADDED design: fxCues
+`renderer/fxcues.js` exporta `fxCues(ana)` (puro, determinista), `LEVELS`, `planTransitionMoves`, `planTrackMoves` y `FxMoves`.
+### automix
+#### ADDED spec: Nivel de efectos y movimientos de DJ
+THE SYSTEM SHALL ofrecer el ajuste `fxLevel` (`off`, `subtle` por defecto, `full`): en transiciones, eco de salida (último 25 %, wet 0 → 0,6, cola de 4 s) y reverb de rotura (salvo estilo Filtro); en `full`, además, riser (phaser) en las subidas con corte en la caída y reverb en las roturas, un movimiento a la vez, una frase de separación, nunca en los 8 s previos a la salida ni tras un salto de la aguja.
+#### ADDED spec: Seguridad de los efectos de AutoMix
+THE SYSTEM SHALL usar solo ranuras apagadas, ceder la ranura si el usuario la toca, omitir el movimiento (con nota) si no hay ranura libre y devolver las ranuras a su estado previo al terminar, detener, saltar o cambiar de pista.
+#### ADDED design: FxMoves y propietario de ranura
+`FxChain.owners[i]` (`'user'|'auto'`) y `Deck.fxSet/fxRamp(..., owner)`; `FxMoves` reserva (`claim`), mueve (`set`/`ramp`), suelta (`release`, con cola opcional) y barre (`sweep`); `AutoMix.fxStep` (transición) y `AutoMix.fxTrack` (pista que suena).
+### ui
+#### ADDED spec: Selector Efectos y estado
+THE SYSTEM SHALL mostrar el selector «Efectos» en el grupo Transición, el nivel en el estado de la transición, la nota «Efecto: …» y una etiqueta en la vista Automix mientras hay un movimiento.
+
 ## Amendments
+
+### A1 · 2026-11-02
+Cambio: una ranura «libre» es una ranura apagada (no «apagada y con cantidad 0»); al devolverla se restaura su estado previo completo.
+Motivo: las ranuras por defecto están apagadas con cantidad 0,5, así que con la definición literal ninguna habría estado libre. Se editó REQ-5 y se volvió a aprobar.
+Afecta: REQ-5.
+
+### A2 · 2026-11-02
+Cambio: las pruebas con ventana de Electron se lanzan bajo una pantalla virtual (xvfb) en Linux de escritorio mediante `scripts/headless.js` (con `YTDJ_VISIBLE=1` se ve la ventana real).
+Motivo: las pruebas abrían la app encima de lo que el usuario estaba haciendo.
+Afecta: solo herramientas de prueba; sin efecto en el producto.

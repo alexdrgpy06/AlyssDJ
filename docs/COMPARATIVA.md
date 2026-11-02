@@ -65,7 +65,7 @@ Comparación de funciones hecha a partir de lo que ofrecen estos programas en su
 1. **Más hot cues (8) con color y nombre, y memory cues.** Es lo que más se nota al preparar sets.
 2. **Cajas propias** (crear playlists, arrastrar pistas, orden manual) y valoración/etiquetas.
 3. **3.er y 4.º deck** para cargar la siguiente sin perder el deck en juego.
-4. **Efectos en AutoMix** (colocarlos según el análisis) y salida de FX compartida entre decks.
+4. **Salida de FX compartida** entre decks. (Los efectos en AutoMix según los cues del análisis ya están.)
 5. **Mapeos MIDI incluidos** para controladoras comunes y salida de LEDs.
 6. **Micrófono con ducking.**
 7. **Rejilla de tempo variable** para pistas en vivo o sin metrónomo.

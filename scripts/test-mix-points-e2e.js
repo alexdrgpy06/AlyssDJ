@@ -17,7 +17,7 @@ const files = Object.entries(T).map(([k, t]) => {
   writeWav(f, t.samples);
   return f;
 });
-const r = spawnSync(path.join(root, 'node_modules/.bin/electron'), ['.'], {
+const r = spawnSync(...require('./headless.js')(['.']), {
   cwd: root, timeout: 300000, encoding: 'utf8',
   env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'mix-points-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_MIX_FILES: JSON.stringify(files), YTDJ_MIX_SHOTS: process.env.YTDJ_MIX_SHOTS || '' },
 });

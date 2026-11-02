@@ -163,6 +163,10 @@ module.exports = (win, decks) => {
       await shot('40-ondas-en-el-deck.png');
       await js(`__app.setWaves('top'); __app.setView('automix'); return 1`); await wait(900);
       await shot('41-vista-automix.png');
+      await js(`const A = __app.decks.A, B = __app.decks.B, am = __app.automix; A.analysis = { bpm: 124, offset: 0.5, duration: 84, mix: { phraseBeats: 16, phrases: [80, 80, 80, 80, 80, 30, 30, 90, 90, 90] } }; B.analysis = A.analysis; A.pos = () => 36; am.cur = A; am.on = true; am.setCfg({ fxLevel: 'subtle' }); am.startTransition(A, B, { seconds: 16, style: 'bass', tempo: false, exitAt: 36, enterAt: null, kind: 'outro', warnings: [] }); am.trans.t0 = performance.now() - 0.8 * 16000; am.stepTransition(); await new Promise((r) => setTimeout(r, 700)); am.emit(); return 1`);
+      await wait(500);
+      await shot('46-automix-efecto.png');
+      await js(`__app.automix.stop(); delete __app.decks.A.pos; delete __app.decks.B.pos; return 1`);
       await js(`__app.setView('library'); await window.ytdj.backlog.pause(); await window.ytdj.backlog.add({ name: 'Playlist de ejemplo', tracks: ${JSON.stringify(rows.map((r) => ({ videoId: 'DEMO' + r.videoId.slice(0, 7), title: r.title + ' (ejemplo)', artist: r.artist, duration: r.duration })))} }); document.querySelector('.sources [data-tab="queue"]').click(); return 1`);
       await wait(900);
       await shot('42-cola-de-analisis.png', '.library');
