@@ -12,6 +12,8 @@ module.exports = (win) => {
     await js(`__app.masterGain = 0; localStorage.clear(); __app.setView('automix'); return 1`); await wait(900);
     const snap = `const v = __app.viz; const c = document.getElementById('imm-viz'); const b = document.getElementById('imm-viz-toggle'); const imm = document.getElementById('immersive').getBoundingClientRect(); const cb = c.getBoundingClientRect();
       return { frames: v.frames, raf: v.raf, hidden: c.hidden, vis: c.offsetParent !== null, cw: Math.round(cb.width), ch: Math.round(cb.height), iw: Math.round(imm.width), ih: Math.round(imm.height), pressed: b.getAttribute('aria-pressed'), cfg: __app.automix.cfg.visual, tf: document.querySelector('.imm-cover').style.transform, sw: document.documentElement.scrollWidth, w: innerWidth, sh: document.documentElement.scrollHeight, hh: innerHeight, role: c.getAttribute('aria-hidden') }`;
+    // en CI (macOS/Windows) la ventana puede contar como oculta o pedir menos movimiento: se fija el entorno para medir el bucle
+    R.env = await js(`const e = { hidden: document.hidden, reduced: __app.viz.reducedMotion() }; Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); __app.viz.forceReduced = false; __app.viz.refresh(); return e`); await wait(500);
     R.start = await js(snap);
     // ¿dispara requestAnimationFrame en este entorno? (ventanas sin foco u ocultas en CI no lo hacen)
     R.rafFires = await js(`let n = 0; const t = performance.now(); await new Promise((ok) => { const f = () => { n++; performance.now() - t > 600 ? ok() : requestAnimationFrame(f); }; requestAnimationFrame(f); setTimeout(ok, 900); }); return n`);
@@ -22,14 +24,14 @@ module.exports = (win) => {
     await js(`__app.setView('automix'); return 1`); await wait(500); R.resumed = await js(snap);
     // ventana oculta: se detiene
     await js(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); __app.viz.refresh(); return 1`); await wait(200); const h0 = await js(snap); await wait(400); const h1 = await js(snap); R.docHidden = { raf: h1.raf, drawn: h1.frames - h0.frames };
-    await js(`delete document.hidden; __app.viz.refresh(); return 1`); await wait(300); R.docShown = await js(snap);
+    await js(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); __app.viz.refresh(); return 1`); await wait(300); R.docShown = await js(snap);
     // botón Visual: apaga, recuerda y enciende
     await js(`document.getElementById('imm-viz-toggle').click(); await new Promise((r) => setTimeout(r, 400)); return 1`); R.off = await js(snap); await wait(500); R.offLater = await js(snap);
     await reload(); await js(`__app.setView('automix'); return 1`); await wait(800); R.offPersisted = await js(snap);
     await js(`document.getElementById('imm-viz-toggle').click(); await new Promise((r) => setTimeout(r, 400)); return 1`); R.on = await js(snap);
     // movimiento reducido: sin bucle; un cuadro estático y no más
     await js(`__app.viz.forceReduced = true; __app.viz.refresh(); return 1`); await wait(300); const r0 = await js(snap); await wait(600); const r1 = await js(snap); R.reduced = { raf: r1.raf, drawn: r1.frames - r0.frames, hasFrame: r0.frames > 0 };
-    await js(`__app.viz.forceReduced = null; __app.viz.refresh(); return 1`); await wait(300);
+    await js(`__app.viz.forceReduced = false; __app.viz.refresh(); return 1`); await wait(300);
     // dibujo con decks simulados: color por deck, latido de la portada y lienzo con contenido
     const fake = (arr) => `__app.viz.getDecks = () => ${JSON.stringify(arr)}; __app.viz.lvl = {}; __app.viz.stop(); __app.viz.drawFrame();`;
     const px = `const c = document.getElementById('imm-viz'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0, r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; } return { n, r: n ? r / n : 0, g: n ? g / n : 0, b: n ? b / n : 0, tf: document.querySelector('.imm-cover').style.transform }`;
