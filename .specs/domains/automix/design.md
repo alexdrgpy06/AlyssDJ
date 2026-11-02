@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-01-automix-modo-salida
+last_change: 2026-11-02-automix-fx-cues
 ---
 # automix · design
 
@@ -28,3 +28,7 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## planTransition por modos
 
 `renderer/mixplan.js` exporta `EXIT_MODES` e `introOutroSeconds`; `planTransition(cur, next, { len, exitMode, optimal, pos })` deriva el modo (`exitMode` o, si falta, `optimal === false` → `end`) y devuelve `mode`. `AutoMix.exitMode()` deriva el modo del ajuste guardado; `skipNext()` y `shuffle(rng)` operan sobre la cola; `snapshot()` expone `exitMode`, `canSkip` y `canShuffle`.
+
+## FxMoves y propietario de ranura
+
+`FxChain.owners[i]` (`'user'|'auto'`) y `Deck.fxSet/fxRamp(..., owner)`; `FxMoves` reserva (`claim`), mueve (`set`/`ramp`), suelta (`release`, con cola opcional) y barre (`sweep`); `AutoMix.fxStep` (transición) y `AutoMix.fxTrack` (pista que suena).

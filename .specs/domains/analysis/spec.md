@@ -1,7 +1,7 @@
 ---
 domain: analysis
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
+last_change: 2026-11-02-automix-fx-cues
 ---
 # analysis · spec
 
@@ -23,3 +23,7 @@ WHEN el tempo detectado sea ambiguo (3:2 o 2:1) THE SYSTEM SHALL decidir con los
 
 WHEN el usuario pide «Analizar lista» THE SYSTEM SHALL encolar las pistas no analizadas ni ya en cola, analizarlas de una en una (las cargadas en un deck primero), seguir tras un error, guardar la cola en disco y retomarla al abrir la app, y esperar mientras dure el bloqueo de yt-dlp por comprobación de bot.
 THE SYSTEM SHALL ofrecer la vista Análisis con el avance por lista y pista, pausar, reanudar, cancelar una lista, reintentar errores y quitar terminadas.
+
+## Cues musicales derivados de la energía por frase
+
+THE SYSTEM SHALL derivar de `mix.phrases` (sin reanalizar) cues `build`, `drop` y `break` alineados a la rejilla: caída = salto ≥ 30 % y ≥ 12 puntos que destaca (≥ 1,8× la media de los demás saltos) dentro de un tramo creciente; rotura = caída ≥ 30 % y ≥ 12 puntos que se queda baja una frase más; subida = ≥ 3 frases crecientes que suman ≥ 25 %, que termina en su caída; vacío sin BPM, rejilla o con menos de 4 frases.

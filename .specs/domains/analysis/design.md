@@ -1,7 +1,7 @@
 ---
 domain: analysis
 paths: [main/settings.js, main/analyzer.js, main/ytdlp.js, main/tools.js, renderer/index.html, renderer/app.js, docs/**]
-last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
+last_change: 2026-11-02-automix-fx-cues
 ---
 # analysis · design
 
@@ -16,3 +16,7 @@ last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
 ## Backlog persistente
 
 `main/analysis-backlog.js` (`Backlog`) guarda `userData/analysis-queue.json` (escritura atómica con retardo) con listas e ítems (`queued|running|done|error`), entrega de a uno al `Analyzer` solo cuando está libre y `!botBlocked()`, escucha sus eventos y notifica por `backlog:event` (máx. cada 250 ms). IPC `backlog:add|state|pause|resume|cancel|retry|clear-done|priority`.
+
+## fxCues
+
+`renderer/fxcues.js` exporta `fxCues(ana)` (puro, determinista), `LEVELS`, `planTransitionMoves`, `planTrackMoves` y `FxMoves`.

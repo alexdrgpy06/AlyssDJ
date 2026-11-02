@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-01-automix-modo-salida
+last_change: 2026-11-02-automix-fx-cues
 ---
 # automix · spec
 
@@ -52,3 +52,11 @@ WHILE el modo es «Outro y intro» THE SYSTEM SHALL durar el menor entre el outr
 ## Saltar siguiente y barajar
 
 THE SYSTEM SHALL permitir quitar la pista que sigue (no durante una transición ni con menos de dos pistas) y barajar al azar las pistas no fijadas sin mover las fijadas ni la que ya se prepara, apagando «Orden automático» y permitiendo «Deshacer».
+
+## Nivel de efectos y movimientos de DJ
+
+THE SYSTEM SHALL ofrecer el ajuste `fxLevel` (`off`, `subtle` por defecto, `full`): en transiciones, eco de salida (último 25 %, wet 0 → 0,6, cola de 4 s) y reverb de rotura (salvo estilo Filtro); en `full`, además, riser (phaser) en las subidas con corte en la caída y reverb en las roturas, un movimiento a la vez, una frase de separación, nunca en los 8 s previos a la salida ni tras un salto de la aguja.
+
+## Seguridad de los efectos de AutoMix
+
+THE SYSTEM SHALL usar solo ranuras apagadas, ceder la ranura si el usuario la toca, omitir el movimiento (con nota) si no hay ranura libre y devolver las ranuras a su estado previo al terminar, detener, saltar o cambiar de pista.

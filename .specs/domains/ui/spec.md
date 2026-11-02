@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-fx-cadena
+last_change: 2026-11-02-automix-fx-cues
 ---
 # ui · spec
 
@@ -60,3 +60,7 @@ THE SYSTEM SHALL mostrar en el banco FX de cada deck tres ranuras (interruptor y
 ## Persistencia, MIDI y Ajustes de efectos
 
 THE SYSTEM SHALL recordar la cadena de cada deck en `alyssdj.fx.<deck>` (ajuste `fxRemember`), conservarla al cargar pistas, registrar para MIDI learn `fx<n>On/Wet/P` y `res` (y mantener `fxOn`, `fxWet`, `fx.<tipo>` en la ranura 1) y ofrecer la sección «Efectos y filtros» con `fxHold`, `fxRemember` y `filterRes`.
+
+## Selector Efectos y estado
+
+THE SYSTEM SHALL mostrar el selector «Efectos» en el grupo Transición, el nivel en el estado de la transición, la nota «Efecto: …» y una etiqueta en la vista Automix mientras hay un movimiento.
