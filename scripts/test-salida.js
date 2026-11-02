@@ -150,7 +150,7 @@ tests.ui = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-salida-')); const music = path.join(tmp, 'music');
   const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 200000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'salida-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 200000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'salida-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
   const f = path.join(tmp, 'salida.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.SALIDA_SHOTS) for (const n of ['automix-exit.png', 'automix-exit-lib.png']) fs.copyFileSync(path.join(tmp, n), path.join(process.env.SALIDA_SHOTS, n));

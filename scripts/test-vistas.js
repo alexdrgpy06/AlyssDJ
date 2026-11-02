@@ -55,7 +55,7 @@ tests.ui = async () => {
   assert.ok(/--split-waves/.test(css) && /--split-lib/.test(css) && /row-resize/.test(css));
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-vistas-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'vistas-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'vistas-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const r = JSON.parse(fs.readFileSync(path.join(tmp, 'vistas.json'), 'utf8')); if (process.env.DBG) for (const k of ['def','reset','libMax','kbBase','kb1','kb2','kb3','kb4']) console.log(k, r[k].split, r[k].waves, r[k].lib, r[k].con);
   const near = (a, b, tol, m) => assert.ok(Math.abs(a - b) <= tol, `${m}: ${a} vs ${b}`);
   const noScroll = (x, m) => assert.ok(x.sw <= x.w && x.sh <= x.ih + 1, `${m}: sin scroll (${x.sw}x${x.sh} en ${x.w}x${x.ih})`);
@@ -107,7 +107,7 @@ tests.save = async () => {
   assert.ok(/f\.addEventListener\('change'/.test(app) && /resetSplits/.test(app));
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-ajustes-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const r = JSON.parse(fs.readFileSync(path.join(tmp, 'ajustes.json'), 'utf8'));
   // REQ-4: se guarda al cambiar, con el diálogo abierto, y confirma
   assert.ok(r.s1.open && r.s1.pitch === 16 && r.s1.saved === 'Guardado', JSON.stringify(r.s1));
@@ -155,7 +155,7 @@ tests.search = async () => {
   assert.ok(html.includes('id="set-search"') && html.includes('id="set-empty"') && html.includes('id="btn-reset-views"'));
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-ajustes-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const r = JSON.parse(fs.readFileSync(path.join(tmp, 'ajustes.json'), 'utf8'));
   assert.ok(r.first.open && r.first.tabs[0] === 'general*' && r.first.panes.join() === 'general', JSON.stringify(r.first.tabs));
   assert.deepStrictEqual(r.first.tabs.map((t) => t.replace(/[*~]/g, '')), ['general', 'audio', 'decks', 'fx', 'library', 'midi', 'tools']);

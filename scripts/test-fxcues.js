@@ -138,6 +138,46 @@ tests.plan = async () => {
   console.log('plan ok');
 };
 
+const electronRun = (selftest, name) => {
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-fxcues-'));
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, selftest), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const f = path.join(tmp, name);
+  assert.ok(fs.existsSync(f), 'la app no produjo resultado');
+  return JSON.parse(fs.readFileSync(f, 'utf8'));
+};
+
+tests.engine = async () => {
+  const r = electronRun('fxcues-selftest.js', 'fxcues.json');
+  assert.ok(!r.__err, JSON.stringify(r.__err));
+  const def = (t) => ({ type: t, on: false, wet: 0.5, p: 0.5 }); const defs = [def('echo'), def('reverb'), def('filter')];
+  // REQ-3: transición en Sutil
+  assert.deepStrictEqual(r.planned, ['echo-out', 'reverb-break']);
+  assert.deepStrictEqual(r.early, defs, 'al 30 % todavía no hay efectos');
+  assert.deepStrictEqual([r.mid.A[0].type, r.mid.A[0].on], ['echo', true], 'eco de salida en la primera ranura libre'); assert.ok(r.mid.A[0].wet > 0 && r.mid.A[0].wet <= 0.6, `wet sube (${r.mid.A[0].wet})`);
+  assert.deepStrictEqual([r.mid.A[1].type, r.mid.A[1].on], ['reverb', true], 'reverb de rotura en la segunda'); assert.deepStrictEqual(r.mid.owners.slice(0, 2), ['auto', 'auto']);
+  assert.ok(/Efecto: eco de salida, reverb de rotura/.test(r.mid.note), r.mid.note); assert.strictEqual(r.mid.fx.level, 'subtle');
+  assert.ok(r.afterFinish.A[0].on, 'la cola del eco sigue sonando al terminar'); assert.ok(!r.afterFinish.A[1].on, 'la reverb ya se apagó al acabar su frase'); assert.strictEqual(r.afterFinish.trans, false);
+  assert.deepStrictEqual(r.restored.A, defs, 'todo vuelve a su estado anterior tras la cola'); assert.deepStrictEqual(r.restored.owners, ['user', 'user', 'user']); assert.deepStrictEqual(r.restored.active, []);
+  // REQ-5: el usuario manda
+  assert.strictEqual(r.userTook.A[0].wet, 0.9, 'lo que el usuario tocó no se restaura ni se mueve'); assert.strictEqual(r.userTook.A[0].on, true); assert.deepStrictEqual(r.userTook.active, []);
+  // sin ranura libre: se omite, se avisa y no se toca nada
+  assert.ok(r.noFree.A.every((s, i) => s.on && Math.abs(s.wet - (0.3 + i / 10)) < 1e-9), 'las ranuras del usuario intactas'); assert.ok(/sin ranura libre para eco de salida/.test(r.noFree.note), r.noFree.note);
+  // REQ-2/6: Apagado
+  assert.strictEqual(r.offPlanned, 0); assert.deepStrictEqual(r.off.A, defs); assert.deepStrictEqual(r.off.fx, { level: 'off', active: [] }); assert.strictEqual(r.off.note.includes('Efecto'), false);
+  // REQ-4: Marcado sobre cues
+  assert.deepStrictEqual([r.riserOn.A[0].type, r.riserOn.A[0].on], ['phaser', true]); assert.ok(r.riserOn.live); assert.ok(/Efecto: riser/.test(r.riserOn.note));
+  assert.ok(Math.abs(r.riserMid - 0.5 * (16 - 0.5) / 32) < 0.02, `el wet sigue a la subida (${r.riserMid})`);
+  assert.deepStrictEqual(r.riserCut.A, defs, 'se corta de golpe en la caída y se restaura'); assert.strictEqual(r.riserCut.live, false);
+  assert.deepStrictEqual(r.subtleTrack, defs, 'en Sutil no hay movimientos sobre cues');
+  assert.deepStrictEqual(r.jump.A, defs, 'un salto de la aguja suelta el riser'); assert.strictEqual(r.jump.live, false);
+  assert.deepStrictEqual([r.breakOn[0].type, r.breakOn[0].on], ['reverb', true]); assert.ok(r.breakOn[0].wet > 0); assert.deepStrictEqual(r.breakOff.A, defs); assert.strictEqual(r.breakOff.live, false);
+  // limpieza: detener AutoMix y cambiar de pista
+  assert.strictEqual(r.beforeStop, true); assert.deepStrictEqual(r.afterStop.A, defs); assert.deepStrictEqual(r.afterStop.active, []); assert.strictEqual(r.afterStop.live, false);
+  assert.deepStrictEqual(r.trackChange.A, defs); assert.strictEqual(r.trackChange.live, false);
+  console.log('engine ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fxcues.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

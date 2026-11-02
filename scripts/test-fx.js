@@ -53,7 +53,7 @@ tests.model = async () => {
 const electronRun = (selftest, name) => {
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-fx-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, selftest), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, selftest), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, name);
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   return JSON.parse(fs.readFileSync(f, 'utf8'));

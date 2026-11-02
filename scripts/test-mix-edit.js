@@ -62,7 +62,7 @@ tests.e2e = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-mixedit-e2e-'));
   const music = path.join(root, 'docs/demo-audio');
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), 'falta el audio de demostración: node scripts/make-demo-audio.js docs/demo-audio');
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 180000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/mix-edit-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_DOCS_MUSIC: music, YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 180000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/mix-edit-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_DOCS_MUSIC: music, YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'mixedit.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.MIXEDIT_SHOTS) for (const n of ['mixedit-auto.png', 'mixedit-edited.png']) fs.copyFileSync(path.join(tmp, n), path.join(process.env.MIXEDIT_SHOTS, n));

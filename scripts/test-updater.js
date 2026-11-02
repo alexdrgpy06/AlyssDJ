@@ -63,7 +63,7 @@ tests.unit = async () => {
 
 tests.ui = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-upd-'));
-  spawnSync(require('electron'), ['.'], { cwd: path.join(__dirname, '..'), timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'updater-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: path.join(__dirname, '..'), timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'updater-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'updater.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.UPDATER_SHOT) fs.copyFileSync(path.join(tmp, 'updater.png'), process.env.UPDATER_SHOT);

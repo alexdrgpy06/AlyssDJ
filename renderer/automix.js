@@ -1,6 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
+import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
 import { EXIT_MODES, planTransition, planNearest, rankCandidates, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
@@ -37,9 +38,14 @@ export class AutoMix {
     this.libPool = []; // pistas ya analizadas de la librería
     this.libPoolAt = -Infinity;
     this.poolAt = -Infinity;
+    this.fxm = new FxMoves(); // efectos que AutoMix pone y quita (eco de salida, riser, reverb de rotura)
+    this.fxLive = null; // movimiento sobre cues en curso
+    this.fxEnd = { id: null, pos: -Infinity }; // dónde acabó el último movimiento sobre cues
+    this.fxWarn = '';
+    this.cueCache = new WeakMap();
     this.moves = new Map(); // agregadas sin analizar: se avisa dónde acaban cuando llega su análisis
     this.suggestBusy = new Set();
-    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, smartOrder: true };
+    this.cfg = { popularity: true, popWeight: 'mid', len: 16, style: 'bass', matchTempo: true, analyze: true, endless: true, preferLocal: true, waitMs: 20000, smartOrder: true, fxLevel: 'subtle' };
     try {
       Object.assign(this.cfg, JSON.parse(localStorage.getItem(LS) || '{}'));
     } catch {}
@@ -57,6 +63,19 @@ export class AutoMix {
   // (apagado = final de la pista), así lo guardado antes de existir el selector sigue valiendo.
   exitMode() {
     return EXIT_MODES.includes(this.cfg.exitMode) ? this.cfg.exitMode : this.cfg.optimalPoints === false ? 'end' : 'optimal';
+  }
+
+  fxLevel() {
+    return LEVELS.includes(this.cfg.fxLevel) ? this.cfg.fxLevel : 'subtle';
+  }
+  anaOf(deck) {
+    return deck?.analysis || this.ana.get(deck?.track?.videoId) || null;
+  }
+  cuesOf(ana) {
+    if (!ana) return [];
+    let c = this.cueCache.get(ana);
+    if (!c) this.cueCache.set(ana, (c = fxCues(ana)));
+    return c;
   }
 
   setCfg(patch) {
@@ -126,6 +145,9 @@ export class AutoMix {
       }
     }
     this.trans = null;
+    this.fxm.releaseAll();
+    this.fxLive = null;
+    this.fxWarn = '';
     this.note = '';
     this.emit();
   }
@@ -547,6 +569,7 @@ export class AutoMix {
       }
       return;
     }
+    this.fxTrack(cur);
     if (!cur.st.playing || !head) return; // pausado a mano o sin siguiente
     const rem = cur.remaining();
     // Plan: mejor punto de salida de la pista que suena (alineado a una frase), no necesariamente el final.
@@ -560,6 +583,57 @@ export class AutoMix {
     const waitingAnalysis = (this.cfg.analyze && next.analyzing && rem > 25) || analysisPending;
     if (this.ready(next, head) && !waitingAnalysis) this.startTransition(cur, next, this.plan);
     else if (rem <= 1.2 && this.ready(next, head)) this.startTransition(cur, next, 2);
+  }
+
+  // Movimientos sobre los cues de la pista que suena (solo nivel «Marcado»): riser en las subidas y reverb en las roturas.
+  fxTrack(cur) {
+    this.fxm.sweep();
+    const level = this.fxLevel();
+    const pos = posOf(cur);
+    const id = cur.track?.videoId;
+    const live = this.fxLive;
+    if (live) {
+      const moved = pos - live.lastPos;
+      const gone = level !== 'full' || live.videoId !== id || !cur.st.playing || moved < -0.1 || moved > 2 || !this.fxm.owned(cur, live.slot);
+      if (gone) {
+        this.fxm.set(cur, live.slot, { wet: 0 });
+        this.fxm.release(cur, live.slot, 0);
+        this.fxLive = null;
+        return this.emit();
+      }
+      live.lastPos = pos;
+      const mv = live.move;
+      if (mv.id === 'riser') {
+        if (pos >= mv.toPos) {
+          this.fxm.set(cur, live.slot, { wet: 0 }); // se corta de golpe en la caída
+          this.fxm.release(cur, live.slot, 0);
+          this.fxEnd = { id, pos: mv.toPos };
+          this.fxLive = null;
+          this.emit();
+        } else this.fxm.set(cur, live.slot, { wet: mv.maxWet * Math.max(0, (pos - mv.fromPos) / (mv.toPos - mv.fromPos)) });
+      } else if (pos >= mv.toPos) {
+        this.fxm.ramp(cur, live.slot, { wet: 0 }, 0.4);
+        this.fxm.release(cur, live.slot, 600);
+        this.fxEnd = { id, pos: mv.toPos };
+        this.fxLive = null;
+        this.emit();
+      }
+      return;
+    }
+    if (level !== 'full' || !cur.st.playing) return;
+    const ana = this.anaOf(cur);
+    const mv = planTrackMoves({ level, cues: this.cuesOf(ana), pos, exitAt: this.plan?.exitAt ?? null, bpm: ana?.bpm, lastEnd: this.fxEnd.id === id ? this.fxEnd.pos : -Infinity });
+    if (!mv) return;
+    const slot = this.fxm.claim(cur, mv);
+    if (slot == null) {
+      this.fxWarn = `sin ranura libre para ${mv.name}`;
+      this.fxEnd = { id, pos: mv.toPos }; // no insistir en este cue
+      return this.emit();
+    }
+    this.fxWarn = '';
+    this.fxLive = { move: mv, slot, videoId: id, lastPos: pos };
+    if (mv.id === 'reverb-break') this.fxm.ramp(cur, slot, { wet: mv.targetWet }, mv.rampSeconds);
+    this.emit();
   }
 
   // Plan de la transición con los análisis de las dos pistas (los del deck si ya están cargados).
@@ -641,6 +715,11 @@ export class AutoMix {
     this.knob(to, 'eqLow', style === 'bass' ? -1 : 0);
     this.knob(to, 'filter', style === 'filter' ? 0.85 : 0);
     this.trans = { from, to, len, t0: performance.now(), tempo, style, lastPhase: 0, swapped: false, track: to.track, kind: p.kind, warnings: p.warnings || [] };
+    // efectos de DJ: lo que quedara de un movimiento sobre cues se suelta y se planean los de esta transición
+    this.fxm.releaseAll();
+    this.fxLive = null;
+    this.fxWarn = '';
+    this.trans.moves = planTransitionMoves({ level: this.fxLevel(), cur: this.anaOf(from), plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null }));
     this.note = `Mezclando ${from.id} → ${to.id}${tempo ? ' (tempo igualado)' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
     this.emit();
   }
@@ -658,6 +737,7 @@ export class AutoMix {
       this.knob(t.from, 'filter', -0.9 * ease(p));
       this.knob(t.to, 'filter', 0.85 * (1 - ease(p)));
     }
+    this.fxStep(t, p);
     // Corrige la fase con pequeños empujones mientras suenan los dos.
     if (t.tempo && p < 0.7 && now - t.lastPhase > 600) {
       t.lastPhase = now;
@@ -667,8 +747,35 @@ export class AutoMix {
     if (p >= 1) this.finishTransition();
   }
 
+  // Movimientos de efectos de la transición: empiezan por progreso o por posición de la saliente.
+  fxStep(t, p) {
+    const pos = posOf(t.from);
+    this.fxm.sweep();
+    for (const m of t.moves || []) {
+      if (m.state === 'wait' && (m.startP != null ? p >= m.startP : pos >= m.atPos)) {
+        const slot = this.fxm.claim(t.from, m);
+        if (slot == null) {
+          m.state = 'skipped';
+          this.fxWarn = `sin ranura libre para ${m.name}`;
+        } else {
+          m.state = 'on';
+          m.slot = slot;
+          this.fxm.ramp(t.from, slot, { wet: m.targetWet }, m.rampSeconds);
+        }
+        this.emit();
+      } else if (m.state === 'on' && m.endPos != null && (pos >= m.endPos || p >= 1)) {
+        m.state = 'done';
+        this.fxm.ramp(t.from, m.slot, { wet: 0 }, 0.4);
+        this.fxm.release(t.from, m.slot, 600);
+        this.emit();
+      }
+    }
+  }
+
   finishTransition() {
     const { from, to } = this.trans;
+    // lo que sigue sonando en la saliente (eco) deja que su cola muera antes de devolver la ranura
+    for (const m of this.trans.moves || []) if (m.state === 'on') this.fxm.release(from, m.slot, m.tailMs || 0);
     this.trans = null;
     from.wantPlay = false;
     from.transport({ type: 'pause' });
@@ -744,7 +851,8 @@ export class AutoMix {
       rem: this.cur ? this.cur.remaining() : null,
       pendingMix: this.pendingMix ? { ready: !!this.pendingMix.plan, kind: this.pendingMix.plan?.kind || null, waitS: this.pendingMix.plan && this.cur ? Math.max(0, this.pendingMix.plan.exitAt - posOf(this.cur)) : null, seconds: this.pendingMix.plan?.seconds ?? null } : null,
       cfg: { ...this.cfg },
-      note: this.note,
+      fx: { level: this.fxLevel(), active: this.fxLevel() === 'off' ? [] : this.fxm.active() },
+      note: [this.note, this.fxLevel() !== 'off' && this.fxm.active().length ? `Efecto: ${this.fxm.active().join(', ')}` : '', this.fxLevel() !== 'off' ? this.fxWarn : ''].filter(Boolean).join(' · '),
     };
   }
 }

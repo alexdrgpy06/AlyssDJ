@@ -35,7 +35,7 @@ tests.files = async () => {
 
 tests.e2e = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-brand-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'brand-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'brand-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'brand.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.BRAND_SHOT) fs.copyFileSync(path.join(tmp, 'about.png'), process.env.BRAND_SHOT);

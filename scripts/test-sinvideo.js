@@ -74,7 +74,7 @@ tests.source = async () => {
   const music = path.join(tmp, 'music');
   const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'source-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'source-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
   const f = path.join(tmp, 'source.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   const r = JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -195,7 +195,7 @@ tests['queue-ui'] = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-qui-')); const music = path.join(tmp, 'music');
   const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'queue-ui-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'queue-ui-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
   const f = path.join(tmp, 'queue-ui.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.QUEUE_UI_SHOT) fs.copyFileSync(path.join(tmp, 'queue.png'), process.env.QUEUE_UI_SHOT);
@@ -243,7 +243,7 @@ tests.views = async () => {
   // e2e
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-views-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'views-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'views-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'views.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   const r = JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -277,7 +277,7 @@ tests.immersive = async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-imm-')); const music = path.join(tmp, 'music');
   const gen = spawnSync(process.execPath, [path.join(__dirname, 'make-demo-audio.js'), music], { cwd: root, encoding: 'utf8' });
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), `sin audio de demostración: ${gen.stderr || gen.stdout}`);
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'immersive-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'immersive-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp, YTDJ_DOCS_MUSIC: music } });
   const f = path.join(tmp, 'immersive.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.IMMERSIVE_SHOT) fs.copyFileSync(path.join(tmp, 'immersive.png'), process.env.IMMERSIVE_SHOT);

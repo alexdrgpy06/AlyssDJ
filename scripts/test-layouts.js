@@ -33,7 +33,7 @@ tests.unit = async () => {
 
 function run() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-layout-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'layouts-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 150000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'layouts-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
   const f = path.join(tmp, 'layouts.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.LAYOUT_SHOTS) for (const n of fs.readdirSync(tmp).filter((x) => x.endsWith('.png'))) fs.copyFileSync(path.join(tmp, n), path.join(process.env.LAYOUT_SHOTS, n));

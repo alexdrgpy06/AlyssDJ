@@ -101,7 +101,7 @@ tests.e2e = async () => {
   const music = path.join(root, 'docs/demo-audio');
   assert.ok(fs.existsSync(path.join(music, 'Neon Drive.mp3')), 'falta el audio de demostración: node scripts/make-demo-audio.js docs/demo-audio');
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-add-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 240000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/automix-add-selftest.js'), YTDJ_USERDATA: path.join(out, 'data'), YTDJ_DOCS_MUSIC: music, YTDJ_SELFTEST_OUT: out } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 240000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/automix-add-selftest.js'), YTDJ_USERDATA: path.join(out, 'data'), YTDJ_DOCS_MUSIC: music, YTDJ_SELFTEST_OUT: out } });
   const f = path.join(out, 'add.json');
   assert.ok(fs.existsSync(f), 'la app no produjo resultado');
   if (process.env.ADD_SHOTS) for (const n of ['add-search.png', 'add-suggest.png']) fs.copyFileSync(path.join(out, n), path.join(process.env.ADD_SHOTS, n));
@@ -133,7 +133,7 @@ tests.live = async () => {
   const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path'); const { spawnSync } = require('node:child_process');
   const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-pop-'));
-  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/popularity-live-selftest.js'), YTDJ_USERDATA: path.join(out, 'data'), YTDJ_SELFTEST_OUT: out } });
+  spawnSync(...require('./headless.js')(['.']), { cwd: root, timeout: 120000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(root, 'scripts/popularity-live-selftest.js'), YTDJ_USERDATA: path.join(out, 'data'), YTDJ_SELFTEST_OUT: out } });
   const r = JSON.parse(fs.readFileSync(path.join(out, 'pop-live.json'), 'utf8'));
   assert.ok(r.plays.length >= 3 && r.plays.some((p) => p.plays > 1e6), `la búsqueda trae reproducciones: ${JSON.stringify(r.plays)}`);
   assert.ok(r.plays.every((p) => !/reproduc/i.test(p.album)), 'las reproducciones no se cuelan como álbum');
