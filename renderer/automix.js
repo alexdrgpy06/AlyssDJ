@@ -104,7 +104,14 @@ export class AutoMix {
   async start({ seed, tracks } = {}) {
     const { A, B } = this.app.decks;
     if (this.on) this.stop();
+    // Un tema nuevo no hereda nada del anterior: ni la cola, ni el plan, ni lo que quedara de una mezcla a medias.
     this.queue = [];
+    this.radioPool = [];
+    this.pinned.clear();
+    this.pendingMix = false;
+    this.plan = null;
+    this.undoStack = null;
+    this.waitSince = 0;
     this.history.clear();
     this.histTracks = [];
     this.trans = null;
@@ -128,6 +135,15 @@ export class AutoMix {
       await deck.load(first, { play: true, force: true });
     } else if (!deck.st.playing) {
       deck.togglePlay();
+    }
+    // El tema anterior se para: la otra pista que siguiera sonando (o a medio mezclar) se pausa y los deck vuelven a EQ y filtro neutros.
+    for (const d of [A, B]) {
+      this.knob(d, 'eqLow', 0);
+      this.knob(d, 'filter', 0);
+      if (d !== deck && (d.st.playing || d.wantPlay)) {
+        d.wantPlay = false;
+        d.transport({ type: 'pause' });
+      }
     }
     this.cur = deck;
     this.setX(side(deck.id));

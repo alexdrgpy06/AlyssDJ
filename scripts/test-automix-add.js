@@ -248,6 +248,14 @@ tests.engine = async () => {
     A.analysis = ana(124, '8A'); B.analysis = ana(150, '8A'); am.ana.set('N1', B.analysis); am.cur = A; B.track = T('N1'); am.queue = [B.track];
     am.startTransition(A, B, { exitAt: 200, enterAt: 0, seconds: 16, style: null, tempo: false, warnings: [] });
     assert.strictEqual(am.trans.style, 'echo-cut'); assert.ok(am.trans.len <= 4.2, 'echo-cut dura 8 pulsos'); }
+  // cambiar de tema: start() para lo anterior (otra pista sonando, cola, radio, plan)
+  { const { am, A, B } = engine(); B.track = T('OLD2'); B.st = { playing: true, dur: 240, ready: true, videoId: 'OLD2' }; B.wantPlay = true; B.pausedCalls = 0; B.transport = function (c) { if (c.type === 'pause') { this.pausedCalls++; this.st.playing = false; } };
+    am.queue = [T('q1'), T('q2')]; am.radioPool = [T('r1')]; am.pinned.add('q1'); am.pendingMix = { plan: null };
+    await am.start({ seed: { videoId: 'NEW', title: 'Nuevo', artist: 'x' } });
+    const playing = [A, B].filter((d) => d.st.playing || d.wantPlay).map((d) => d.track?.videoId);
+    assert.ok(!playing.includes('OLD2') && !playing.includes('CUR'), `solo suena el tema nuevo (${playing})`);
+    assert.deepStrictEqual(am.queue.map((t) => t.videoId).filter((v) => v === 'q1' || v === 'q2'), [], 'la cola anterior se descarta');
+    assert.strictEqual(am.radioPool.length, 0); assert.strictEqual(am.pinned.size, 0); assert.strictEqual(am.pendingMix, false); am.stop(); }
   console.log('automix-add engine: OK');
 };
 
