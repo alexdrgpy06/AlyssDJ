@@ -2,7 +2,8 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
+import { fileURLToPath } from 'node:url';
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 const mode = process.argv[2] || 'math';
 const tests = {};
