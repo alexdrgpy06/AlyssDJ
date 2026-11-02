@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
+last_change: 2026-11-02-exportar-biblioteca
 ---
 # library · design
 
@@ -20,3 +20,7 @@ last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
 ## Resolución de fuente
 
 `renderer/source.js` exporta `resolveSource({ track, analysis, preferSaved, forced })` → `{ source, origin, canSwitch, why, missing }`. `Analyzer.get` añade `savedMissing` cuando el archivo guardado ya no existe. El ajuste `preferSaved` (por defecto `true`) vive en `main/settings.js`.
+
+## export.js
+
+`main/export.js` (puro) exporta `normalize`, `toM3u8`, `toCsv`, `toRekordbox`, `esc`, `fileUri`, `writeAtomic`, `safeName` y `FORMATS`; `main.js` expone `export:run` y el preload `window.ytdj.export.run`.
