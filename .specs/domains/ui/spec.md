@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-automix-visual
+last_change: 2026-11-02-jog-turntable
 ---
 # ui · spec
 
@@ -72,3 +72,11 @@ THE SYSTEM SHALL dibujar en un lienzo detrás de la portada anillos que se expan
 ## Control, movimiento reducido y rendimiento
 
 THE SYSTEM SHALL ofrecer el botón «Visual» (activado por defecto, recordado en `AutoMix.cfg.visual`), mostrar el visual estático con `prefers-reduced-motion`, dibujar a ≤ 30 fps solo con la vista Automix, la ventana y el visual activos, y no cambiar el audio.
+
+## Editor y chips de género
+
+THE SYSTEM SHALL ofrecer un editor de géneros por pista y mostrar los géneros como chips en la cola de AutoMix.
+
+## Plato sujeto
+
+WHILE un plato está sujeto THE SYSTEM SHALL marcarlo con la clase `held` y AutoMix SHALL no iniciar transiciones.

@@ -34,3 +34,11 @@ approved_at: 2026-11-02
 Sin cambios de interfaz: solo cambia qué pistas aparecen en la cola y las sugeridas, y el texto de la nota.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: Sin canciones repetidas
+WHEN AutoMix rellena la cola con la radio o sugiere pistas THE SYSTEM SHALL tratar como la misma canción las que comparten título normalizado (sin acentos ni ruido entre corchetes) y primer artista, aunque tengan distinto videoId, y no repetirla ni encadenarla dos veces seguidas.
+IF el análisis o la descarga de la siguiente pista falla THEN THE SYSTEM SHALL mezclarla igualmente por streaming con fundido, sin tempo, y avisarlo en una nota.
+#### ADDED design: songKey
+`mixplan.songKey(track)` normaliza título y primer artista; `AutoMix.knownSongs()` reúne cola, historial y pista actual para filtrar el relleno y las sugerencias; una cabeza con preparación en error pasa a `ready` con `stream: true`.

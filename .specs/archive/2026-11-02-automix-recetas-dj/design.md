@@ -45,3 +45,12 @@ En la vista de AutoMix, bajo la mezcla actual o planificada: una tira horizontal
 
 ### A2 · 2026-11-02
 `cfg.styleV` (2) migra una sola vez el estilo guardado a `auto`, porque las versiones anteriores guardaban `bass` por defecto. Afecta a REQ-6.
+
+## Domain deltas
+### automix
+#### ADDED spec: Recetas de DJ
+WHEN AutoMix prepara una mezcla en modo Auto THE SYSTEM SHALL elegir la receta (bass swap, filtro, fundido, eco y corte o corte en la caída) según BPM, tonalidad, estructura y duración de outro e intro, y mostrar el motivo.
+WHILE una receta está en curso THE SYSTEM SHALL aplicar sus gestos de graves, filtro, fundido y efecto sobre la rejilla de la pista que sale, con el intercambio de graves en inicios de frase.
+WHERE el nivel de efectos es «apagado» THE SYSTEM SHALL omitir los gestos de efecto.
+#### ADDED design: recipes.js
+`renderer/recipes.js` (puro): `chooseStyle` → `{style, why}`, `planRecipe` → `{style, len, beat, swapBeat, gestures}`, `gestureValue`; `AutoMix.recipeStep` los aplica y `previewRecipe` alimenta la tira de la vista.

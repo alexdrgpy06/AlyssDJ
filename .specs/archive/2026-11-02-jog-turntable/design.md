@@ -46,3 +46,14 @@ Desviaciones respecto al diseño aprobado, sin cambiar ningún REQ:
 - La pista se prepara al pasar el cursor por el plato (`pointerenter`), no solo al pulsar, para que el decodificado (~160 ms) no retrase el primer gesto.
 - Sin buffer (pista de más de 15 min o sin archivo) el respaldo usa `rampTo(0.06, 150)` para frenar y `rampTo(1, 300)` para arrancar, y el arrastre hace seek.
 - `held.wanted` recuerda si el deck sonaba para reanudarlo al soltar; AutoMix consulta `platterHeld` de ambos decks y no inicia transiciones (ni «Mezclar ahora») mientras alguno esté sujeto.
+
+## Domain deltas
+### audio
+#### ADDED spec: Scratch en el plato
+WHEN el usuario pulsa el plato de un deck THE SYSTEM SHALL detener la pista como un vinilo y, mientras lo arrastra, moverla con su mano (también hacia atrás) a razón de 1,8 s de audio por vuelta; al soltar SHALL reanudar y, con SYNC, realinear la fase.
+IF no hay buffer decodificado (más de 15 min o sin archivo) THEN THE SYSTEM SHALL usar frenado y arranque con rampa y seek al arrastrar, avisando una vez.
+#### ADDED design: Procesador de scratch
+`shared/scratch.js` y `scratch-worklet.js` leen un buffer decodificado con posición fraccionaria y velocidad con signo; `scratch-math.js` calcula la velocidad del arrastre; `deck-engine` expone las operaciones `scratch` prepare, hold, move y release.
+### ui
+#### ADDED spec: Plato sujeto
+WHILE un plato está sujeto THE SYSTEM SHALL marcarlo con la clase `held` y AutoMix SHALL no iniciar transiciones.

@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-02-automix-fx-cues
+last_change: 2026-11-02-automix-recetas-dj
 ---
 # automix · spec
 
@@ -60,3 +60,19 @@ THE SYSTEM SHALL ofrecer el ajuste `fxLevel` (`off`, `subtle` por defecto, `full
 ## Seguridad de los efectos de AutoMix
 
 THE SYSTEM SHALL usar solo ranuras apagadas, ceder la ranura si el usuario la toca, omitir el movimiento (con nota) si no hay ranura libre y devolver las ranuras a su estado previo al terminar, detener, saltar o cambiar de pista.
+
+## Sin canciones repetidas
+
+WHEN AutoMix rellena la cola con la radio o sugiere pistas THE SYSTEM SHALL tratar como la misma canción las que comparten título normalizado (sin acentos ni ruido entre corchetes) y primer artista, aunque tengan distinto videoId, y no repetirla ni encadenarla dos veces seguidas.
+IF el análisis o la descarga de la siguiente pista falla THEN THE SYSTEM SHALL mezclarla igualmente por streaming con fundido, sin tempo, y avisarlo en una nota.
+
+## Cambio de tema o radio
+
+WHEN el usuario inicia AutoMix con otro tema o una radio mientras otro está activo THE SYSTEM SHALL parar el anterior, vaciar su cola, radio, fijadas, plan y deshacer, devolver EQ y filtro de ambos decks a neutro, y no heredar nada de la sesión previa.
+WHILE una pista del tema anterior suena THE SYSTEM SHALL dejarla sonar y pausar solo el deck que no suena.
+
+## Recetas de DJ
+
+WHEN AutoMix prepara una mezcla en modo Auto THE SYSTEM SHALL elegir la receta (bass swap, filtro, fundido, eco y corte o corte en la caída) según BPM, tonalidad, estructura y duración de outro e intro, y mostrar el motivo.
+WHILE una receta está en curso THE SYSTEM SHALL aplicar sus gestos de graves, filtro, fundido y efecto sobre la rejilla de la pista que sale, con el intercambio de graves en inicios de frase.
+WHERE el nivel de efectos es «apagado» THE SYSTEM SHALL omitir los gestos de efecto.

@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-exportar-biblioteca
+last_change: 2026-11-02-generos
 ---
 # library · design
 
@@ -24,3 +24,7 @@ last_change: 2026-11-02-exportar-biblioteca
 ## export.js
 
 `main/export.js` (puro) exporta `normalize`, `toM3u8`, `toCsv`, `toRekordbox`, `esc`, `fileUri`, `writeAtomic`, `safeName` y `FORMATS`; `main.js` expone `export:run` y el preload `window.ytdj.export.run`.
+
+## GenreStore
+
+`main/genres.js` persiste `userData/genres.json`; IPC `genres:all` y `genres:set`, evento `genres:event`; el editor vive en `renderer/genres.js`.

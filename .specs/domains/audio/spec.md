@@ -1,7 +1,7 @@
 ---
 domain: audio
 paths: [shared/fx.js, shared/dsp-chain.js, renderer/deck.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/fxpad.js, main/settings.js, scripts/**, docs/**, README.md, .github/**]
-last_change: 2026-11-02-fx-cadena
+last_change: 2026-11-02-jog-turntable
 ---
 # audio · spec
 
@@ -16,3 +16,8 @@ THE SYSTEM SHALL asignar a P: eco → división ¼/½/¾/1 beat y realimentació
 ## Resonancia del filtro de canal
 
 THE SYSTEM SHALL añadir `res` (0–1 → Q 0,707–8; 0,07 ≈ el Q 1,2 anterior) al filtro bipolar del canal, con ganancia compensadora por encima de ese Q y centro neutro con cualquier valor.
+
+## Scratch en el plato
+
+WHEN el usuario pulsa el plato de un deck THE SYSTEM SHALL detener la pista como un vinilo y, mientras lo arrastra, moverla con su mano (también hacia atrás) a razón de 1,8 s de audio por vuelta; al soltar SHALL reanudar y, con SYNC, realinear la fase.
+IF no hay buffer decodificado (más de 15 min o sin archivo) THEN THE SYSTEM SHALL usar frenado y arranque con rampa y seek al arrastrar, avisando una vez.

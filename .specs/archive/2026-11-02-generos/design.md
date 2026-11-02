@@ -40,3 +40,17 @@ Chips pequeños (alto 18 px, texto 11 px, color neutro con borde, sin color por 
 
 ### A1 · 2026-11-02
 No se añadió la lectura de `%(genre)s` de yt-dlp: YouTube Music casi nunca lo trae y el riesgo de parsear la salida de la descarga no compensa. La fuente automática de pistas de YouTube es la etiqueta del archivo bajado (`ffmpeg -i`), con origen `metadatos`; las locales usan `archivo`. Afecta a REQ-2. Además, la columna `género` del CSV va tras `Camelot` y antes de `ruta`, y el almacén expone `genres:event` para refrescar la interfaz.
+
+## Domain deltas
+### library
+#### ADDED spec: Géneros por pista
+THE SYSTEM SHALL guardar hasta 5 géneros normalizados por pista, con origen metadatos, archivo o manual (el manual prevalece), permitir editarlos y filtrar la librería por género, y exportarlos en la columna «género» del CSV y el atributo Genre de Rekordbox.
+WHEN AutoMix puntúa candidatas THE SYSTEM SHALL dar una bonificación a las que comparten género con la pista de referencia.
+#### ADDED design: GenreStore
+`main/genres.js` persiste `userData/genres.json`; IPC `genres:all` y `genres:set`, evento `genres:event`; el editor vive en `renderer/genres.js`.
+### analysis
+#### ADDED spec: Género desde el archivo
+WHEN se analiza o indexa un archivo local con etiqueta de género THE SYSTEM SHALL registrar ese género como origen archivo sin pisar uno manual.
+### ui
+#### ADDED spec: Editor y chips de género
+THE SYSTEM SHALL ofrecer un editor de géneros por pista y mostrar los géneros como chips en la cola de AutoMix.

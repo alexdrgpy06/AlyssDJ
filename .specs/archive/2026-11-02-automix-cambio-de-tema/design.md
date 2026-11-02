@@ -30,3 +30,11 @@ Sin cambios de API ni de datos; `start({ seed, tracks })` mantiene su firma.
 Sin cambios de interfaz.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: Cambio de tema o radio
+WHEN el usuario inicia AutoMix con otro tema o una radio mientras otro está activo THE SYSTEM SHALL parar el anterior, vaciar su cola, radio, fijadas, plan y deshacer, devolver EQ y filtro de ambos decks a neutro, y no heredar nada de la sesión previa.
+WHILE una pista del tema anterior suena THE SYSTEM SHALL dejarla sonar y pausar solo el deck que no suena.
+#### ADDED design: Limpieza en start()
+`AutoMix.start()` resetea queue, radioPool, pinned, pendingMix, plan, undoStack y waitSince antes de arrancar el nuevo tema.
