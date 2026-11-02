@@ -52,6 +52,44 @@ export function fxCues(ana) {
   return cues.sort((x, y) => x.t - y.t || order[x.kind] - order[y.kind]);
 }
 
+// Movimientos de una transición: eco de salida y reverb de rotura sobre la pista saliente.
+//   level: 'off' | 'subtle' | 'full' · cur: análisis de la saliente · plan: { exitAt, seconds } · style: estilo de la mezcla
+// Cada movimiento: { id, name, deck: 'from', type, p, targetWet, tailMs, startP | atPos/endPos, rampSeconds }.
+export function planTransitionMoves({ level, cur, plan, style }) {
+  if (!LEVELS.includes(level) || level === 'off' || !plan || !(plan.seconds > 0)) return [];
+  const moves = [];
+  const bpm = cur?.bpm > 0 ? cur.bpm : 120;
+  const beat = 60 / bpm;
+  if (plan.seconds >= 4) {
+    moves.push({ id: 'echo-out', name: 'eco de salida', deck: 'from', type: 'echo', p: 0.5, targetWet: 0.6, startP: 0.75, rampSeconds: plan.seconds * 0.25, tailMs: 4000 });
+  }
+  if (style !== 'filter') {
+    const end = plan.exitAt + plan.seconds;
+    const br = fxCues(cur).find((c) => c.kind === 'break' && c.t >= plan.exitAt && c.t <= end - beat);
+    if (br) moves.push({ id: 'reverb-break', name: 'reverb de rotura', deck: 'from', type: 'reverb', p: 0.8, targetWet: 0.5, atPos: br.t, endPos: Math.min(br.t + 16 * beat, end), rampSeconds: beat, tailMs: 4000 });
+  }
+  return moves;
+}
+
+// Movimiento sobre cues de la pista que suena (solo nivel «full», fuera de transición). Se llama en cada ciclo y devuelve
+// el movimiento que toca empezar ahora (o null). `lastEnd` es la posición donde acabó el anterior.
+export function planTrackMoves({ level, cues, pos, exitAt = null, bpm = 120, lastEnd = -Infinity }) {
+  if (level !== 'full' || !Array.isArray(cues) || !cues.length || !Number.isFinite(pos)) return null;
+  if (exitAt != null && pos > exitAt - 8) return null; // la transición manda
+  const phraseSec = (16 * 60) / (bpm > 0 ? bpm : 120);
+  const fresh = (t) => pos >= t && pos - t <= 2 && t >= lastEnd + phraseSec; // se empieza en el momento, no a mitad
+  for (const c of cues) {
+    if (c.kind === 'build') {
+      const d = cues.find((x) => x.kind === 'drop' && Math.abs(x.t - c.end) <= phraseSec / 2);
+      if (d && fresh(c.t) && pos < d.t) return { id: 'riser', name: 'riser', deck: 'cur', type: 'phaser', p: 0.7, maxWet: 0.5, fromPos: c.t, toPos: d.t, cut: 'drop' };
+    } else if (c.kind === 'break' && fresh(c.t)) {
+      const inRiser = cues.some((b) => b.kind === 'build' && b.t <= c.t && c.t < b.end);
+      if (!inRiser) return { id: 'reverb-break', name: 'reverb de rotura', deck: 'cur', type: 'reverb', p: 0.8, targetWet: 0.5, fromPos: c.t, toPos: c.t + phraseSec, rampSeconds: phraseSec / 16 };
+    }
+  }
+  return null;
+}
+
 // Reserva y devuelve ranuras de la cadena de efectos de los decks para los movimientos de AutoMix.
 // Solo usa ranuras apagadas; si el usuario toca una que está usando, la suelta sin restaurar (manda el usuario).
 export class FxMoves {

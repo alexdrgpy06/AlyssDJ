@@ -94,6 +94,50 @@ tests.moves = async () => {
   console.log('moves ok');
 };
 
+tests.plan = async () => {
+  const { planTransitionMoves, planTrackMoves, fxCues } = await import('../renderer/fxcues.js');
+  // pista: 120 BPM (frase 8 s), rotura en la frase 5 (t = 40,5) y caída en la 7 (t = 56,5)
+  const cur = ana([80, 80, 80, 80, 80, 30, 30, 90, 90, 90], { duration: 84 });
+  const cues = fxCues(cur); assert.deepStrictEqual(cues.map((c) => c.kind), ['break', 'drop']);
+  // REQ-2/6: apagado = nada
+  assert.deepStrictEqual(planTransitionMoves({ level: 'off', cur, plan: { exitAt: 30, seconds: 16 }, style: 'bass' }), []);
+  assert.deepStrictEqual(planTransitionMoves({ level: 'raro', cur, plan: { exitAt: 30, seconds: 16 }, style: 'bass' }), []); assert.deepStrictEqual(planTransitionMoves({ level: 'subtle', cur, plan: null }), []);
+  // REQ-3: eco de salida en el último cuarto, de 0 a 0,6, con cola de 4 s
+  let mv = planTransitionMoves({ level: 'subtle', cur, plan: { exitAt: 20, seconds: 16 }, style: 'bass' });
+  const eo = mv.find((m) => m.id === 'echo-out'); assert.ok(eo);
+  assert.deepStrictEqual([eo.deck, eo.type, eo.startP, eo.targetWet, eo.tailMs], ['from', 'echo', 0.75, 0.6, 4000]); assert.strictEqual(eo.rampSeconds, 4, 'el 25 % de 16 s');
+  assert.ok(!mv.some((m) => m.id === 'reverb-break'), 'la rotura (40,5) queda fuera de la ventana 20–36');
+  // transición corta (< 4 s): sin eco de salida
+  assert.ok(!planTransitionMoves({ level: 'subtle', cur, plan: { exitAt: 20, seconds: 3 }, style: 'bass' }).some((m) => m.id === 'echo-out'));
+  // reverb de rotura: dentro de la ventana, en fundido y bass swap, no en «filtro»
+  const win = { exitAt: 36, seconds: 16 };
+  mv = planTransitionMoves({ level: 'subtle', cur, plan: win, style: 'crossfade' }); const rb = mv.find((m) => m.id === 'reverb-break');
+  assert.ok(rb); assert.deepStrictEqual([rb.type, rb.atPos, rb.targetWet], ['reverb', 40.5, 0.5]); assert.strictEqual(rb.rampSeconds, 0.5, 'un beat'); assert.strictEqual(rb.endPos, 48.5, 'una frase de duración'); assert.strictEqual(planTransitionMoves({ level: 'subtle', cur, plan: { exitAt: 36, seconds: 8 }, style: 'bass' }).find((m) => m.id === 'reverb-break').endPos, 44, 'tope: fin de la transición (36 + 8)');
+  assert.ok(planTransitionMoves({ level: 'subtle', cur, plan: win, style: 'bass' }).some((m) => m.id === 'reverb-break'));
+  assert.ok(!planTransitionMoves({ level: 'subtle', cur, plan: win, style: 'filter' }).some((m) => m.id === 'reverb-break'), 'con el estilo filtro no hay reverb');
+  assert.ok(planTransitionMoves({ level: 'full', cur, plan: win, style: 'bass' }).length >= 2, 'Marcado también hace los de transición');
+  // REQ-4: solo en «Marcado» y fuera de transición
+  const rise = ana([40, 50, 60, 70, 100, 100, 100, 100, 100, 100], { duration: 84 }); const rc = fxCues(rise); // build 0,5→32,5 · drop 32,5
+  assert.deepStrictEqual(rc.map((c) => c.kind), ['build', 'drop']);
+  assert.strictEqual(planTrackMoves({ level: 'subtle', cues: rc, pos: 1, bpm: 120 }), null); assert.strictEqual(planTrackMoves({ level: 'off', cues: rc, pos: 1, bpm: 120 }), null);
+  const r = planTrackMoves({ level: 'full', cues: rc, pos: 1, bpm: 120 });
+  assert.deepStrictEqual([r.id, r.type, r.p, r.maxWet, r.fromPos, r.toPos], ['riser', 'phaser', 0.7, 0.5, 0.5, 32.5]);
+  assert.strictEqual(planTrackMoves({ level: 'full', cues: rc, pos: 33, bpm: 120 }), null, 'ya pasó la caída');
+  assert.strictEqual(planTrackMoves({ level: 'full', cues: rc, pos: 20, bpm: 120 }), null, 'a mitad de la subida (tras buscar con la aguja) no se empieza');
+  // la transición manda: 8 s antes de la salida no hay movimientos
+  assert.strictEqual(planTrackMoves({ level: 'full', cues: rc, pos: 1, bpm: 120, exitAt: 8 }), null); assert.ok(planTrackMoves({ level: 'full', cues: rc, pos: 1, bpm: 120, exitAt: 60 }));
+  // reverb de rotura sobre la pista que suena, con una frase de duración
+  const bk = planTrackMoves({ level: 'full', cues, pos: 41, bpm: 120 });
+  assert.deepStrictEqual([bk.id, bk.type, bk.fromPos, bk.toPos], ['reverb-break', 'reverb', 40.5, 48.5]);
+  // una frase de separación entre movimientos
+  assert.strictEqual(planTrackMoves({ level: 'full', cues, pos: 41, bpm: 120, lastEnd: 36 }), null, 'terminó hace menos de una frase (8 s)'); assert.ok(planTrackMoves({ level: 'full', cues, pos: 41, bpm: 120, lastEnd: 30 }));
+  assert.strictEqual(planTrackMoves({ level: 'full', cues: [], pos: 5 }), null); assert.strictEqual(planTrackMoves({ level: 'full', cues, pos: NaN }), null);
+  // la rotura dentro de una subida no lanza reverb
+  const mix2 = [{ t: 10, kind: 'build', end: 40, strength: 1 }, { t: 40, kind: 'drop', strength: 1 }, { t: 20, kind: 'break', strength: 0.5 }].sort((x, y) => x.t - y.t);
+  assert.strictEqual(planTrackMoves({ level: 'full', cues: mix2, pos: 21, bpm: 120 }), null);
+  console.log('plan ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fxcues.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });
