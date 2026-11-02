@@ -176,6 +176,18 @@ tests.ui = async () => {
   console.log('ui: OK');
 };
 
+tests.docs = async () => {
+  const d = read('docs/04-automix.md');
+  assert.ok(/Elegir cuándo sale la pista que suena/.test(d) && /Outro y intro/.test(d) && /Inicio del outro/.test(d) && /Final de la pista/.test(d), 'modos de salida documentados');
+  assert.ok(/Saltar siguiente/.test(d) && /Barajar/.test(d), 'saltar y barajar documentados');
+  assert.ok(!/Mezclar en puntos óptimos\*\* \(activado/.test(d) && !/mezclar en puntos óptimos\./.test(d), 'sin el interruptor antiguo');
+  assert.ok(/cuándo sale la pista que suena/.test(read('README.md')));
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in plan queue docs; do node scripts\/test-salida\.js/.test(ci) && /test-salida\.js ui/.test(ci), 'CI ejecuta test-salida');
+  for (const m of d.matchAll(/\((?:docs\/)?(img\/[^)]+\.png)\)/g)) assert.ok(fs.existsSync(path.join(root, 'docs', m[1])), `falta ${m[1]}`);
+  console.log('docs: OK');
+};
+
 const mode = process.argv[2];
 if (!tests[mode]) { console.error('modo desconocido:', mode, '| disponibles:', Object.keys(tests).join(', ')); process.exit(2); }
 tests[mode]().catch((e) => { console.error(e); process.exit(1); });

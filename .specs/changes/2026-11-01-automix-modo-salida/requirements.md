@@ -3,7 +3,7 @@ change: 2026-11-01-automix-modo-salida
 type: feature
 domains: [automix, ui]
 paths: [renderer/automix.js, renderer/mixplan.js, renderer/app.js, renderer/index.html, renderer/styles.css, scripts/**, docs/**, README.md, .github/**]
-commits: []
+commits: [3192c92,a54c64f,b4aa870]
 status: approved
 rev: 1
 approved_rev: 1

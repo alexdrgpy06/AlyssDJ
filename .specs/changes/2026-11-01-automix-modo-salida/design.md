@@ -50,4 +50,23 @@ planTransition(cur, next, { len, exitMode, optimal /* heredado */, pos })
 - Los botones nuevos son `btn sm` / `btn ghost sm` como los del grupo Cola; «Saltar siguiente» lleva el icono `i-skip`.
 - Sin animaciones nuevas.
 
+## Domain deltas
+### automix
+#### ADDED spec: Modo de salida
+THE SYSTEM SHALL ofrecer el selector «Salir» con los modos Mejor punto (por defecto), Outro y intro, Inicio del outro y Final de la pista; los puntos de salida editados mandan en cualquier modo; sin outro marcado sale como en Final de la pista y lo avisa; el ajuste heredado «puntos óptimos» se traduce (activado → Mejor punto, apagado → Final de la pista).
+#### ADDED spec: Duración adaptada
+WHILE el modo es «Outro y intro» THE SYSTEM SHALL durar el menor entre el outro restante de la saliente y el intro de la entrante (si solo se conoce uno, ese; si ninguno, la duración elegida), entre 4 y 48 s y sin pasar del outro de la entrante, y mostrar la duración de la próxima mezcla en el estado.
+#### ADDED spec: Saltar siguiente y barajar
+THE SYSTEM SHALL permitir quitar la pista que sigue (no durante una transición ni con menos de dos pistas) y barajar al azar las pistas no fijadas sin mover las fijadas ni la que ya se prepara, apagando «Orden automático» y permitiendo «Deshacer».
+#### ADDED design: planTransition por modos
+`renderer/mixplan.js` exporta `EXIT_MODES` e `introOutroSeconds`; `planTransition(cur, next, { len, exitMode, optimal, pos })` deriva el modo (`exitMode` o, si falta, `optimal === false` → `end`) y devuelve `mode`. `AutoMix.exitMode()` deriva el modo del ajuste guardado; `skipNext()` y `shuffle(rng)` operan sobre la cola; `snapshot()` expone `exitMode`, `canSkip` y `canShuffle`.
+### ui
+#### ADDED spec: Controles de salida, saltar y barajar
+THE SYSTEM SHALL mostrar el selector «Salir» en el grupo Transición, los botones «Barajar» y «Saltar siguiente» en el grupo Cola y «Saltar siguiente» en la vista Automix.
+
 ## Amendments
+
+### A1 · 2026-11-01
+Cambio: la prueba del modo `intro-outro` con puntos de salida editados fija que la duración sigue siendo la elegida (la salida editada no es el inicio del outro).
+Motivo: la duración adaptada solo tiene sentido cuando se sale al empezar el outro.
+Afecta: REQ-2 (precisión, sin cambio de comportamiento para el resto de los casos).

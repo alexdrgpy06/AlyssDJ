@@ -50,13 +50,29 @@ Apagando esa opción vuelve el comportamiento anterior (stream con fundido, y te
 
 Al analizar una pista (o al cargarla desde tu disco), AlyssDJ también calcula su **estructura**: la divide en **frases de 16 beats** alineadas a la rejilla, mide la energía de cada una y detecta **dónde acaba la intro**, **dónde empieza el outro** y las **roturas** (una frase fuerte seguida de una floja).
 
-Con **Mezclar en puntos óptimos** (activado por defecto):
+Con el selector **Salir** en **Mejor punto** (el valor por defecto):
 
 - La pista que suena **sale en su mejor punto**: el comienzo del outro, o una rotura, siempre en un límite de frase. Si una pista tiene un outro largo, no esperas a que acabe.
 - La siguiente **entra en su punto de entrada** (el primer beat con música), no en un segundo cualquiera.
 - La mezcla dura **compases enteros** (múltiplos de 4 beats) cercanos a la **Duración** que elegiste, y se recorta si queda poco tramo.
 - En la vista, la tarjeta **SUENA** muestra cuándo toca (`mezcla en 1:12 (outro, 1:40)`), y en la vista general de cada deck se marcan la **entrada** (verde), la **región de outro** (ámbar) y las **salidas candidatas**.
-- Sin estructura (pista sin analizar o con un análisis antiguo) vuelve a mezclar al final; los análisis antiguos se **recalculan solos con el archivo que ya está en tu disco**, sin descargar nada. Apagando la opción, mezcla siempre al final.
+- Sin estructura (pista sin analizar o con un análisis antiguo) vuelve a mezclar al final; los análisis antiguos se **recalculan solos con el archivo que ya está en tu disco**, sin descargar nada. Con **Final de la pista** mezcla siempre al final.
+
+### Elegir cuándo sale la pista que suena
+
+El selector **Salir** (grupo Transición) ofrece cuatro modos, inspirados en los modos de transición de los DJ automáticos como el AutoDJ de Mixxx:
+
+| Modo | Cuándo sale | Cuánto dura la mezcla |
+|---|---|---|
+| **Mejor punto** (por defecto) | En el mejor punto del análisis: el comienzo del outro o una rotura | La **Duración** elegida |
+| **Outro y intro** | Al empezar el outro | El **menor** entre lo que queda de outro de la pista que suena y el intro de la que entra (desde su punto de entrada hasta que acaba el intro). Si solo se conoce uno, ese; si ninguno, la duración elegida. Entre 4 y 48 s, y sin pasar del outro de la propia entrante |
+| **Inicio del outro** | Al empezar el outro | La **Duración** elegida |
+| **Final de la pista** | Casi al final | La **Duración** elegida |
+
+- Los **puntos de salida que editaste** a mano siguen mandando en cualquier modo.
+- Si una pista no tiene outro marcado (sin análisis o sin BPM), sale como en *Final de la pista* y el estado lo dice («sin outro marcado: sale al final»).
+- Con un plan listo, el estado muestra cuánto durará la próxima mezcla («próxima mezcla de 12 s»).
+- Quien tenía guardado «Mezclar en puntos óptimos» lo conserva: activado equivale a *Mejor punto* y apagado a *Final de la pista*.
 
 ## El BPM siempre cuenta
 
@@ -104,8 +120,10 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 Los controles de AutoMix están agrupados por función, con título:
 
 - **Reproducción:** iniciar o detener AutoMix y **Mezclar ahora** (**⇧→**).
-- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, mezclar en puntos óptimos.
-- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Deshacer**, **Rellenar con radio** y **Vaciar**.
+- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase y **Salir** (cuándo sale la pista que suena).
+- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Saltar siguiente**, **Rellenar con radio** y **Vaciar**.
+  - **Barajar** ordena al azar lo que no está fijado (no mueve lo fijado a mano ni la pista que ya se está preparando), apaga «Orden automático» para que no rehaga el orden y se puede **Deshacer**.
+  - **Saltar siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.
 - **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.
 
 ## Buscar y agregar desde la propia vista

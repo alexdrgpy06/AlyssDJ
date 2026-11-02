@@ -52,6 +52,8 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **Decks:** el plato muestra la portada (carátula del archivo, o una generada) y gira con la pista. La fuente (archivo local, copia guardada o streaming) se decide sola y se ve en cada deck y en cada fila.
 
+**AutoMix:** elige cuándo sale la pista que suena (mejor punto, outro e intro, inicio del outro o final), salta la siguiente y baraja la cola.
+
 **Vistas:** Mezcla, Librería, Automix (portada grande) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck.
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).
