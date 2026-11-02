@@ -39,3 +39,10 @@ El `<audio>` no puede ir hacia atrás ni muy lento, así que el scratch usa un r
 El plato gira con el puntero mientras está sujeto y se detiene al pulsar (clase `.held`: borde de acento y cursor `grabbing`); sin sujeción, giro normal ligado al tempo. Aviso de respaldo en un toast único («Scratch solo con audio local»). Respeta «reducir movimiento» (el giro del plato se detiene, el audio no cambia). Foco visible y objetivo táctil del plato ≥ 120 px.
 
 ## Amendments
+
+### A1 · 2026-11-02
+Desviaciones respecto al diseño aprobado, sin cambiar ningún REQ:
+- `shared/scratch.js` expone también `ready/url/pos/error`; el motor ofrece `scratchError()` y la vista avisa una sola vez cuando se usa el respaldo.
+- La pista se prepara al pasar el cursor por el plato (`pointerenter`), no solo al pulsar, para que el decodificado (~160 ms) no retrase el primer gesto.
+- Sin buffer (pista de más de 15 min o sin archivo) el respaldo usa `rampTo(0.06, 150)` para frenar y `rampTo(1, 300)` para arrancar, y el arrastre hace seek.
+- `held.wanted` recuerda si el deck sonaba para reanudarlo al soltar; AutoMix consulta `platterHeld` de ambos decks y no inicia transiciones (ni «Mezclar ahora») mientras alguno esté sujeto.

@@ -3,9 +3,9 @@
 //  - local:  un <audio> con el archivo que bajó yt-dlp, dentro del renderer
 // Lo que cambia entre ambas es el "adapter" (cómo se carga una pista y se lee su metadata).
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./dsp-chain.js'));
-  else root.YTDJEngine = factory(root.YTDJChain);
-})(typeof self !== 'undefined' ? self : this, function (Chain) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./dsp-chain.js'), (() => { try { return require('./scratch.js'); } catch { return null; } })());
+  else root.YTDJEngine = factory(root.YTDJChain, root.YTDJScratch);
+})(typeof self !== 'undefined' ? self : this, function (Chain, Scratch) {
   const STATE_MS = 33;
 
   function createDeckEngine({ adapter, onState }) {
@@ -20,6 +20,10 @@
     let loop = null;
     let wantPlaying = false;
     let lastEmit = 0;
+    let ramp = 1; // factor de velocidad del arranque/freno del plato
+    let rampTimer = null;
+    let held = null; // plato sujeto: { wasPlaying, buffered }
+    let scratch = null;
 
     function attach(el) {
       if (!el || el === media) return;
@@ -34,12 +38,12 @@
     }
 
     function effectiveRate() {
-      return rate * (1 + (performance.now() < bendUntil ? bend : 0));
+      return rate * (1 + (performance.now() < bendUntil ? bend : 0)) * ramp;
     }
 
     function applyRate() {
       if (!media) return;
-      const r = effectiveRate();
+      const r = Math.max(0.0625, effectiveRate()); // el <audio> no baja de ahí
       if (Math.abs(media.playbackRate - r) > 1e-4) media.playbackRate = r;
       if (media.preservesPitch !== keylock) media.preservesPitch = keylock;
     }
@@ -63,9 +67,74 @@
       media.currentTime = Math.max(0, Math.min(t, d - 0.05));
     }
 
+    // Rampa del factor de velocidad (freno y arranque del vinilo).
+    function rampTo(target, ms) {
+      clearInterval(rampTimer);
+      const from = ramp;
+      const t0 = performance.now();
+      rampTimer = setInterval(() => {
+        const f = Math.min(1, (performance.now() - t0) / ms);
+        ramp = from + (target - from) * f;
+        applyRate();
+        if (f >= 1) clearInterval(rampTimer);
+      }, 16);
+    }
+
+    // Plato: sujetar, mover, soltar. Con buffer decodificado suena el worklet (scratch real, hacia atrás incluido);
+    // sin él, freno y arranque suaves del <audio> y búsqueda al arrastrar.
+    async function scratchOp(cmd) {
+      if (cmd.op === 'prepare') {
+        if (!Scratch || !media) return false;
+        scratch = scratch || Scratch.create(ctx, chain.input);
+        return scratch.prepare(media.currentSrc);
+      }
+      if (cmd.op === 'hold') {
+        if (!media || held) return held?.buffered ?? false;
+        const wasPlaying = !media.paused;
+        const buffered = !!(scratch && scratch.ready && scratch.url === media.currentSrc);
+        held = { wasPlaying, buffered, wanted: wantPlaying };
+        if (buffered) {
+          sources.get(media)?.disconnect();
+          media.pause();
+          wantPlaying = false;
+          scratch.hold(media.currentTime, wasPlaying ? effectiveRate() : 0, 0);
+        } else if (wasPlaying) rampTo(0.06, 150);
+        return buffered;
+      }
+      if (cmd.op === 'move') {
+        if (!held) return false;
+        if (held.buffered) scratch.move(cmd.v || 0);
+        else if (cmd.d) seek(media.currentTime + cmd.d);
+        return true;
+      }
+      if (cmd.op === 'release') {
+        if (!held) return false;
+        const h = held;
+        held = null;
+        if (h.buffered) {
+          const p = await scratch.release();
+          sources.get(media)?.connect(chain.input);
+          seek(p);
+          wantPlaying = h.wanted;
+          if (h.wasPlaying) {
+            ramp = 0.06;
+            rampTo(1, 300);
+            await play();
+          }
+        } else if (h.wasPlaying) rampTo(1, 300);
+        return true;
+      }
+      return false;
+    }
+
     async function handle(cmd) {
       switch (cmd.type) {
+        case 'scratch':
+          return scratchOp(cmd);
         case 'load':
+          held = null;
+          ramp = 1;
+          scratch?.drop();
           wantPlaying = !!cmd.play;
           loop = null;
           await adapter.load(cmd, engine);
@@ -120,9 +189,11 @@
       const meta = adapter.meta ? adapter.meta() : {};
       return {
         ...meta,
-        pos: media ? media.currentTime : 0,
+        pos: held?.buffered ? scratch.pos : media ? media.currentTime : 0,
         dur: media && isFinite(media.duration) ? media.duration : 0,
-        playing: !!media && !media.paused && !media.ended,
+        playing: held?.buffered ? held.wasPlaying : !!media && !media.paused && !media.ended,
+        held: !!held,
+        scratchReady: !!(scratch && scratch.ready && media && scratch.url === media.currentSrc),
         rate: effectiveRate(),
         level: chain.level(),
         loop,
@@ -137,6 +208,7 @@
       get media() {
         return media;
       },
+      scratchError: () => (scratch ? scratch.error : 'sin controlador'),
       get wantPlaying() {
         return wantPlaying;
       },

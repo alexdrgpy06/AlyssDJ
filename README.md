@@ -64,7 +64,7 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).
 
-**Controles:** CUE estilo CDJ, 4 hot cues (Shift o clic derecho borra), loops de 1 a 16 beats e IN/OUT/EXIT, SYNC de tempo y fase, keylock, cuantizado, nudge, jog wheel, EQ de 3 bandas con kill, filtro bipolar, trim con auto-gain, PFL, crossfader y master.
+**Controles:** CUE estilo CDJ, 4 hot cues (Shift o clic derecho borra), loops de 1 a 16 beats e IN/OUT/EXIT, SYNC de tempo y fase, keylock, cuantizado, nudge, plato con scratch (pulsa para parar como un vinilo, arrastra para rayar, suelta para reanudar), EQ de 3 bandas con kill, filtro bipolar, trim con auto-gain, PFL, crossfader y master.
 
 **Teclado:** deck A → Z play, X cue, 1–4 hot cues, Q sync, A/S nudge · deck B → M play, N cue, 7–0 hot cues, P sync, K/L nudge · ←/→ crossfader.
 

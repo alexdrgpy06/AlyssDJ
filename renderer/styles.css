@@ -847,3 +847,6 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .gedit-chips { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .gedit-in { min-width: 220px; min-height: 26px; }
 .actions .gn { min-width: 24px; }
+
+/* Plato sujeto: se frena y el audio sigue a la mano */
+.platter.held { cursor: grabbing; box-shadow: 0 0 0 2px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }

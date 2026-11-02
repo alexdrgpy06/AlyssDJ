@@ -1,4 +1,5 @@
 import { register } from './controls.js';
+import { velFromDrag, SECONDS_PER_TURN } from '/shared/scratch-math.js';
 import { makeKnob } from './knob.js';
 import { analysisWave, liveWave, recordLive, drawScroll, drawOverview } from './waveform.js';
 import { camelotColor } from './camelot.js';
@@ -101,11 +102,11 @@ export class Deck {
     window.ytdj.deck.cmd(this.id, cmd);
   }
   sendLocal(cmd) {
-    this.local?.engine.handle(cmd);
+    return this.local?.engine.handle(cmd);
   }
   transport(cmd) {
-    if (this.source === 'local') this.sendLocal(cmd);
-    else this.sendStream(cmd);
+    if (this.source === 'local') return this.sendLocal(cmd);
+    return this.sendStream(cmd);
   }
   broadcast(cmd) {
     this.sendStream(cmd);
@@ -549,6 +550,44 @@ export class Deck {
     this.transport({ type: 'bend', amount: down ? dir * 0.04 : 0 });
   }
 
+  // ---------- plato: sujetar, scratch, soltar ----------
+  // Decodifica el audio local en segundo plano para que el scratch esté listo cuando se toque.
+  prepareScratch() {
+    if (this.source !== 'local' || !this.track || this.st.scratchReady || this.scratchPreparing) return;
+    this.scratchPreparing = true;
+    Promise.resolve(this.transport({ type: 'scratch', op: 'prepare' })).finally(() => (this.scratchPreparing = false));
+  }
+
+  async holdPlatter() {
+    if (this.platterHeld || !this.track) return;
+    this.platterHeld = { buffered: false };
+    this.el.platter.classList.add('held');
+    const ready = this.st.scratchReady || (await Promise.resolve(this.transport({ type: 'scratch', op: 'prepare' })).catch(() => false));
+    if (!this.platterHeld) return; // se soltó mientras se preparaba
+    const buffered = await Promise.resolve(this.transport({ type: 'scratch', op: 'hold' }));
+    if (this.platterHeld) this.platterHeld.buffered = !!buffered;
+    if (!ready && !this.scratchWarned) {
+      this.scratchWarned = true;
+      this.app.toast(this.source === 'local' ? 'Preparando el scratch de esta pista: de momento solo frena.' : 'Scratch solo con audio local: aquí el plato frena y arranca suave.');
+    }
+  }
+
+  // `deg` grados girados en `dt` s: con buffer manda la velocidad de la pista; sin él, se busca en pasos.
+  movePlatter(deg, dt) {
+    const h = this.platterHeld;
+    if (!h) return;
+    if (h.buffered) this.transport({ type: 'scratch', op: 'move', v: velFromDrag(deg, dt) });
+    else if (deg) this.transport({ type: 'scratch', op: 'move', d: (deg / 360) * SECONDS_PER_TURN });
+  }
+
+  async releasePlatter() {
+    if (!this.platterHeld) return;
+    this.platterHeld = null;
+    this.el.platter.classList.remove('held');
+    await this.transport({ type: 'scratch', op: 'release' });
+    if (this.syncLock) this.alignPhase?.(this.app.other(this));
+  }
+
   jog(delta) {
     if (!this.track) return;
     if (this.st.playing) this.transport({ type: 'bend', amount: Math.max(-0.3, Math.min(0.3, delta * 0.01)), ms: 80 });
@@ -720,27 +759,40 @@ export class Deck {
     register(`${P}.pitch`, { kind: 'range', setNorm: (n) => this.setPitch(n * 2 - 1) }, el.pitchFader);
     register(`${P}.jog`, { kind: 'relative', nudge: (d) => this.jog(d) }, el.platter);
 
-    // Jog: arrastrar en círculo. Sonando = pitch bend; en pausa = búsqueda fina.
+    // Plato: tocarlo lo sujeta como un vinilo (frena), arrastrarlo hace scratch (hacia atrás incluido) y soltarlo lo
+    // reanuda. Sin audio local decodificado (streaming o aún cargando) hay freno y arranque suaves.
+    el.platter.addEventListener('pointerenter', () => this.prepareScratch());
     el.platter.addEventListener('pointerdown', (e) => {
-      if (this.app.learning) return;
-      el.platter.setPointerCapture(e.pointerId);
+      if (this.app.learning || !this.track) return;
+      try { el.platter.setPointerCapture(e.pointerId); } catch { /* puntero sintético: sin captura */ }
       const r = el.platter.getBoundingClientRect();
       const angle = (ev) => (Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2)) * 180) / Math.PI;
       let last = angle(e);
+      let lastT = performance.now();
+      let idle = null;
+      this.holdPlatter();
       const move = (ev) => {
         const a = angle(ev);
         let d = a - last;
         if (d > 180) d -= 360;
         if (d < -180) d += 360;
         last = a;
-        this.jog(d / 3);
+        const now = performance.now();
+        this.movePlatter(d, (now - lastT) / 1000);
+        lastT = now;
+        clearTimeout(idle);
+        idle = setTimeout(() => this.movePlatter(0, 0), 60); // la mano quieta frena el disco
       };
       const up = () => {
+        clearTimeout(idle);
         el.platter.removeEventListener('pointermove', move);
         el.platter.removeEventListener('pointerup', up);
+        el.platter.removeEventListener('pointercancel', up);
+        this.releasePlatter();
       };
       el.platter.addEventListener('pointermove', move);
       el.platter.addEventListener('pointerup', up);
+      el.platter.addEventListener('pointercancel', up);
     });
 
     el.overview.addEventListener('pointerdown', (e) => {

@@ -583,6 +583,8 @@ export class AutoMix {
     const cur = this.cur;
     if (!cur?.track) return;
     const next = this.app.other(cur);
+    // Con un plato sujeto (scratch) no se inicia ninguna transición: se espera a que el DJ suelte.
+    const held = !!(cur.platterHeld || next.platterHeld);
     this.ensureQueue();
     this.prepareAhead();
     // Una cabeza que no se pudo analizar o descargar no frena la mezcla: suena por streaming y entra con fundido, sin tempo.
@@ -601,7 +603,8 @@ export class AutoMix {
       if (this.ready(next, head)) {
         const pm = this.pendingMix;
         if (!pm.plan) pm.plan = this.makeNearestPlan(cur, next, head);
-        if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {
+        if (held) this.emit();
+        else if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {
           this.pendingMix = false;
           this.startTransition(cur, next, pm.plan);
         } else this.emit(); // la cuenta atrás de la vista
@@ -610,6 +613,7 @@ export class AutoMix {
     }
     this.fxTrack(cur);
     if (!cur.st.playing || !head) return; // pausado a mano o sin siguiente
+    if (held) return;
     const rem = cur.remaining();
     // Plan: mejor punto de salida de la pista que suena (alineado a una frase), no necesariamente el final.
     this.plan = this.makePlan(cur, next, head);

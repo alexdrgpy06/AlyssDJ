@@ -31,6 +31,14 @@ Arriba, una onda por deck con **tres bandas** (graves azules, medios naranjas, a
 
 Sin analizar, la onda se dibuja *mientras suena*. Tras **Analizar** (YouTube) o al cargar una pista local, aparece completa.
 
+## Plato (jog) y scratch
+
+Pasa el cursor por el plato de un deck: la pista se prepara en segundo plano. Al **pulsarlo**, el plato se detiene como un vinilo con la mano encima (se marca con un borde). Mientras lo **arrastras en círculo**, la pista se mueve con tu mano: hacia atrás suena al revés, rápido o lento según giras. Al **soltar**, vuelve a sonar a su velocidad y, con SYNC activo, se realinea la fase con el otro deck.
+
+- Una vuelta completa del plato equivale a 1,8 s de audio (un disco a 33⅓ rpm).
+- Si la pista aún no se ha podido preparar (muy larga, de más de 15 min, o sin archivo), el plato frena y arranca con una rampa y el arrastre salta por la pista: es menos fino, y la app te avisa una vez.
+- Mientras un plato está sujeto, **AutoMix no inicia ninguna transición**: espera a que lo sueltes.
+
 ## Loops
 
 ![Loops](img/06-loops.png)
