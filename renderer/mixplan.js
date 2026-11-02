@@ -336,3 +336,13 @@ export function planTransition(cur, next, { len: chosenLen = 16, exitMode, optim
   if ((mode === 'outro-start' || mode === 'intro-outro') && !edited && !warnings.some((w) => w.startsWith('sin outro'))) warnings.push('sin outro marcado: sale al final');
   return endPlan();
 }
+
+// Clave de "es la misma canción": título sin acentos ni ruido entre paréntesis (remaster, official…) + primer artista.
+// Una misma canción llega con varios videoId (subida oficial, lyric video, otro crédito de artistas).
+const NOISE = /\b(official|video|audio|lyrics?|remaster(ed)?|visuali[sz]er|hd|hq|clean|explicit|version|mv)\b/;
+const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+export function songKey(t) {
+  const title = fold(t?.title).replace(/[(\[][^)\]]*[)\]]/g, (m) => (NOISE.test(m) ? ' ' : m)).replace(/[^a-z0-9]+/g, ' ').trim();
+  const artist = fold(t?.artist).split(/\s*(?:,|&|\bx\b|\bfeat\.?|\bft\.?|\bwith\b|\band\b)\s*/)[0].replace(/[^a-z0-9]+/g, ' ').trim();
+  return `${title}|${artist}`;
+}

@@ -176,14 +176,16 @@ tests.prepare = async () => {
     assert.ok(c.am.isReady(c.am.queue[0]), 'se marca para mezclar por streaming');
     assert.ok(c.toasts.some((m) => /streaming con fundido/.test(m)), 'avisa');
   }
-  // una cabeza que falló pasa al final y no bloquea
+  // una cabeza que no se pudo analizar o descargar no se salta ni bloquea: se mezcla por streaming con fundido
   {
     const c = setup();
     playing(c.am, c.A, c.T, 'CUR', 100);
     c.am.queue = [c.T('e1'), c.T('e2', { local: true })];
     c.am.prep.set('e1', { state: 'error', error: 'x' });
     c.am.tick();
-    assert.deepStrictEqual(ids(c.am), ['e2', 'e1']);
+    assert.deepStrictEqual(ids(c.am), ['e1', 'e2']);
+    assert.ok(c.am.isReady(c.am.queue[0]), 'la fallida queda lista para mezclarse por streaming');
+    assert.strictEqual(c.am.prep.get('e1').stream, true);
   }
   // REQ-7: con «usar archivo» apagado se comporta como antes (todo cuenta como listo y no se pide nada)
   {

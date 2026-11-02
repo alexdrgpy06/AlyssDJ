@@ -225,6 +225,14 @@ tests.engine = async () => {
     am.addSmart(T('L1', { local: true }));
     assert.ok(!am.suggestions().some((x) => x.track.videoId === 'L1'));
   }
+  // misma canción con otro videoId/crédito: ni entra a la cola ni se sugiere junto a la que ya suena o está en cola
+  { const { am } = engine(); am.A = null;
+    am.app.decks.A.track = { videoId: 'CUR', title: 'Thank You (Not So Bad)', artist: 'Dimitri Vegas & Like Mike, Tiësto, Dido' };
+    net.radio = [T('dup1', { title: 'Thank You (Not So Bad)', artist: 'Dimitri Vegas, Like Mike, Tiësto, Dido', duration: 140 }), T('dup2', { title: 'Blade', artist: 'D\'Angello & Francis', duration: 169 }), T('dup3', { title: 'Blade (Official Video)', artist: 'D\'Angello', duration: 169 })];
+    await am.ensureQueue(true);
+    assert.deepStrictEqual(am.queue.map((t) => t.videoId), ['dup2'], 'una sola versión de cada canción, ninguna repite la que suena');
+    am.radioPool = [net.radio[0], net.radio[2]]; am.libPool = [];
+    assert.strictEqual(am.suggestions().length, 0, 'las sugeridas tampoco repiten canciones ya en la cola o sonando'); }
   console.log('automix-add engine: OK');
 };
 

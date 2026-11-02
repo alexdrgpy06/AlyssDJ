@@ -2,7 +2,7 @@
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
-import { EXIT_MODES, planTransition, planNearest, rankCandidates, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { EXIT_MODES, planTransition, planNearest, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -18,6 +18,7 @@ export class AutoMix {
     this.on = false;
     this.queue = [];
     this.history = new Set();
+    this.histTracks = [];
     this.cur = null;
     this.trans = null;
     this.filling = false;
@@ -102,6 +103,7 @@ export class AutoMix {
     if (this.on) this.stop();
     this.queue = [];
     this.history.clear();
+    this.histTracks = [];
     this.trans = null;
     let first = seed;
     if (tracks?.length) {
@@ -127,6 +129,7 @@ export class AutoMix {
     this.cur = deck;
     this.setX(side(deck.id));
     this.history.add(first.videoId);
+    this.histTracks.push(first);
     this.note = '';
     clearInterval(this.timer);
     this.timer = setInterval(() => this.tick(), 250);
@@ -246,7 +249,8 @@ export class AutoMix {
     const r = await window.ytdj.lib.radio(vid);
     if (!r.ok) throw new Error(r.error);
     const known = new Set([...this.history, ...this.queue.map((t) => t.videoId), this.app.decks.A.track?.videoId, this.app.decks.B.track?.videoId]);
-    const fresh = r.data.filter((t) => !known.has(t.videoId) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR))).map((t) => ({ ...t, fromRadio: true }));
+    const knownSongs = this.knownSongs();
+    const fresh = r.data.filter((t) => !known.has(t.videoId) && !knownSongs.has(songKey(t)) && knownSongs.add(songKey(t)) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR))).map((t) => ({ ...t, fromRadio: true }));
     const noPlays = fresh.filter((t) => !t.plays); // algunas ya traen las vistas en sus créditos
     if (this.cfg.popularity && noPlays.length && window.ytdj.lib.popularity) {
       // Las reproducciones llegan en segundos; si tardan, la candidata entra sin ellas y la cola se reordena con el análisis.
@@ -278,6 +282,12 @@ export class AutoMix {
       this.filling = false;
       this.emit();
     }
+  }
+
+  // Canciones (no videoId) que ya sonaron, suenan o están en la cola: otra subida de la misma canción no se sugiere.
+  knownSongs() {
+    const out = new Set([...this.queue, this.cur?.track, this.app.decks.A.track, this.app.decks.B.track, ...this.histTracks].filter(Boolean).map(songKey));
+    return out;
   }
 
   // ---------- agregar ----------
@@ -365,8 +375,9 @@ export class AutoMix {
     const last = this.queue[this.queue.length - 1] || this.cur?.track;
     const ref = this.ana.get(last?.videoId) || this.cur?.analysis || null;
     const seen = new Set();
+    const songs = this.knownSongs();
     const cands = [...this.radioPool, ...this.libPool]
-      .filter((t) => !this.isKnown(t.videoId) && !this.history.has(t.videoId) && !seen.has(t.videoId) && seen.add(t.videoId))
+      .filter((t) => !this.isKnown(t.videoId) && !this.history.has(t.videoId) && !seen.has(t.videoId) && seen.add(t.videoId) && !songs.has(songKey(t)) && songs.add(songKey(t)))
       .map((t) => ({ track: t, analysis: this.ana.get(t.videoId) }));
     const ranked = rankCandidates({ ref, refTrack: last || null, cands, popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
     return ranked.slice(0, limit).map((c) => ({ track: c.track, cost: c.cost, fits: c.fits, plays: c.track.plays || 0, analyzed: !!c.analysis?.bpm, popBonus: c.popBonus }));
@@ -548,10 +559,12 @@ export class AutoMix {
     const next = this.app.other(cur);
     this.ensureQueue();
     this.prepareAhead();
-    // Una cabeza que falló al prepararse pasa al final: no bloquea la cola.
-    if (this.queue.length > 1 && this.prepOf(this.queue[0]).state === 'error') {
-      this.note = `No se pudo preparar “${this.queue[0].title}”; pasa al final de la cola`;
-      this.move(0, this.queue.length - 1);
+    // Una cabeza que no se pudo analizar o descargar no frena la mezcla: suena por streaming y entra con fundido, sin tempo.
+    const h0 = this.queue[0];
+    if (h0 && this.prepOf(h0).state === 'error') {
+      const error = this.prep.get(h0.videoId)?.error;
+      this.note = `No se pudo analizar o descargar “${h0.title}”: se mezcla por streaming con fundido`;
+      this.prep.set(h0.videoId, { state: 'ready', stream: true, error });
     }
     this.reorder();
     const head = this.queue[0];
@@ -785,6 +798,7 @@ export class AutoMix {
     }
     to.syncLock = false;
     this.history.add(to.track.videoId);
+    this.histTracks.push(to.track);
     // La cola pudo editarse durante la mezcla: se quita la pista que entró, no «la primera».
     this.queue = this.queue.filter((t) => t.videoId !== to.track.videoId);
     this.cur = to;
