@@ -19,6 +19,7 @@ module.exports = (win) => {
       R.prepare = await js(`const d = __app.decks.A; const t = performance.now(); const ok = await d.transport({ type: 'scratch', op: 'prepare' }); return { ok, ms: Math.round(performance.now() - t), src: d.local.engine.media.currentSrc, err: d.local.engine.scratchError?.() }`);
       for (let i = 0; i < 6 && !R.prepare.ok; i++) { await wait(1000); R.prepare = await js(`const d = __app.decks.A; const t = performance.now(); const ok = await d.transport({ type: 'scratch', op: 'prepare' }); return { ok, ms: Math.round(performance.now() - t), src: d.local.engine.media.currentSrc, ctx: d.local.engine.ctx?.state, err: d.local.engine.scratchError?.() }`); }
       R.ready = await js(snap);
+      for (let i = 0; i < 20 && !R.ready.ready; i++) { await wait(150); R.ready = await js(snap); } // `st` es una instantánea periódica
       // sujetar sonando: se frena y la posición deja de avanzar
       await js(`await __app.decks.A.holdPlatter(); return 1`); await wait(350); R.held = await js(snap); await wait(400); R.held2 = await js(snap);
       // arrastrar hacia atrás: −90° en 0,1 s (−4,5×) durante 0,5 s
