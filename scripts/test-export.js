@@ -121,6 +121,14 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.docs = async () => {
+  const d3 = read('docs/03-libreria-y-playlists.md'); const rd = read('README.md'); const ci = read('.github/workflows/ci.yml');
+  for (const k of ['Exportar a otro programa', 'M3U8', 'CSV', 'Rekordbox XML', 'Mezcla', 'Intro', 'Salida', 'Traktor no está incluido', 'img/48-exportar.png']) assert.ok(d3.includes(k), `03: ${k}`);
+  assert.ok(/Exportar:\*\*/.test(rd)); assert.ok(fs.existsSync(path.join(root, 'docs/img/48-exportar.png')), 'captura');
+  assert.ok(/for m in model docs; do node scripts\/test-export\.js/.test(ci), 'CI rápida'); assert.ok((ci.match(/test-export\.js ui/g) || []).length === 2, 'CI con ventana: ui (Linux y resto)');
+  console.log('docs ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('Uso: node scripts/test-export.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

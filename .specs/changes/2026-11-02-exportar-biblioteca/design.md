@@ -38,4 +38,14 @@ Un módulo puro `main/export.js` (sin Electron) con tres generadores y un normal
 - El resultado va al `#lib-msg` (`role="status"`): «Exportadas N pistas a nombre.ext» y, si hubo omitidas, «M sin audio en el disco omitidas».
 - Mismos tokens y estilo `.btn.sm` que los botones vecinos; sin elementos nuevos fuera de la barra.
 
+## Domain deltas
+### library
+#### ADDED spec: Exportar a otros programas
+THE SYSTEM SHALL permitir exportar «todo lo analizado» o una playlist importada a M3U8, CSV (UTF-8 con BOM) y Rekordbox XML (`COLLECTION` con tempo, tonalidad Camelot y marcas Mezcla/Intro/Salida) desde un botón «Exportar» de la Librería, omitir de M3U8 y Rekordbox las pistas sin archivo de audio en el disco (y avisar cuántas), conservarlas en el CSV con la ruta vacía, y escribir el archivo a un temporal que se renombra.
+#### ADDED design: export.js
+`main/export.js` (puro) exporta `normalize`, `toM3u8`, `toCsv`, `toRekordbox`, `esc`, `fileUri`, `writeAtomic`, `safeName` y `FORMATS`; `main.js` expone `export:run` y el preload `window.ytdj.export.run`.
+
 ## Amendments
+
+### A1 · 2026-11-02
+Cambio: el preload expone también `window.ytdj.crates` y `window.ytdj.crate` en la raíz. La Librería ya los llamaba así, pero solo existían bajo `window.ytdj.lib`, de modo que la pestaña «Importadas» y abrir una playlist importada fallaban; la exportación desde una playlist los necesita. Afecta a REQ-1.

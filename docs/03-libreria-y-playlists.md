@@ -76,3 +76,15 @@ El botón **Analizar** (en el deck o en la fila) descarga el audio **sin sesión
 - **+**: añade a la cola de AutoMix.
 - **Analizar / ✓**: analizar (✓ = ya analizada).
 - Arrastrar la fila a un deck, o doble clic, también carga.
+
+## Exportar a otro programa
+
+En **Analizadas** y dentro de cualquier **playlist importada** aparece el botón **Exportar**. Elige el formato y dónde guardarlo:
+
+![Exportar](img/48-exportar.png)
+
+- **M3U8 (lista)**: una lista que casi cualquier reproductor y programa de DJ entiende.
+- **CSV (hoja de cálculo)**: título, artista, duración, BPM, tonalidad, Camelot, ruta e id, en UTF-8 con acentos (se abre bien en Excel y LibreOffice).
+- **Rekordbox XML**: colección con BPM, tonalidad, rejilla de tempo y tres marcas por pista (**Mezcla**, **Intro** y **Salida**, sacadas del análisis); en Rekordbox, *Archivo → Importar* lo lee.
+
+Solo se exportan con ruta de audio las pistas que están en tu disco (locales o **guardadas**). Las que solo existen por streaming no se pueden reproducir fuera de la app: M3U8 y Rekordbox las omiten (la app avisa cuántas) y el CSV las conserva con la ruta vacía. El archivo se escribe entero o no se escribe. Traktor no está incluido.

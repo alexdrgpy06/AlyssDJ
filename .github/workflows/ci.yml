@@ -54,6 +54,7 @@ jobs:
           for m in model docs; do node scripts/test-fx.js $m; done
           for m in cues moves plan docs; do node scripts/test-fxcues.js $m; done
           for m in model docs; do node scripts/test-visual.js $m; done
+          for m in model docs; do node scripts/test-export.js $m; done
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
@@ -73,6 +74,7 @@ jobs:
           for m in engine ui settings; do xvfb-run -a node scripts/test-fx.js $m; done
           for m in engine ui; do xvfb-run -a node scripts/test-fxcues.js $m; done
           xvfb-run -a node scripts/test-visual.js ui
+          xvfb-run -a node scripts/test-export.js ui
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |
@@ -86,6 +88,7 @@ jobs:
           for m in engine ui settings; do node scripts/test-fx.js $m; done
           for m in engine ui; do node scripts/test-fxcues.js $m; done
           node scripts/test-visual.js ui
+          node scripts/test-export.js ui
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

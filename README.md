@@ -56,6 +56,8 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **Efectos:** cadena de tres efectos por deck (eco, reverb, flanger, gate, phaser, crush y filtro resonante), pad XY con modo instantáneo y resonancia del filtro del canal; todo con MIDI learn.
 
+**Exportar:** lo analizado y tus playlists importadas salen a M3U8, CSV o Rekordbox XML (BPM, tonalidad, rejilla y marcas de mezcla).
+
 **Vistas:** Mezcla, Librería, Automix (portada grande con anillos que laten con el beat) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck, y los divisores entre ondas, decks y librería se arrastran (cada vista recuerda su tamaño).
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).
