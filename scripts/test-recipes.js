@@ -17,7 +17,8 @@ tests.model = () => {
   assert.strictEqual(R.chooseStyle(A, B, plan(A), 'auto').style, 'bass');
   assert.strictEqual(R.chooseStyle(A, ana(124, '8A', { mix: { introEnd: 6, phrases: phrases(30) } }), plan(A), 'auto').style, 'filter', 'intro corta → filtro');
   assert.strictEqual(R.chooseStyle(A, ana(140), plan(A), 'auto').style, 'echo-cut', 'salto grande de BPM');
-  assert.strictEqual(R.chooseStyle(A, ana(124, '3B'), plan(A), 'auto').style, 'echo-cut', 'tonalidad en conflicto');
+  assert.strictEqual(R.chooseStyle(A, ana(124, '3B'), plan(A), 'auto').style, 'filter', 'tonalidad en conflicto con tempo parecido: filtro largo, no corte');
+  assert.strictEqual(R.chooseStyle(A, ana(133, '3B'), plan(A), 'auto').style, 'echo-cut', 'tonalidad en conflicto y tempo algo distinto');
   assert.strictEqual(R.chooseStyle(A, ana(128, '8A'), plan(A), 'auto').style, 'filter', 'BPM algo distinto');
   assert.strictEqual(R.chooseStyle({ ...A, bpm: null }, B, plan(A), 'auto').style, 'crossfade', 'sin BPM');
   assert.ok(R.chooseStyle(A, B, plan(A), 'auto').why.length > 5);
@@ -47,10 +48,17 @@ tests.model = () => {
   const fl = R.planRecipe({ style: 'filter', cur, plan: plan(cur) });
   const sweep = fl.gestures.find((x) => x.id === 'barrido-saliente');
   assert.ok((sweep.end - sweep.at) / beat >= 8 - 1e-6 && Math.abs(sweep.end - fl.len) < 1e-3, 'barrido de 8 o 16 pulsos al final');
+  // el intercambio de graves dura un compás y los cortes se hacen con una rampa de un pulso (nada de saltos)
+  assert.ok(Math.abs((sw.end - sw.at) - 4 * beat) < 2e-3, 'swap de un compás');
+  // todas las recetas salvo el fundido llevan un bass swap (el grave cambia de pista con una rampa) y nunca un salto
+  for (const st of ['bass', 'filter', 'echo-cut', 'drop-cut']) { const gsx = R.planRecipe({ style: st, cur, plan: plan(cur) }).gestures; assert.ok(gsx.some((x) => x.deck === 'from' && x.param === 'eqLow' && x.to === -1 && x.curve === 'ease') && gsx.some((x) => x.deck === 'to' && x.param === 'eqLow' && x.to === 0 && x.curve === 'ease'), `${st}: bass swap`); assert.ok(gsx.filter((x) => x.param === 'x').every((x) => x.curve === 'ease' && x.end > x.at), `${st}: crossfader con rampa`); }
+  // en Auto la duración la sugiere el análisis y se respeta
+  assert.strictEqual(R.chooseStyle(A, B, plan(A), 'auto').beats, 32); assert.strictEqual(R.chooseStyle(A, ana(140), plan(A), 'auto').beats, 8);
+  assert.strictEqual(R.planRecipe({ style: 'echo-cut', cur, plan: plan(cur), beats: 8 }).len, 8 * beat);
   const ec = R.planRecipe({ style: 'echo-cut', cur, plan: plan(cur) });
   const echo = ec.gestures.find((x) => x.id === 'eco-salida');
   assert.ok(echo && Math.abs(echo.at - (ec.len - 4 * beat)) < 2e-3 && [0.5, 0.75].includes(echo.delay), 'eco en el último compás con retardo 1/2 o 3/4');
-  assert.strictEqual(Math.round(ec.gestures.find((x) => x.id === 'corte').at * 1000), Math.round(ec.len * 1000), 'corte en la línea de compás');
+  assert.strictEqual(Math.round(ec.gestures.find((x) => x.id === 'fundido').end * 1000), Math.round(ec.len * 1000), 'el fundido termina en la línea de compás');
   // REQ-7: nivel de efectos
   const names = (lv, st) => R.planRecipe({ style: st, cur, plan: plan(cur), level: lv }).gestures.filter((x) => x.fx).map((x) => x.fx);
   assert.deepStrictEqual(names('off', 'echo-cut'), []); assert.deepStrictEqual(names('off', 'drop-cut'), []);
@@ -64,7 +72,7 @@ tests.model = () => {
 tests.docs = () => {
   const doc = readFileSync(new URL('../docs/04-automix.md', import.meta.url), 'utf8') + readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   const lc = doc.toLowerCase();
-  for (const w of ['Auto', 'eco y corte', 'corte en la caída', 'rejilla']) assert.ok(lc.includes(w.toLowerCase()), `la documentación menciona «${w}»`);
+  for (const w of ['Auto', 'bass swap + eco', 'en la caída', 'duración', 'rejilla']) assert.ok(lc.includes(w.toLowerCase()), `la documentación menciona «${w}»`);
   console.log('recipes docs: OK');
 };
 tests[mode]();

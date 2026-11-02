@@ -5,7 +5,7 @@ import { keysCompatible } from './camelot.js';
 import { fxCues } from './fxcues.js';
 
 export const STYLES = ['auto', 'bass', 'filter', 'crossfade', 'echo-cut', 'drop-cut'];
-export const STYLE_LABEL = { bass: 'bass swap', filter: 'filtro', crossfade: 'fundido', 'echo-cut': 'eco y corte', 'drop-cut': 'corte en la caída' };
+export const STYLE_LABEL = { bass: 'bass swap', filter: 'bass swap + filtro', crossfade: 'fundido', 'echo-cut': 'bass swap + eco', 'drop-cut': 'bass swap en la caída' };
 const LONG_BEATS = 32; // outro e intro de al menos 8 compases para un bass swap
 const MODERATE_GAP = 0.03; // por encima de un 3 % de BPM, el filtro disimula mejor que el bass swap
 
@@ -34,17 +34,22 @@ function dropEntry(cur, next, plan) {
 export function chooseStyle(cur, next, plan, cfgStyle = 'auto') {
   if (cfgStyle && cfgStyle !== 'auto' && STYLES.includes(cfgStyle)) return { style: cfgStyle, why: 'estilo elegido' };
   const gap = bpmGap(cur?.bpm, next?.bpm);
-  if (!gap) return { style: 'crossfade', why: 'sin BPM en alguna de las dos' };
-  if (gap.gap > MAX_BPM_GAP) return { style: 'echo-cut', why: `salto de BPM de ${Math.round(gap.gap * 100)} %` };
+  if (!gap) return { style: 'crossfade', why: 'sin BPM en alguna de las dos', beats: 16 };
+  // Todas las recetas menos el fundido llevan un bass swap: es la base de una buena transición. Cambian la duración y lo que se le añade.
+  if (gap.gap > MAX_BPM_GAP) return { style: 'echo-cut', why: `salto de BPM de ${Math.round(gap.gap * 100)} %: corta con eco`, beats: 8 };
   const ck = cur.camelot, nk = next.camelot;
-  if (ck && nk && ck !== nk && !keysCompatible(ck, nk)) return { style: 'echo-cut', why: `tonalidades en conflicto (${ck} → ${nk})` };
-  if (dropEntry(cur, next, plan)) return { style: 'drop-cut', why: 'rotura de la saliente y la entrante entra fuerte' };
-  if (gap.gap > MODERATE_GAP) return { style: 'filter', why: `BPM algo distinto (${Math.round(gap.gap * 100)} %)` };
+  if (ck && nk && ck !== nk && !keysCompatible(ck, nk)) {
+    // Con el tempo parecido un corte seco suena brusco: se disimula con un filtro largo; el corte se reserva a saltos grandes.
+    if (gap.gap <= MODERATE_GAP) return { style: 'filter', why: `tonalidades en conflicto (${ck} → ${nk}): bass swap con filtro para disimular`, beats: 16 };
+    return { style: 'echo-cut', why: `tonalidades en conflicto (${ck} → ${nk}) y tempo distinto`, beats: 8 };
+  }
+  if (dropEntry(cur, next, plan)) return { style: 'drop-cut', why: 'rotura de la saliente y la entrante entra fuerte', beats: 16 };
+  if (gap.gap > MODERATE_GAP) return { style: 'filter', why: `BPM algo distinto (${Math.round(gap.gap * 100)} %)`, beats: 16 };
   const beat = 60 / cur.bpm;
   const outroBeats = ((cur.duration || 0) - plan.exitAt) / beat;
   const introBeats = next.mix?.introEnd != null ? (next.mix.introEnd - (plan.enterAt ?? next.mix.mixIn ?? 0)) / beat : null;
-  if (outroBeats >= LONG_BEATS && (introBeats == null || introBeats >= LONG_BEATS)) return { style: 'bass', why: 'BPM y tonalidad compatibles, outro e intro largos' };
-  return { style: 'filter', why: 'outro o intro cortos' };
+  if (outroBeats >= LONG_BEATS && (introBeats == null || introBeats >= LONG_BEATS)) return { style: 'bass', why: 'BPM y tonalidad compatibles, outro e intro largos', beats: 32 };
+  return { style: 'filter', why: 'outro o intro cortos', beats: 16 };
 }
 
 const g = (id, deck, param, from, to, at, end, curve = 'ease', extra = {}) => ({ id, deck, param, from, to, at, end, curve, ...extra });
@@ -53,51 +58,59 @@ const g = (id, deck, param, from, to, at, end, curve = 'ease', extra = {}) => ({
 //   Gesto: { id, deck: 'from'|'to'|'x', param: 'eqLow'|'filter'|'x'|'fx', from, to, at, end, curve: 'lin'|'ease'|'step', fx? }
 //   `at`/`end` en segundos de mezcla (0 = salida de la saliente), siempre múltiplos del pulso. x: 0 = deck saliente, 1 = entrante.
 //   level: 'off' | 'subtle' | 'full' (REQ-7: 'off' quita los gestos de efecto).
-export function planRecipe({ style, cur, plan, level = 'subtle' }) {
+export function planRecipe({ style, cur, plan, level = 'subtle', beats: want = 0 }) {
   const bpm = cur?.bpm > 0 ? cur.bpm : 120;
   const beat = 60 / bpm;
   const phraseBeats = cur?.mix?.phraseBeats || 16;
   const maxBeats = Math.max(4, Math.floor(plan.seconds / beat));
   const bars = (b) => Math.max(4, Math.floor(b / 4) * 4);
   const short = ['echo-cut', 'drop-cut'].includes(style);
-  const nBeats = short ? Math.min(bars(maxBeats), 8) : bars(maxBeats);
+  // `want`: duración sugerida por el análisis (modo Auto); sin ella, cada estilo usa todo el tramo disponible (los de corte, 8 pulsos).
+  const nBeats = want > 0 ? bars(Math.min(maxBeats, want)) : short ? Math.min(bars(maxBeats), 8) : bars(maxBeats);
   const len = nBeats * beat;
   const T = (b) => b * beat;
   // Swap: inicio de frase más cercano a la mitad (o compás si la mezcla es corta), con un compás limpio antes y después.
   const half = nBeats / 2;
   let swap = nBeats >= 2 * phraseBeats ? Math.round(half / phraseBeats) * phraseBeats : Math.round(half / 4) * 4;
-  swap = Math.max(4, Math.min(swap, Math.max(4, nBeats - 6)));
+  swap = Math.max(4, Math.min(swap, Math.max(4, nBeats - 8)));
+  const SW = Math.max(1, Math.min(4, nBeats - swap)); // el intercambio de graves dura un compás: más gradual que 2 pulsos
   const out = [];
   const fx = level !== 'off';
   switch (style) {
     case 'bass':
       out.push(g('graves-entrante', 'to', 'eqLow', 0, -1, 0, 0, 'step'));
       out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
-      out.push(g('swap-entra', 'to', 'eqLow', -1, 0, T(swap), T(swap + 2), 'ease'));
-      out.push(g('swap-sale', 'from', 'eqLow', 0, -1, T(swap), T(swap + 2), 'ease'));
+      out.push(g('swap-entra', 'to', 'eqLow', -1, 0, T(swap), T(swap + SW), 'ease'));
+      out.push(g('swap-sale', 'from', 'eqLow', 0, -1, T(swap), T(swap + SW), 'ease'));
       break;
     case 'filter': {
       const sweep = nBeats >= 16 ? 16 : Math.max(4, nBeats >= 8 ? 8 : nBeats);
       out.push(g('graves-entrante', 'to', 'eqLow', 0, -1, 0, 0, 'step'));
       out.push(g('filtro-entra', 'to', 'filter', 0, 0.85, 0, 0, 'step'));
       out.push(g('abre-entrante', 'to', 'filter', 0.85, 0, 0, T(swap), 'ease'));
-      out.push(g('swap-entra', 'to', 'eqLow', -1, 0, T(swap), T(swap + 2), 'ease'));
-      out.push(g('swap-sale', 'from', 'eqLow', 0, -1, T(swap), T(swap + 2), 'ease'));
+      out.push(g('swap-entra', 'to', 'eqLow', -1, 0, T(swap), T(swap + SW), 'ease'));
+      out.push(g('swap-sale', 'from', 'eqLow', 0, -1, T(swap), T(swap + SW), 'ease'));
       out.push(g('barrido-saliente', 'from', 'filter', 0, -0.9, T(nBeats - sweep), T(nBeats), 'ease'));
       out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
       break;
     }
     case 'echo-cut':
-      if (fx) out.push(g('eco-salida', 'from', 'fx', 0, 0.6, T(nBeats - 4), T(nBeats - 4) + beat, 'ease', { fx: 'echo', p: bpm >= 128 ? 0.3 : 0.6, delay: bpm >= 128 ? 0.5 : 0.75, tailMs: 4000 }));
-      out.push(g('corte', 'x', 'x', 0, 1, T(nBeats), T(nBeats), 'step'));
-      break;
-    case 'drop-cut':
       out.push(g('graves-entrante', 'to', 'eqLow', 0, -1, 0, 0, 'step'));
-      if (fx) out.push(g('cola-reverb', 'from', 'fx', 0, 0.5, T(nBeats - 4), T(nBeats - 3), 'ease', { fx: 'reverb', p: 0.8, tailMs: 4000 }));
-      out.push(g('graves-entran', 'to', 'eqLow', -1, 0, T(nBeats), T(nBeats), 'step'));
-      out.push(g('graves-salen', 'from', 'eqLow', 0, -1, T(nBeats), T(nBeats), 'step'));
-      out.push(g('corte', 'x', 'x', 0, 1, T(nBeats), T(nBeats), 'step'));
+      out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
+      out.push(g('swap-entra', 'to', 'eqLow', -1, 0, T(swap), T(swap + SW), 'ease'));
+      out.push(g('swap-sale', 'from', 'eqLow', 0, -1, T(swap), T(swap + SW), 'ease'));
+      if (fx) out.push(g('eco-salida', 'from', 'fx', 0, 0.6, T(nBeats - 4), T(nBeats - 4) + beat, 'ease', { fx: 'echo', p: bpm >= 128 ? 0.3 : 0.6, delay: bpm >= 128 ? 0.5 : 0.75, tailMs: 4000 }));
       break;
+    case 'drop-cut': {
+      // La entrante se funde en los últimos 8 pulsos con el grave cortado y el bass swap cae en el último pulso (la caída).
+      const x0 = Math.max(0, nBeats - 8);
+      out.push(g('graves-entrante', 'to', 'eqLow', 0, -1, 0, 0, 'step'));
+      out.push(g('fundido', 'x', 'x', 0, 1, T(x0), T(nBeats), 'ease'));
+      if (fx) out.push(g('cola-reverb', 'from', 'fx', 0, 0.5, T(nBeats - 4), T(nBeats - 3), 'ease', { fx: 'reverb', p: 0.8, tailMs: 4000 }));
+      out.push(g('graves-entran', 'to', 'eqLow', -1, 0, T(nBeats - 1), T(nBeats), 'ease'));
+      out.push(g('graves-salen', 'from', 'eqLow', 0, -1, T(nBeats - 1), T(nBeats), 'ease'));
+      break;
+    }
     default: // crossfade
       out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
   }
@@ -115,4 +128,4 @@ export function gestureValue(gs, t) {
 }
 
 // Etiqueta corta de un gesto para la vista.
-export const GESTURE_LABEL = { 'graves-entrante': 'graves', 'swap-entra': 'graves', 'swap-sale': 'graves', 'graves-entran': 'graves', 'graves-salen': 'graves', 'filtro-entra': 'filtro', 'abre-entrante': 'filtro', 'barrido-saliente': 'filtro', fundido: 'fundido', 'eco-salida': 'eco', 'cola-reverb': 'reverb', corte: 'corte' };
+export const GESTURE_LABEL = { 'graves-entrante': 'graves', 'swap-entra': 'graves', 'swap-sale': 'graves', 'graves-entran': 'graves', 'graves-salen': 'graves', 'filtro-entra': 'filtro', 'abre-entrante': 'filtro', 'barrido-saliente': 'filtro', fundido: 'fundido', 'eco-salida': 'eco', 'cola-reverb': 'reverb' };

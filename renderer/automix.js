@@ -160,6 +160,7 @@ export class AutoMix {
 
   stop() {
     clearInterval(this.timer);
+    clearInterval(this.stepTimer);
     this.timer = null;
     this.on = false;
     if (this.trans) {
@@ -171,6 +172,10 @@ export class AutoMix {
     this.trans = null;
     this.fxm.releaseAll();
     this.fxLive = null;
+    // Los gestos (fundido, EQ, filtro) se aplican cada 40 ms y no cada 250 ms: así las curvas no suenan escalonadas.
+    clearInterval(this.stepTimer);
+    this.stepTimer = setInterval(() => (this.trans ? this.stepTransition() : clearInterval(this.stepTimer)), 40);
+    this.stepTimer.unref?.(); // en Node (pruebas) no mantiene vivo el proceso
     this.fxWarn = '';
     this.note = '';
     this.emit();
@@ -602,7 +607,11 @@ export class AutoMix {
     if (this.pendingMix && head) {
       if (this.ready(next, head)) {
         const pm = this.pendingMix;
-        if (!pm.plan) pm.plan = this.makeNearestPlan(cur, next, head);
+        // La entrada de la siguiente sale de su análisis: se espera a él (hasta 8 s) para no entrar por el principio de la pista.
+        pm.since ||= performance.now();
+        const noAna = !this.anaOf(next)?.mix && !this.ana.get(head.videoId)?.mix;
+        if (noAna && (next.analyzing || next.source === 'local' || this.cfg.analyze) && performance.now() - pm.since < 8000) return this.emit();
+        if (!pm.plan || (pm.plan.enterAt === 0 && !noAna)) pm.plan = this.makeNearestPlan(cur, next, head);
         if (held) this.emit();
         else if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {
           this.pendingMix = false;
@@ -625,7 +634,12 @@ export class AutoMix {
     const analysisPending = !next.analysis && (next.analyzing || next.source === 'local') && next.track?.videoId === head.videoId && rem > 12;
     const waitingAnalysis = (this.cfg.analyze && next.analyzing && rem > 25) || analysisPending;
     if (this.ready(next, head) && !waitingAnalysis) this.startTransition(cur, next, this.plan);
-    else if (rem <= 1.2 && this.ready(next, head)) this.startTransition(cur, next, 2);
+    else if (rem <= 1.2 && this.ready(next, head)) this.startTransition(cur, next, { seconds: 2, style: null, tempo: true, enterAt: this.makeNearestPlan(cur, next, head).enterAt, warnings: [] });
+  }
+
+  // Duración máxima que se le da al plan: en Auto la receta decide (hasta 32 s); con un estilo fijo, la elegida.
+  maxLen() {
+    return this.cfg.style === 'auto' ? Math.max(this.cfg.len, 32) : this.cfg.len;
   }
 
   // Receta que se usaría con la mezcla planificada (para la vista); null si aún no hay plan o análisis de la siguiente.
@@ -634,7 +648,7 @@ export class AutoMix {
     if (!this.on || !this.plan || !cur || !next?.bpm) return null;
     const pl = { exitAt: this.plan.exitAt, enterAt: this.plan.enterAt, seconds: this.plan.seconds };
     const pick = this.cfg.style !== 'auto' && this.plan.style ? { style: this.plan.style } : chooseStyle(cur, next, pl, this.cfg.style);
-    const rec = planRecipe({ style: pick.style, cur, plan: pl, level: this.fxLevel() });
+    const rec = planRecipe({ style: pick.style, cur, plan: pl, level: this.fxLevel(), beats: this.cfg.style === 'auto' ? pick.beats : 0 });
     return { style: pick.style, len: rec.len, gestures: rec.gestures.map((x) => ({ id: x.id, label: GESTURE_LABEL[x.id] || x.id, deck: x.deck, at: x.at, end: x.end, state: 'wait' })) };
   }
 
@@ -695,14 +709,14 @@ export class AutoMix {
     const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
     curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
     const nextAna = (next.track?.videoId === head.videoId && next.analysis) || this.ana.get(head.videoId) || {};
-    return planNearest(curAna, nextAna, { pos: posOf(cur), len: this.cfg.len });
+    return planNearest(curAna, nextAna, { pos: posOf(cur), len: this.maxLen() });
   }
 
   makePlan(cur, next, head, { quick = false } = {}) {
     const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
     curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
     const nextAna = (next.track?.videoId === head.videoId && next.analysis) || this.ana.get(head.videoId) || {};
-    return planTransition(curAna, nextAna, { len: quick ? Math.min(this.cfg.len, 6) : this.cfg.len, exitMode: quick ? 'end' : this.exitMode(), pos: posOf(cur) });
+    return planTransition(curAna, nextAna, { len: quick ? Math.min(this.cfg.len, 6) : this.maxLen(), exitMode: quick ? 'end' : this.exitMode(), pos: posOf(cur) });
   }
 
   resetWait() {
@@ -767,7 +781,7 @@ export class AutoMix {
     const curAna = this.anaOf(from);
     const nextAna = this.anaOf(to);
     const pick = this.cfg.style !== 'auto' && p.style ? { style: p.style, why: 'salto de BPM brusco' } : chooseStyle(curAna, nextAna, { exitAt: p.exitAt ?? posOf(from), enterAt: p.enterAt, seconds: p.seconds }, this.cfg.style);
-    const recipe = planRecipe({ style: pick.style, cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: p.seconds }, level: this.fxLevel() });
+    const recipe = planRecipe({ style: pick.style, cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: p.seconds }, level: this.fxLevel(), beats: this.cfg.style === 'auto' ? pick.beats : 0 });
     const style = pick.style;
     const len = recipe.len || p.seconds;
     this.trans = { from, to, len, t0: performance.now(), tempo, style, why: pick.why, recipe: recipe.gestures.map((x) => ({ ...x, state: 'wait', slot: null })), lastPhase: 0, track: to.track, kind: p.kind, warnings: p.warnings || [] };
@@ -851,6 +865,7 @@ export class AutoMix {
     for (const m of this.trans.moves || []) if (m.state === 'on') this.fxm.release(from, m.slot, m.tailMs || 0);
     for (const gs of this.trans.recipe || []) if (gs.param === 'fx' && gs.state === 'on') this.fxm.release(from, gs.slot, gs.tailMs || 0);
     this.trans = null;
+    clearInterval(this.stepTimer);
     from.wantPlay = false;
     from.transport({ type: 'pause' });
     for (const d of [from, to]) {

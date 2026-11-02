@@ -108,6 +108,16 @@ tests.engine = async () => {
     assert.ok(B.tempoCalls > 0, 'tempo igualado');
     assert.strictEqual(Math.round(am.trans.len / 0.5) % 4, 0, `${am.trans.len} s = compases enteros`);
   }
+  // «Siguiente» con el análisis de la entrante todavía sin llegar: espera a él y entra por su mejor punto, no por el principio
+  {
+    const { am, A, B } = setupEngine();
+    const full = am.ana.get('N1'); am.ana.set('N1', { bpm: full.bpm, offset: full.offset, duration: 240 }); // sin estructura (`mix`)
+    am.mixNow(); am.tick(); await sleep(5); am.tick();
+    assert.ok(!am.trans, 'sin análisis de estructura, espera');
+    am.ana.set('N1', full); B.analysis = full; // llega el análisis
+    am.tick(); const exitAt = am.pendingMix.plan.exitAt; A.pos = exitAt + 0.01; am.tick();
+    assert.ok(am.trans && B.seeks.includes(8), `entra por su mixIn (${JSON.stringify(B.seeks)})`);
+  }
   // una segunda pulsación cancela
   {
     const { am } = setupEngine();

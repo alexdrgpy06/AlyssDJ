@@ -35,7 +35,7 @@ Arriba, tres tarjetas: **SUENA** (con lo que falta), el estado de la mezcla con 
 |---|---|
 | **Iniciar / Detener AutoMix** | Enciende o apaga el DJ automático |
 | **Mezclar ahora** (**Mayús + →**) | Pasa ya a la siguiente pista **lista**, con una transición corta. Úsalo cuando el cambio sea bueno. Si aún no hay ninguna lista, se mezclará en cuanto la haya |
-| **Estilo** | *Auto* (por defecto, elige la receta en cada mezcla), *Fundido*, *Bass swap*, *Filtro*, *Eco y corte* o *Corte* (en la caída). Ver «Recetas de DJ» |
+| **Estilo** | *Auto* (por defecto, elige la receta en cada mezcla), *Fundido*, *Bass swap*, *Filtro*, *Bass + eco* o *En la caída*. Ver «Recetas de DJ» |
 | **Duración** | De 4 a 48 s |
 | **Analizar y usar archivo** | Ver abajo. Activado por defecto |
 | **Igualar tempo y fase** | Necesita BPM en las dos pistas |
@@ -201,8 +201,8 @@ Cada estilo es una receta: una lista de gestos (EQ, filtro, crossfader y efectos
 |---|---|
 | **Bass swap** | La entrante entra con el grave cortado; medios y agudos se mezclan y el grave cambia de pista en un inicio de frase (con un compás limpio antes y después) |
 | **Filtro** | La saliente cierra el paso alto en sus últimos 8 o 16 pulsos; la entrante se abre desde la entrada hasta la frase donde toma el grave |
-| **Eco y corte** | Eco a 1/2 o 3/4 de pulso en el primer tiempo del último compás y corte seco en la línea de compás; para saltos de BPM grandes, tonalidades en conflicto o pistas sin rejilla |
-| **Corte** (en la caída) | Si la saliente tiene una rotura y la entrante entra fuerte, corte en el inicio de compás con cola de reverb |
+| **Bass swap + eco** | Bass swap en una mezcla corta (8 pulsos) con eco a 1/2 o 3/4 de pulso en el último compás de la saliente; para saltos de BPM grandes o tonalidades en conflicto con tempo algo distinto |
+| **Bass swap en la caída** (*En la caída*) | Si la saliente tiene una rotura y la entrante entra fuerte: la entrante se funde en los últimos 8 pulsos con el grave cortado y el grave cambia de pista en el último pulso, con cola de reverb |
 | **Fundido** | Solo crossfader |
 
-Con **Auto**, la elección sale del análisis: sin BPM, fundido; salto de BPM grande o tonalidades en conflicto, eco y corte; rotura de la saliente con la entrante fuerte, corte; BPM algo distinto (más de un 3 %) u outro o intro cortos, filtro; BPM y tonalidad compatibles con outro e intro de al menos 8 compases, bass swap. El motivo aparece en la nota de la mezcla. Con el nivel de efectos en *Apagado* solo se ejecutan los gestos de EQ y filtro.
+Con **Auto** deciden el análisis tanto la receta como la **duración** y los efectos, y casi todas llevan un bass swap como base: sin BPM, fundido simple (16 pulsos); salto de BPM grande o tonalidades en conflicto con tempo distinto, bass swap corto con eco (8 pulsos); tonalidades en conflicto con tempo parecido, bass swap con filtro (16); rotura de la saliente con la entrante fuerte, bass swap en la caída (16); BPM algo distinto (más de un 3 %) u outro o intro cortos, bass swap con filtro (16); BPM y tonalidad compatibles con outro e intro de al menos 8 compases, bass swap largo (32 pulsos). El eco de salida y la reverb de las roturas se añaden según el nivel de efectos. El motivo se muestra en la vista.
