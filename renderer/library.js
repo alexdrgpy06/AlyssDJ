@@ -1,4 +1,5 @@
 // Librería: búsqueda, Me gusta y playlists de YouTube Music + pistas ya analizadas.
+import { genres, openGenreEditor, closeGenreEditor } from './genres.js';
 import { camelotColor, keysCompatible, bpmCompatible } from './camelot.js';
 import { resolveSource, originChip } from './source.js';
 
@@ -19,6 +20,8 @@ export class Library {
     this.addFolder.addEventListener('click', () => this.chooseFolder());
     this.sort = null;
     this.onlyCompat = false;
+    this.genreSel = new Set();
+    this.bindGenres();
     document.querySelectorAll('.tracks th[data-sort]').forEach((th) =>
       th.addEventListener('click', () => {
         const k = th.dataset.sort;
@@ -199,6 +202,12 @@ export class Library {
       this.app.automix.add(row);
       this.app.toast(`En la cola de AutoMix: ${row.title}`);
     }
+    if (btn.dataset.act === 'genres') {
+      return openGenreEditor(tr, row.videoId, () => {
+        this.render(this.base); // los chips de la fila reflejan lo guardado
+        this.body.querySelector(`tr[data-id="${CSS.escape(row.videoId)}"] .gn`)?.focus();
+      });
+    }
     if (btn.dataset.act === 'analyze') {
       if (this.jobs.has(row.videoId)) window.ytdj.analysis.cancel(row.videoId);
       else window.ytdj.analysis.request(row.videoId, { meta: { title: row.title, artist: row.artist, thumb: row.thumb, trackDuration: row.duration }, file: row.local ? row.path : undefined });
@@ -240,11 +249,11 @@ export class Library {
     return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
       <td>${art}</td>
       <td title="${esc(r.title)}">${esc(r.title)}</td>
-      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}</td>
+      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}${genres.chips(r.videoId)}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>
-      <td class="actions"><button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
+      <td class="actions"><button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
     </tr>`;
   }
 
@@ -285,6 +294,8 @@ export class Library {
   render(rows = this.base || this.rows) {
     this.base = rows;
     if (this.onlyCompat) rows = rows.filter((r) => r.playlist || this.isCompat(r));
+    if (this.genreSel.size) rows = rows.filter((r) => r.playlist || genres.matches(r.videoId, this.genreSel));
+    closeGenreEditor();
     rows = this.sorted(rows);
     this.rows = rows;
     document.querySelectorAll('.tracks th[data-sort]').forEach((th) => {
@@ -297,6 +308,57 @@ export class Library {
     this.listBtn.hidden = !rows.some((r) => r.videoId && !r.playlist);
     this.exportBtn.hidden = !this.exportSrc || !rows.some((r) => r.videoId && !r.playlist);
     this.analyzeBtn.hidden = !rows.some((r) => r.videoId && !r.playlist) || ['analyzed', 'automix', 'queue'].includes(this.tab);
+  }
+
+  // ---------- géneros: filtro de la barra ----------
+  bindGenres() {
+    this.genreBtn = document.getElementById('btn-genres');
+    this.genreMenu = document.getElementById('genre-menu');
+    const close = (refocus) => {
+      this.genreMenu.hidden = true;
+      this.genreBtn.setAttribute('aria-expanded', 'false');
+      if (refocus) this.genreBtn.focus();
+    };
+    this.genreBtn.addEventListener('click', () => {
+      const open = this.genreMenu.hidden;
+      if (open) this.paintGenreMenu();
+      this.genreMenu.hidden = !open;
+      this.genreBtn.setAttribute('aria-expanded', String(open));
+      if (open) this.genreMenu.querySelector('input,button')?.focus();
+    });
+    this.genreMenu.addEventListener('change', (e) => {
+      const name = e.target.dataset.g;
+      if (!name) return;
+      e.target.checked ? this.genreSel.add(name) : this.genreSel.delete(name);
+      this.paintGenreMenu(); // aparece o desaparece «Quitar el filtro»; el foco se queda en la casilla
+      this.genreMenu.querySelector(`input[data-g="${CSS.escape(name)}"]`)?.focus();
+      this.render(this.base);
+    });
+    this.genreMenu.addEventListener('click', (e) => {
+      if (!e.target.closest('.gclear')) return;
+      this.genreSel.clear();
+      this.render(this.base);
+      this.paintGenreMenu();
+    });
+    this.genreMenu.addEventListener('keydown', (e) => e.key === 'Escape' && (e.stopPropagation(), close(true)));
+    document.addEventListener('pointerdown', (e) => !this.genreMenu.hidden && !e.target.closest('.genre-wrap') && close(false));
+    genres.on(() => {
+      this.paintGenreMenu();
+      if (this.base && !document.querySelector('.gedit-row')) this.render(this.base); // con el editor abierto, la fila se actualiza al cerrarlo
+    });
+    genres.bind();
+    genres.load();
+  }
+
+  genreLabel() {
+    document.getElementById('btn-genres-label').textContent = this.genreSel.size ? `Géneros (${this.genreSel.size})` : 'Géneros';
+  }
+
+  paintGenreMenu() {
+    const v = genres.vocab;
+    this.genreBtn.hidden = !v.length;
+    this.genreLabel();
+    this.genreMenu.innerHTML = (this.genreSel.size ? '<button type="button" class="btn sm ghost gclear">Quitar el filtro</button>' : '') + v.map((g) => `<label><input type="checkbox" data-g="${esc(g.name)}"${this.genreSel.has(g.name) ? ' checked' : ''} />${esc(g.name)}<span class="n">${g.n}</span></label>`).join('');
   }
 
   // ---------- exportar a otros programas ----------

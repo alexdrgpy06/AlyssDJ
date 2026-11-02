@@ -4,11 +4,12 @@ type: feature
 domains: [audio, ui]
 paths: [renderer/deck.js, shared/deck-engine.js, renderer/styles.css, scripts/test-jog*.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 70a5eee315d308fc2fcba83dceb72ee8807f8689112624643b29c407a1f590b5
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-02
 ---
 # Requirements · 2026-11-02-jog-turntable
 

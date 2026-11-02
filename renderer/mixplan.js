@@ -213,6 +213,7 @@ export function planNearest(cur, next, { pos = 0, len = 16, minLead = 1, maxWait
 }
 
 // ---------- candidatas: BPM, tonalidad, energía, estilo y popularidad ----------
+export const GENRE_BONUS = 1.2; // compartir algún género con la pista de referencia: prefiere, no descarta
 export const POP_WEIGHTS = { low: 2, mid: 4, high: 8 };
 // 100 mil reproducciones → 0, 1000 millones → 1 (escala logarítmica).
 export const popScore = (plays) => (plays > 0 ? Math.max(0, Math.min(1, (Math.log10(plays) - 5) / 4)) : 0);
@@ -237,6 +238,7 @@ export function rankCandidates({ ref, refTrack = null, cands, popularity = true,
     const fits = fitsWith(ref, c.analysis);
     let style = 0;
     if (t.fromRadio) style += 1.5;
+    if (refTrack?.genres?.length && t.genres?.length && t.genres.some((g) => refTrack.genres.includes(g))) style += GENRE_BONUS;
     if (refTrack?.artist && t.artist && refTrack.artist.split(', ')[0].toLowerCase() === t.artist.split(', ')[0].toLowerCase()) style += 1;
     if (refTrack?.year && t.year) style += Math.max(0, 1 - 0.05 * Math.abs(refTrack.year - t.year));
     const popBonus = popularity ? w * popScore(t.plays || 0) : 0;

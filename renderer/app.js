@@ -2,6 +2,7 @@ import { controls, register, press } from './controls.js';
 import { makeKnob } from './knob.js';
 import { Deck } from './deck.js';
 import { STYLE_LABEL } from './recipes.js';
+import { genres } from './genres.js';
 import { Library } from './library.js';
 import { Midi } from './midi.js';
 import { AutoMix } from './automix.js';
@@ -734,7 +735,7 @@ class App {
     $('#amv-note').textContent = st.note || '';
 
     if (this.amDragging) return; // no reconstruir la lista mientras se arrastra
-    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}:${t.cost}`).join('|') + `|${st.curInfo?.bpm}`;
+    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}:${t.cost}:${(t.genres || []).join('+')}`).join('|') + `|${st.curInfo?.bpm}`;
     const list = $('#amv-list');
     if (list.dataset.sig === sig) return;
     list.dataset.sig = sig;
@@ -743,7 +744,7 @@ class App {
       const art = t.thumb ? `<img src="${esc(t.thumb)}" alt="" loading="lazy">` : '<div class="noart">♪</div>';
       return `<li class="am-item${i === 0 ? ' head' : ''}" data-i="${i}" draggable="true">
         <span class="am-grip" aria-hidden="true">⋮⋮</span><span class="am-num">${i + 1}</span>${art}
-        <div class="am-info"><b title="${esc(t.title)}">${esc(t.title)}${t.pinned ? '<span class="am-pin" title="Colocada por ti: no se reordena sola">📌 fija</span>' : ''}</b><small>${esc(t.artist)}</small></div>
+        <div class="am-info"><b title="${esc(t.title)}">${esc(t.title)}${t.pinned ? '<span class="am-pin" title="Colocada por ti: no se reordena sola">📌 fija</span>' : ''}</b><small>${esc(t.artist)}${genres.chips(t.videoId, 2)}</small></div>
         <span class="am-meta">
           <span class="bpm">${t.bpm ? t.bpm.toFixed(1) : '—'}</span>
           ${t.camelot ? `<span class="kchip" style="--k:${camelotColor(t.camelot)}">${t.camelot}</span>` : '<span class="kchip">—</span>'}

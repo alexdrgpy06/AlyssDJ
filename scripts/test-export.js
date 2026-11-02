@@ -67,8 +67,8 @@ tests.model = async () => {
   assert.deepStrictEqual([m.written, m.skipped], [2, 1]); assert.ok(!m.text.includes('Solo stream'));
   // REQ-2: CSV con ida y vuelta, comas, comillas, acentos y pistas sin audio
   const c = exp.toCsv(entries); assert.ok(c.text.startsWith('\uFEFF')); const rows = parseCsv(c.text);
-  assert.strictEqual(rows.length, 4); assert.deepStrictEqual(rows[0], ['título', 'artista', 'duración', 'BPM', 'tonalidad', 'Camelot', 'ruta', 'id']);
-  assert.deepStrictEqual(rows[1], ['Uno, "el primero"', 'Ñu & Co', '200', '124.50', 'A minor', '8A', f1, 'a']); assert.strictEqual(rows[2][3], ''); assert.deepStrictEqual([rows[3][6], rows[3][3]], ['', '100.00']);
+  assert.strictEqual(rows.length, 4); assert.deepStrictEqual(rows[0], ['título', 'artista', 'duración', 'BPM', 'tonalidad', 'Camelot', 'género', 'ruta', 'id']);
+  assert.deepStrictEqual(rows[1], ['Uno, "el primero"', 'Ñu & Co', '200', '124.50', 'A minor', '8A', '', f1, 'a']); assert.strictEqual(rows[2][3], ''); assert.deepStrictEqual([rows[3][6], rows[3][3]], ['', '100.00']);
   assert.deepStrictEqual([c.written, c.skipped], [3, 0]);
   const nl = exp.toCsv([{ ...entries[0], title: 'línea\nnueva' }]); assert.strictEqual(parseCsv(nl.text)[1][0], 'línea\nnueva');
   // REQ-3: Rekordbox XML bien formado, con escapes, URI, tempo y marcas
@@ -112,12 +112,12 @@ tests.ui = async () => {
   assert.deepStrictEqual([r.open.menu, r.open.expanded, r.open.items, r.open.focus], [true, 'true', 3, 'm3u8']); assert.strictEqual(r.down.focus, 'csv'); assert.deepStrictEqual([r.esc.menu, r.esc.expanded, r.esc.focus], [false, 'false', 'btn-export']); assert.strictEqual(r.outside.menu, false);
   // REQ-1/2/3: los tres formatos desde «todo lo analizado»: dos con audio, una sin
   const m = r.files.m3u8; assert.ok(m.text.startsWith('#EXTM3U') && (m.text.match(/#EXTINF/g) || []).length === 2 && !m.text.includes('Pista ccccccccccc'), 'm3u8'); assert.ok(/Exportadas 2 pistas a salida\.out · 1 sin audio/.test(m.snap.msg), m.snap.msg); assert.strictEqual(m.tmp, false);
-  const c = parseCsv(r.files.csv.text); assert.strictEqual(c.length, 4, 'csv: cabecera y 3 pistas'); assert.ok(c.some((x) => x[0] === 'Pista aaaaaaaaaaa' && x[3] === '124.00' && x[5] === '8A' && x[6].endsWith('aaaaaaaaaaa.m4a')));
+  const c = parseCsv(r.files.csv.text); assert.strictEqual(c.length, 4, 'csv: cabecera y 3 pistas'); assert.ok(c.some((x) => x[0] === 'Pista aaaaaaaaaaa' && x[3] === '124.00' && x[5] === '8A' && x[7].endsWith('aaaaaaaaaaa.m4a')));
   const x = r.files.rekordbox.text; wellFormed(x); assert.ok(x.includes('<COLLECTION Entries="2">') && x.includes('Name="Mezcla" Type="0" Start="16.000"') && x.includes('Bpm="128.00"'), 'rekordbox');
   // REQ-4: fallo de escritura → mensaje claro y nada a medias
   assert.ok(/No se pudo exportar/.test(r.fail.msg), r.fail.msg); assert.ok(!fs.existsSync(path.join(tmp, 'no')));
   // playlist importada: la pista con audio sale, la de stream no se puede reproducir y se avisa
-  const cc = parseCsv(r.crateCsv); assert.strictEqual(cc.length, 3); assert.ok(cc.some((y) => y[0] === 'Pista A' || y[0] === 'Pista aaaaaaaaaaa')); assert.ok(cc.some((y) => y[0] === 'Solo stream' && y[6] === ''), 'CSV conserva la de stream sin ruta');
+  const cc = parseCsv(r.crateCsv); assert.strictEqual(cc.length, 3); assert.ok(cc.some((y) => y[0] === 'Pista A' || y[0] === 'Pista aaaaaaaaaaa')); assert.ok(cc.some((y) => y[0] === 'Solo stream' && y[7] === ''), 'CSV conserva la de stream sin ruta');
   console.log('ui ok');
 };
 

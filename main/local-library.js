@@ -9,7 +9,8 @@ const EXT = new Set(['.mp3', '.flac', '.wav', '.m4a', '.aac', '.ogg', '.opus', '
 const idFor = (p) => 'L' + crypto.createHash('sha1').update(p).digest('hex').slice(0, 15);
 
 class LocalLibrary {
-  constructor({ file, ffmpeg, emit, coversDir }) {
+  constructor({ file, ffmpeg, emit, coversDir, onGenre }) {
+    this.onGenre = onGenre; // (id, texto de la etiqueta) → guarda el género leído del archivo
     this.coversDir = coversDir;
     if (coversDir) fs.mkdirSync(coversDir, { recursive: true });
     this.file = file;
@@ -166,6 +167,8 @@ class LocalLibrary {
         if (title) out.title = title;
         out.artist = artist;
         out.album = tag('album');
+        const genre = tag('genre');
+        if (genre) this.onGenre?.(id, genre);
         if (this.coversDir && /Stream #\d+:\d+[^\n]*Video:/.test(text)) {
           const img = path.join(this.coversDir, `${id}.jpg`);
           execFile(this.ffmpeg(), ['-v', 'error', '-y', '-i', p, '-an', '-frames:v', '1', '-vf', 'scale=360:-2', img], { timeout: 20000 }, (err) => {

@@ -88,3 +88,14 @@ En **Analizadas** y dentro de cualquier **playlist importada** aparece el botón
 - **Rekordbox XML**: colección con BPM, tonalidad, rejilla de tempo y tres marcas por pista (**Mezcla**, **Intro** y **Salida**, sacadas del análisis); en Rekordbox, *Archivo → Importar* lo lee.
 
 Solo se exportan con ruta de audio las pistas que están en tu disco (locales o **guardadas**). Las que solo existen por streaming no se pueden reproducir fuera de la app: M3U8 y Rekordbox las omiten (la app avisa cuántas) y el CSV las conserva con la ruta vacía. El archivo se escribe entero o no se escribe. Traktor no está incluido.
+
+
+## Géneros
+
+Cada pista puede llevar hasta cinco **géneros** (etiquetas de texto libre). Se leen solos de las **etiquetas del archivo** (ID3/MP4) o de los metadatos al analizar, y puedes escribirlos tú:
+
+- En la fila, el botón **♯** abre el editor: escribe un género y pulsa Enter o coma; Retroceso quita el último; Escape cierra. Lo que escribes a mano manda y no se pierde al reanalizar; dejar la lista vacía vuelve a lo automático.
+- Los géneros salen como chips junto al artista (hasta tres y «+N») y también en la cola del AutoMix.
+- El botón **Géneros** de la barra abre un **filtro** con casillas y cuántas pistas tiene cada género; sirve para ver solo lo que mezcla bien entre sí.
+- El **AutoMix** prefiere, al ordenar la cola y sugerir, pistas que comparten algún género con la que suena; no descarta las demás ni penaliza a las que no tienen género.
+- Al **exportar**, el CSV gana la columna *género* y el XML de Rekordbox el atributo `Genre`; el M3U8 no cambia.

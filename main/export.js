@@ -7,7 +7,7 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 // Una pista lista para escribir. `rec` es el registro de análisis o la fila de una playlist; `ana` el análisis (si lo hay).
 // `resolvePath(id, rec, ana)` devuelve la ruta del audio en el disco o ''.
-function normalize(rec, ana, resolvePath) {
+function normalize(rec, ana, resolvePath, genreOf) {
   const a = ana || {};
   const id = rec.videoId || rec.id || a.id || '';
   const mix = a.mix && typeof a.mix === 'object' ? a.mix : null;
@@ -21,6 +21,7 @@ function normalize(rec, ana, resolvePath) {
     offset: num(a.offset),
     key: a.key || '',
     camelot: a.camelot || '',
+    genre: ((genreOf && genreOf(id)) || []).join(', '),
     path: file && fs.existsSync(file) ? file : '',
     mix: mix ? { mixIn: mix.mixIn, introEnd: mix.introEnd, outroStart: mix.outroStart } : null,
   };
@@ -38,14 +39,14 @@ function toM3u8(entries) {
   return { text: lines.join('\n') + '\n', written: ok.length, skipped: entries.length - ok.length };
 }
 
-const COLS = ['título', 'artista', 'duración', 'BPM', 'tonalidad', 'Camelot', 'ruta', 'id'];
+const COLS = ['título', 'artista', 'duración', 'BPM', 'tonalidad', 'Camelot', 'género', 'ruta', 'id'];
 const csvCell = (v) => {
   const s = String(v ?? '');
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
 function toCsv(entries) {
-  const rows = [COLS, ...entries.map((e) => [e.title, e.artist, Math.round(e.duration) || '', e.bpm ? e.bpm.toFixed(2) : '', e.key, e.camelot, e.path, e.id])];
+  const rows = [COLS, ...entries.map((e) => [e.title, e.artist, Math.round(e.duration) || '', e.bpm ? e.bpm.toFixed(2) : '', e.key, e.camelot, e.genre || '', e.path, e.id])];
   return { text: '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n', written: entries.length, skipped: 0 };
 }
 
@@ -73,7 +74,7 @@ function toRekordbox(entries, name = 'AlyssDJ') {
   const ok = playable(entries);
   const out = ['<?xml version="1.0" encoding="UTF-8"?>', '<DJ_PLAYLISTS Version="1.0.0">', '  <PRODUCT Name="AlyssDJ" Version="1.0" Company="AlystechPY"/>', `  <COLLECTION Entries="${ok.length}">`];
   ok.forEach((e, i) => {
-    out.push(`    <TRACK TrackID="${i + 1}" Name="${esc(e.title)}" Artist="${esc(e.artist)}" TotalTime="${Math.round(e.duration)}" AverageBpm="${e.bpm.toFixed(2)}" Tonality="${esc(e.camelot)}" Location="${esc(fileUri(e.path))}">`);
+    out.push(`    <TRACK TrackID="${i + 1}" Name="${esc(e.title)}" Artist="${esc(e.artist)}" TotalTime="${Math.round(e.duration)}" AverageBpm="${e.bpm.toFixed(2)}" Tonality="${esc(e.camelot)}"${e.genre ? ` Genre="${esc(e.genre)}"` : ''} Location="${esc(fileUri(e.path))}">`);
     if (e.bpm > 0) out.push(`      <TEMPO Inizio="${e.offset.toFixed(3)}" Bpm="${e.bpm.toFixed(2)}" Metro="4/4" Battito="1"/>`);
     let n = 0;
     for (const [k, label] of MARKS) {

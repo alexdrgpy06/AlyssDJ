@@ -2,6 +2,7 @@
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
+import { genres } from './genres.js';
 import { chooseStyle, planRecipe, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
 import { EXIT_MODES, planTransition, planNearest, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
@@ -53,6 +54,7 @@ export class AutoMix {
       Object.assign(this.cfg, JSON.parse(localStorage.getItem(LS) || '{}'));
     } catch {}
     if (this.cfg.styleV !== 2) Object.assign(this.cfg, { style: 'auto', styleV: 2 }); // el nuevo «Auto» sustituye al «Bass swap» que traían por defecto las versiones anteriores
+    genres.on(() => this.emit()); // los chips de la cola reflejan los cambios de género
     window.ytdj.analysis.onEvent((ev) => this.onAnalysis(ev));
   }
 
@@ -257,6 +259,11 @@ export class AutoMix {
   // ---------- cola (radio de YouTube Music) ----------
   // Candidatas frescas de la radio de YouTube Music para `seedTrack`, con sus reproducciones, ordenadas por BPM, tonalidad,
   // estilo y popularidad. No toca la cola.
+  // Pista con sus géneros (los del almacén), para que rankCandidates pueda preferir los compartidos.
+  tagged(t) {
+    return t && !t.genres ? { ...t, genres: genres.of(t.videoId) } : t;
+  }
+
   async radioCandidates(seedTrack) {
     let vid = seedTrack.videoId;
     if (seedTrack.local) {
@@ -278,7 +285,7 @@ export class AutoMix {
     }
     const last = this.queue[this.queue.length - 1] || this.cur?.track;
     const ref = this.ana.get(last?.videoId) || this.cur?.analysis || null;
-    const ranked = rankCandidates({ ref, refTrack: last || null, cands: fresh.map((t) => ({ track: t, analysis: this.ana.get(t.videoId) })), popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
+    const ranked = rankCandidates({ ref, refTrack: this.tagged(last) || null, cands: fresh.map((t) => ({ track: this.tagged(t), analysis: this.ana.get(t.videoId) })), popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
     return ranked.map((c) => c.track);
   }
 
@@ -397,8 +404,8 @@ export class AutoMix {
     const songs = this.knownSongs();
     const cands = [...this.radioPool, ...this.libPool]
       .filter((t) => !this.isKnown(t.videoId) && !this.history.has(t.videoId) && !seen.has(t.videoId) && seen.add(t.videoId) && !songs.has(songKey(t)) && songs.add(songKey(t)))
-      .map((t) => ({ track: t, analysis: this.ana.get(t.videoId) }));
-    const ranked = rankCandidates({ ref, refTrack: last || null, cands, popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
+      .map((t) => ({ track: this.tagged(t), analysis: this.ana.get(t.videoId) }));
+    const ranked = rankCandidates({ ref, refTrack: this.tagged(last) || null, cands, popularity: this.cfg.popularity, popWeight: this.cfg.popWeight });
     return ranked.slice(0, limit).map((c) => ({ track: c.track, cost: c.cost, fits: c.fits, plays: c.track.plays || 0, analyzed: !!c.analysis?.bpm, popBonus: c.popBonus }));
   }
 
@@ -893,6 +900,7 @@ export class AutoMix {
         gapPct: g ? Math.round((g.ratio - 1) * 1000) / 10 : null, // + si hay que acelerar la entrante
         jump: !!g && g.gap > MAX_BPM_GAP,
         pinned: this.pinned.has(tr.videoId),
+        genres: genres.of(tr.videoId),
       };
     });
     return {

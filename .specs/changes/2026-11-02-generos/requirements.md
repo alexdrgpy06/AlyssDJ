@@ -4,11 +4,12 @@ type: feature
 domains: [library, analysis, ui]
 paths: [main/**, renderer/library.js, renderer/automix.js, renderer/mixplan.js, preload/app.js, scripts/test-generos.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 7300ecbf52a73d6f5bb845cd5875672831faffd2de1c620bba5e7a48397c441a
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-02
 ---
 # Requirements · 2026-11-02-generos
 

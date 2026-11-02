@@ -9,7 +9,8 @@ const ytdlp = require('./ytdlp');
 const L = require('./library-save');
 
 class Analyzer {
-  constructor({ cacheDir, settings, session, emit, ffmpeg, localLib, libraryDir }) {
+  constructor({ cacheDir, settings, session, emit, ffmpeg, localLib, libraryDir, genres }) {
+    this.genres = genres;
     this.localLib = localLib;
     this.libraryDir = libraryDir || (() => path.join(cacheDir, 'saved'));
     this.ffmpeg = ffmpeg || (() => 'ffmpeg');
@@ -133,6 +134,8 @@ class Analyzer {
       if (save) ({ file, thumb } = await ytdlp.withFormatRetry((format) => ytdlp.downloadToLibrary({ ...common, dir: libDir, format })));
       else file = await ytdlp.withFormatRetry((format) => ytdlp.download({ ...common, outDir: this.cacheDir, format }));
     }
+    // Género de la etiqueta del archivo (ya bajado o local); lo escrito a mano no se toca.
+    this.genres?.autoFromFile(id, file, this.ffmpeg(), local ? 'archivo' : 'metadatos').catch(() => {});
     this.running.stage = 'analyze';
     this.emit({ id, stage: 'analyze' });
     const result = await new Promise((resolve, reject) => {

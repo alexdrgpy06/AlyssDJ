@@ -10,6 +10,7 @@ const { Backlog } = require('./analysis-backlog');
 const { YtmLibrary } = require('./ytm-library');
 const ytdlp = require('./ytdlp');
 const exporter = require('./export');
+const { GenreStore } = require('./genres');
 const tools = require('./tools');
 const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
@@ -35,6 +36,7 @@ protocol.registerSchemesAsPrivileged([
 let win = null;
 let ffmpegBin = 'ffmpeg';
 let localLib = null;
+let genres = null;
 let toolDirs = [];
 let coversDir = '';
 let libraryView = null;
@@ -310,6 +312,10 @@ ipcMain.handle('lib:import-playlists', wrap(async () => {
 ipcMain.handle('crates:list', () => readCrates().map(({ tracks, ...l }) => ({ ...l, count: tracks.length })));
 ipcMain.handle('crates:get', (_e, id) => readCrates().find((c) => c.id === id)?.tracks || []);
 
+// ---------- géneros ----------
+ipcMain.handle('genres:all', () => genres.all());
+ipcMain.handle('genres:set', wrap((id, list) => genres.setManual(String(id || ''), list)));
+
 // ---------- exportar a otros programas (M3U8, CSV, Rekordbox XML) ----------
 ipcMain.handle('export:run', wrap(async (source, format) => {
   const fmt = exporter.FORMATS[format];
@@ -323,7 +329,7 @@ ipcMain.handle('export:run', wrap(async (source, format) => {
     name = c.title; rows = c.tracks;
   } else throw new Error('Origen de exportación no válido');
   const resolve = (id, _rec, a) => (a.saved?.path && fs.existsSync(a.saved.path) ? a.saved.path : localLib.pathOf(id) || analyzer.audioFile(id) || '');
-  const entries = rows.map((r) => exporter.normalize(r, analyzer.get(r.videoId), resolve));
+  const entries = rows.map((r) => exporter.normalize(r, analyzer.get(r.videoId), resolve, (id) => genres.get(id)?.genres));
   if (!entries.length) throw new Error('No hay pistas que exportar');
   const selftest = process.env.YTDJ_SELFTEST && process.env.YTDJ_EXPORT_FILE;
   let file = selftest;
@@ -492,13 +498,16 @@ app.whenReady().then(() => {
   // Instalada, la carpeta de la app puede ser de solo lectura: yt-dlp y ffmpeg van a la carpeta de datos del usuario.
   toolDirs = app.isPackaged ? [path.join(app.getPath('userData'), 'bin')] : [path.join(ROOT, 'bin'), path.join(app.getPath('userData'), 'bin')];
   ytdlp.setManagedDirs(toolDirs);
+  genres = new GenreStore({ file: path.join(app.getPath('userData'), 'genres.json'), emit: (ev) => send('genres:event', ev) });
   localLib = new LocalLibrary({
+    onGenre: (id, text) => genres.setAuto(id, text, 'archivo'),
     file: path.join(app.getPath('userData'), 'local-index.json'),
     coversDir,
     ffmpeg: () => ffmpegBin,
     emit: (ev) => send('local:event', ev),
   });
   analyzer = new Analyzer({
+    genres,
     localLib,
     libraryDir,
     ffmpeg: () => ffmpegBin,
