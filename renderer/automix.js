@@ -610,7 +610,7 @@ export class AutoMix {
         // La entrada de la siguiente sale de su análisis: se espera a él (hasta 8 s) para no entrar por el principio de la pista.
         pm.since ||= performance.now();
         const noAna = !this.anaOf(next)?.mix && !this.ana.get(head.videoId)?.mix;
-        if (noAna && (next.analyzing || next.source === 'local' || this.cfg.analyze) && performance.now() - pm.since < 8000) return this.emit();
+        if (noAna && (next.analyzing || this.prepOf(head).state === 'analyze') && performance.now() - pm.since < 8000) return this.emit();
         if (!pm.plan || (pm.plan.enterAt === 0 && !noAna)) pm.plan = this.makeNearestPlan(cur, next, head);
         if (held) this.emit();
         else if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {

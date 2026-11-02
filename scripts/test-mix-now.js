@@ -111,10 +111,10 @@ tests.engine = async () => {
   // «Siguiente» con el análisis de la entrante todavía sin llegar: espera a él y entra por su mejor punto, no por el principio
   {
     const { am, A, B } = setupEngine();
-    const full = am.ana.get('N1'); am.ana.set('N1', { bpm: full.bpm, offset: full.offset, duration: 240 }); // sin estructura (`mix`)
+    const full = am.ana.get('N1'); am.ana.set('N1', { bpm: full.bpm, offset: full.offset, duration: 240 }); B.analyzing = true; // analizándose: sin estructura (`mix`) todavía
     am.mixNow(); am.tick(); await sleep(5); am.tick();
     assert.ok(!am.trans, 'sin análisis de estructura, espera');
-    am.ana.set('N1', full); B.analysis = full; // llega el análisis
+    am.ana.set('N1', full); B.analysis = full; B.analyzing = null; // llega el análisis
     am.tick(); const exitAt = am.pendingMix.plan.exitAt; A.pos = exitAt + 0.01; am.tick();
     assert.ok(am.trans && B.seeks.includes(8), `entra por su mixIn (${JSON.stringify(B.seeks)})`);
   }
