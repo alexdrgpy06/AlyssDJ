@@ -17,7 +17,7 @@ module.exports = (win) => {
       R.loaded = await js(snap);
       // preparar: decodifica al pasar el ratón; se mide el tiempo
       R.prepare = await js(`const d = __app.decks.A; const t = performance.now(); const ok = await d.transport({ type: 'scratch', op: 'prepare' }); return { ok, ms: Math.round(performance.now() - t), src: d.local.engine.media.currentSrc, err: d.local.engine.scratchError?.() }`);
-      for (let i = 0; i < 3 && !R.prepare.ok; i++) { await wait(500); R.prepare = await js(`const d = __app.decks.A; const t = performance.now(); const ok = await d.transport({ type: 'scratch', op: 'prepare' }); return { ok, ms: Math.round(performance.now() - t), err: d.local.engine.scratchError?.() }`); }
+      for (let i = 0; i < 6 && !R.prepare.ok; i++) { await wait(1000); R.prepare = await js(`const d = __app.decks.A; const t = performance.now(); const ok = await d.transport({ type: 'scratch', op: 'prepare' }); return { ok, ms: Math.round(performance.now() - t), src: d.local.engine.media.currentSrc, ctx: d.local.engine.ctx?.state, err: d.local.engine.scratchError?.() }`); }
       R.ready = await js(snap);
       // sujetar sonando: se frena y la posición deja de avanzar
       await js(`await __app.decks.A.holdPlatter(); return 1`); await wait(350); R.held = await js(snap); await wait(400); R.held2 = await js(snap);

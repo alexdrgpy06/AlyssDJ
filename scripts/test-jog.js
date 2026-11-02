@@ -60,7 +60,7 @@ async function run() {
 tests.engine = async () => {
   const r = await run();
   // viabilidad: la pista local se decodifica en el contexto del deck y queda lista
-  assert.ok(r.prepare.ok === true && r.ready.ready, `buffer decodificado (${r.prepare.ms} ms)`); assert.ok(r.prepare.ms < 8000, `decodificar tarda ${r.prepare.ms} ms`);
+  assert.ok(r.prepare.ok === true && r.ready.ready, `buffer decodificado (${JSON.stringify(r.prepare)} ${JSON.stringify(r.ready)})`); assert.ok(r.prepare.ms < 8000, `decodificar tarda ${r.prepare.ms} ms`);
   assert.ok(r.loaded.playing && !r.loaded.paused, 'sonaba antes de tocar el plato');
   // REQ-1: sujeto → el <audio> se pausa, el plato lo muestra y la posición se queda quieta
   assert.ok(r.held.held && r.held.platter && r.held.paused, 'sujeto'); assert.ok(Math.abs(r.held2.pos - r.held.pos) < 0.05, `quieto sujeto (${r.held.pos} → ${r.held2.pos})`);
