@@ -298,6 +298,7 @@ class App {
     $('#amv-local').addEventListener('change', (e) => am.setCfg({ preferLocal: e.target.checked }));
     $('#amv-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
     $('#amv-exit').addEventListener('change', (e) => am.setCfg({ exitMode: e.target.value }));
+    $('#amv-fx').addEventListener('change', (e) => am.setCfg({ fxLevel: e.target.value }));
     $('#amv-skip').addEventListener('click', () => am.skipNext());
     $('#amv-shuffle').addEventListener('click', () => am.shuffle());
     $('#amv-order').addEventListener('change', (e) => am.setCfg({ smartOrder: e.target.checked }));
@@ -461,6 +462,9 @@ class App {
     $('#imm-status').textContent = st.trans
       ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}`
       : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${st.plan ? ` · próxima mezcla de ${Math.round(st.plan.seconds)} s` : ''}`) : 'AutoMix detenido';
+    const fxl = { off: 'apagados', subtle: 'sutiles', full: 'marcados' }[st.fx.level];
+    $('#imm-fx').hidden = !(st.fx.active.length || (st.trans && st.fx.level !== 'off'));
+    $('#imm-fx').textContent = st.fx.active.length ? `Efecto: ${st.fx.active.join(', ')}` : `Efectos ${fxl}`;
     $('#imm-bar').style.width = st.trans ? `${Math.round(st.trans.progress * 100)}%` : '0%';
     $('#imm-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#imm-next-sub').textContent = st.next ? [st.next.artist, st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : ''].filter(Boolean).join(' · ') : '';
@@ -657,6 +661,7 @@ class App {
     $('#amv-local').checked = st.cfg.preferLocal;
     $('#amv-tempo').checked = st.cfg.matchTempo;
     $('#amv-exit').value = st.exitMode;
+    $('#amv-fx').value = st.fx.level;
     $('#amv-skip').disabled = !st.canSkip;
     $('#amv-shuffle').disabled = !st.canShuffle;
     $('#amv-order').checked = st.cfg.smartOrder;
@@ -677,7 +682,7 @@ class App {
     $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     $('#amv-status').textContent = st.trans
-      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
+      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${{ bass: 'bass swap', filter: 'filtro', crossfade: 'fundido' }[st.trans.style]}${st.trans.tempo ? ' · tempo igualado' : ''}${st.fx.level !== 'off' ? ` · efectos ${{ subtle: 'sutiles', full: 'marcados' }[st.fx.level]}` : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
       : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}${Number.isFinite(st.pendingMix.seconds) ? ` · dura ${Math.round(st.pendingMix.seconds)} s` : ''}` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${planNote(st)}`) : 'Detenido';
     $('#amv-bar-wrap').hidden = !st.trans;
     if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;

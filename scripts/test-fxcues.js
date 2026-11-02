@@ -178,6 +178,24 @@ tests.engine = async () => {
   console.log('engine ok');
 };
 
+tests.ui = async () => {
+  const html = read('renderer/index.html'); const app = read('renderer/app.js'); const css = read('renderer/styles.css');
+  assert.ok(html.includes('id="amv-fx"') && html.includes('id="imm-fx"') && /<option value="subtle"/.test(html), 'selector y chip');
+  assert.ok(/fxLevel: e\.target\.value/.test(app) && /st\.fx\.level/.test(app) && /\.imm-chip/.test(css));
+  const r = electronRun('fxcues-ui-selftest.js', 'fxcues-ui.json');
+  assert.ok(!r.__err, JSON.stringify(r.__err));
+  // REQ-2: tres niveles, «Sutil» por defecto, recordado entre sesiones
+  assert.deepStrictEqual(r.opts.vals, ['off', 'subtle', 'full']); assert.deepStrictEqual(r.opts.labels, ['Apagado', 'Sutil', 'Marcado']); assert.strictEqual(r.opts.cur, 'subtle'); assert.strictEqual(r.opts.label, 'Efectos'); assert.ok(r.opts.aria);
+  assert.deepStrictEqual(r.after, { cfg: 'full', snap: 'full', sel: 'full' }); assert.deepStrictEqual(r.persisted, { cfg: 'full', sel: 'full' }, 'recordado');
+  // REQ-6: nota, estado y chip mientras hay un movimiento; nada con «Apagado»
+  assert.ok(/Efecto: eco de salida/.test(r.trans.note), r.trans.note); assert.ok(/efectos sutiles/.test(r.trans.status) || /efectos marcados/.test(r.trans.status), r.trans.status);
+  assert.strictEqual(r.trans.chipHidden, false); assert.ok(/Efecto: eco de salida/.test(r.trans.chip), r.trans.chip);
+  assert.strictEqual(r.off.chipHidden, true); assert.strictEqual(r.off.note.includes('Efecto'), false);
+  // 1366×768 sin desbordes
+  assert.ok(r.opts.sw <= r.opts.w && r.imm.sw <= r.imm.w, 'sin desbordes horizontales'); assert.ok(r.imm.sh <= r.imm.ih + 1, 'la vista Automix cabe');
+  console.log('ui ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fxcues.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

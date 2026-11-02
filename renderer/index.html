@@ -113,7 +113,7 @@
         <h2 id="imm-title">Nada cargado</h2>
         <p class="imm-artist" id="imm-artist">Carga una pista o inicia AutoMix.</p>
         <div class="imm-chips"><b class="imm-bpm" id="imm-bpm"></b><span class="kchip key" id="imm-key"></span><span class="src-chip" id="imm-origin" hidden></span><span class="imm-time" id="imm-time"></span></div>
-        <div class="imm-flow"><div class="am-status" id="imm-status">Detenido</div><div class="am-bar" id="imm-bar-wrap"><i id="imm-bar"></i></div></div>
+        <div class="imm-flow"><div class="am-status" id="imm-status">Detenido</div><div class="am-bar" id="imm-bar-wrap"><i id="imm-bar"></i></div><span class="imm-chip" id="imm-fx" hidden></span></div>
         <div class="imm-next"><span class="lbl">SIGUE</span><b id="imm-next">—</b><small id="imm-next-sub"></small></div>
       </div>
     </div>
@@ -320,6 +320,13 @@
               <option value="intro-outro" title="Al empezar el outro; dura lo que dure el menor entre su outro y el intro de la entrante">Outro y intro</option>
               <option value="outro-start" title="Al empezar el outro, con la duración elegida">Inicio del outro</option>
               <option value="end" title="Casi al final de la pista">Final de la pista</option>
+            </select>
+          </label>
+          <label class="am-exit"><span class="lbl">Efectos</span>
+            <select id="amv-fx" aria-label="Efectos de AutoMix" title="Efectos de DJ que AutoMix pone solo: usa solo ranuras de efecto libres y las devuelve al terminar">
+              <option value="off" title="Sin efectos: solo crossfader, graves o filtro">Apagado</option>
+              <option value="subtle" title="Eco de salida y reverb en una rotura durante las transiciones">Sutil</option>
+              <option value="full" title="Además, riser en las subidas y reverb en las roturas mientras suena la pista">Marcado</option>
             </select>
           </label>
         </fieldset>

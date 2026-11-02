@@ -809,3 +809,4 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .fx-ctl { grid-row: 2; }
 .pads .pane { min-height: 60px; align-items: center; }
 .pads .pane.fxpane { align-items: stretch; }
+.imm-chip { align-self: flex-start; margin-top: var(--s-2); padding: 1px var(--s-3); font-size: var(--fs-2); color: var(--text); background: var(--raised-2); border: 1px solid var(--line-2); border-radius: var(--r-pill); }
