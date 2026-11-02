@@ -12,8 +12,8 @@ module.exports = (win) => {
     const probe = `const h = (s) => { const e = document.querySelector(s); return e && e.offsetParent !== null ? Math.round(e.getBoundingClientRect().height) : null; };
       const sp = (w) => { const e = document.querySelector('.splitter[data-split="' + w + '"]'); if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, role: e.getAttribute('role'), now: e.getAttribute('aria-valuenow'), min: e.getAttribute('aria-valuemin'), max: e.getAttribute('aria-valuemax') }; };
       return { view: document.body.dataset.view, split: document.body.dataset.split || null, waves: h('.waves'), lib: h('.library'), con: h('.console'), sw: document.documentElement.scrollWidth, w: innerWidth, sh: document.documentElement.scrollHeight, ih: innerHeight, wsp: sp('waves'), lsp: sp('lib'), stored: JSON.parse(localStorage.getItem('alyssdj.splits') || 'null') }`;
-    const mouse = async (type, x, y, extra = {}) => { wc.sendInputEvent({ type, x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, ...extra }); await wait(60); };
-    const drag = async (sp, dy) => { await mouse('mouseDown', sp.x, sp.y); for (let i = 1; i <= 6; i++) await mouse('mouseMove', sp.x, sp.y + (dy * i) / 6, { modifiers: ['leftButtonDown'] }); await mouse('mouseUp', sp.x, sp.y + dy); await wait(250); };
+    const mouse = async (type, x, y, extra = {}) => { wc.sendInputEvent({ type, x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, ...extra }); await wait(80); };
+    const drag = async (sp, dy) => { win.focus(); wc.focus(); await mouse('mouseMove', sp.x, sp.y); await wait(150); await mouse('mouseDown', sp.x, sp.y); for (let i = 1; i <= 6; i++) await mouse('mouseMove', sp.x, sp.y + (dy * i) / 6, { modifiers: ['leftButtonDown'] }); await mouse('mouseUp', sp.x, sp.y + dy); await wait(250); };
 
     res.def = await js(probe);
     await drag(res.def.wsp, 60); res.waves60 = await js(probe);
