@@ -81,10 +81,10 @@ module.exports = (win, decks) => {
       await shot('06-loops.png', '#deck-A .deck', 4);
       await js(`const A=__app.decks.A; A.setLoop(null); A.setBank('jump'); return 1`);
       await shot('07-jump-roll.png', '#deck-A .deck', 4);
-      await js(`const A=__app.decks.A; A.setBank('fx'); document.querySelector('#deck-A .fx-on').click(); document.querySelector('#deck-A [data-fx="echo"]').click(); const w=document.querySelector('#deck-A .fx-wet'); w.value=0.55; w.dispatchEvent(new Event('input')); return 1`);
+      await js(`const A=__app.decks.A; A.setBank('fx'); A.fxc.set(0, { type: 'echo', on: true, wet: 0.55, p: 0.5 }); A.fxc.set(1, { type: 'phaser', on: false, wet: 0.4, p: 0.7 }); A.fxc.set(2, { type: 'filter', on: false, wet: 0.5, p: 0.3 }); A.fxc.select(0); A.fxPanel.sync(); return 1`);
       await wait(400);
       await shot('08-fx.png', '#deck-A .deck', 4);
-      await js(`const A=__app.decks.A; document.querySelector('#deck-A .fx-on').click(); A.setBank('grid'); return 1`);
+      await js(`const A=__app.decks.A; A.fxc.set(0, { on: false }); A.setBank('grid'); return 1`);
       await shot('09-grid.png', '#deck-A .deck', 4);
       await js(`__app.decks.A.setBank('loop'); return 1`);
       await shot('10-deck-sync.png', '#deck-B .deck', 4);
@@ -108,6 +108,9 @@ module.exports = (win, decks) => {
       await wait(900);
       await js(`__app.setSettingsPane('general'); return 1`);
       await shot('17-ajustes-1.png', 'dialog[open]', 16);
+      await js(`__app.setSettingsPane('fx'); return 1`);
+      await wait(300);
+      await shot('45-ajustes-efectos.png', 'dialog[open]', 16);
       await js(`__app.setSettingsPane('library'); return 1`);
       await wait(300);
       await shot('17-ajustes-2.png', 'dialog[open]', 16);

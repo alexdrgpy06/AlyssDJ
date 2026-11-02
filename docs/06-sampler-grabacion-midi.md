@@ -39,7 +39,7 @@ Pulsa **?** en cualquier momento:
 
 ## Ajustes
 
-Seis secciones: **General** (ondas grandes, diseño, restablecer vistas, actualizaciones), **Audio**, **Decks** (pitch y crossfader), **Librería y música**, **MIDI** y **Herramientas y cuenta**. Cada opción vive en una sola.
+Siete secciones: **General** (ondas grandes, diseño, restablecer vistas, actualizaciones), **Audio**, **Decks** (pitch y crossfader), **Efectos y filtros** (efectos instantáneos, recordar la cadena, resonancia por defecto), **Librería y música**, **MIDI** y **Herramientas y cuenta**. Cada opción vive en una sola.
 
 - **Buscador** (arriba a la izquierda; atajos **/** o **Ctrl+F**): escribe una palabra y se muestran solo las opciones que la contienen, en su etiqueta o en su ayuda, sin importar tildes ni mayúsculas. **Esc** limpia la búsqueda.
 - **Se guardan al cambiar**, sin botón: aparece «Guardado» arriba a la derecha. Si el guardado falla, el control vuelve a su valor y el motivo aparece debajo.
@@ -48,4 +48,5 @@ Seis secciones: **General** (ondas grandes, diseño, restablecer vistas, actuali
 
 ![Ajustes: General](img/17-ajustes-1.png)
 ![Ajustes: Librería y música](img/17-ajustes-2.png)
+![Ajustes: Efectos y filtros](img/45-ajustes-efectos.png)
 ![Ajustes: búsqueda](img/44-ajustes-busqueda.png)

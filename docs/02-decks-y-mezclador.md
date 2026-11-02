@@ -64,19 +64,31 @@ El ajuste se guarda por pista.
 
 ![FX](img/08-fx.png)
 
-Cada deck tiene su unidad de efectos. Pestaña **FX**:
+Cada deck tiene una **cadena de tres efectos en serie** (1 → 2 → 3). Pestaña **FX**:
 
-1. **FX** enciende o apaga.
-2. Elige el tipo: **ECO** (sincronizado al BPM), **REVERB**, **FLANGER** o **GATE** (corta el audio a corcheas).
-3. El deslizador es la cantidad. En el eco, el selector de la derecha es el tiempo (¼, ½, ¾ o 1 beat).
+1. Arriba, las **tres ranuras**: el número a la izquierda enciende o apaga el efecto; el nombre elige la ranura que editas (borde claro).
+2. Debajo, para la ranura elegida: el **tipo**, la **cantidad** y **P**, un segundo parámetro que cambia según el tipo.
+3. A la derecha, el **pad XY**: arrastra para mover a la vez la cantidad (izquierda → derecha) y P (abajo → arriba). Al pulsarlo la ranura se enciende; con **Mantener** (por defecto, en *Ajustes → Efectos y filtros*) se apaga al soltar, como un efecto instantáneo. Con el teclado: flechas (±0,02; **Mayús** ±0,1); doble clic lo centra.
 
-El eco sigue al tempo aunque muevas el pitch.
+| Tipo | Qué hace | P |
+|---|---|---|
+| **Eco** | Eco sincronizado al BPM | División: ¼, ½, ¾ o 1 beat (y la realimentación) |
+| **Reverb** | Sala sintética | Tamaño: de sala pequeña a grande |
+| **Flanger** | Barrido de peine | Velocidad, por beats (16 → 1) |
+| **Gate** | Corta el audio al ritmo | Corte por beat (1, ½, ¼) |
+| **Phaser** | Muescas que se mueven | Velocidad, por beats (16 → 1) |
+| **Crush** | Reduce los bits (12 → 3) | Bits |
+| **Filtro** | Pasa-bajos resonante | Frecuencia de corte |
+
+Puedes repetir el mismo tipo en varias ranuras. Con una ranura apagada o con cantidad 0 el audio pasa intacto y no gasta procesador. Los efectos sincronizados siguen al tempo aunque muevas el pitch. La cadena de cada deck se recuerda entre sesiones (se puede apagar en Ajustes) y cargar otra pista no la cambia.
+
+Todos los controles se pueden asignar por **MIDI learn** (interruptor, cantidad y P de cada ranura). En compactos de pantalla muy pequeña el banco FX queda oculto, igual que los demás bancos.
 
 ## Mezclador
 
 ![Mezclador](img/03-mixer.png)
 
-Por canal, de arriba abajo: **TRIM** (ganancia; se ajusta solo al cargar una pista analizada), **HI · MID · LOW** (EQ de 3 bandas; todo a la izquierda es *kill*), **FILTER** (a la izquierda pasa-bajos, a la derecha pasa-altos), **CUE** (PFL: escuchar en los auriculares), el **fader** con su medidor de nivel y el **crossfader** de abajo.
+Por canal, de arriba abajo: **TRIM** (ganancia; se ajusta solo al cargar una pista analizada), **HI · MID · LOW** (EQ de 3 bandas; todo a la izquierda es *kill*), **FILTER** (a la izquierda pasa-bajos, a la derecha pasa-altos), **RES** (resonancia del filtro; su valor por defecto se cambia en *Ajustes → Efectos y filtros*, y el doble clic vuelve a él), **CUE** (PFL: escuchar en los auriculares), el **fader** con su medidor de nivel y el **crossfader** de abajo.
 
 En el centro: **MASTER** y **PHONES** (volumen de auriculares).
 

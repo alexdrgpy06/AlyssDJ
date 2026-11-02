@@ -54,6 +54,8 @@ Fuente **Playlists**: tus listas de YouTube Music (con la sesión iniciada). **I
 
 **AutoMix:** elige cuándo sale la pista que suena (mejor punto, outro e intro, inicio del outro o final), salta la siguiente y baraja la cola.
 
+**Efectos:** cadena de tres efectos por deck (eco, reverb, flanger, gate, phaser, crush y filtro resonante), pad XY con modo instantáneo y resonancia del filtro del canal; todo con MIDI learn.
+
 **Vistas:** Mezcla, Librería, Automix (portada grande) y Ondas, con **Alt+1…4**; las ondas pueden ir arriba o dentro de cada deck, y los divisores entre ondas, decks y librería se arrastran (cada vista recuerda su tamaño).
 
 **Análisis en segundo plano:** «Analizar lista» deja playlists enteras en una cola persistente que se analiza de una en una (vista **Análisis**).

@@ -56,4 +56,37 @@ Fx.create(ctx).set({ slots: [{type,on,wet,p}×3], bpm })
 - Tras mantener el pad, la ranura vuelve a su estado (modo «mantener»).
 - El panel cabe en las alturas de los bancos actuales a 1366×768 sin desbordar; si no cabe en el modo compacto, el pad se oculta y quedan las ranuras (nunca desborda).
 
+## Domain deltas
+### audio
+#### ADDED spec: Cadena de tres efectos por deck
+THE SYSTEM SHALL ofrecer por deck tres ranuras de efecto en serie con tipo (eco, reverb, flanger, gate, phaser, crush, filtro), interruptor, cantidad y P; apagadas o con cantidad 0 dejan pasar el audio sin alterarlo y sin gastar procesador (el efecto solo se monta mientras la ranura está activa); el cambio de tipo hace un fundido de 30 ms.
+#### ADDED spec: Parámetro P y sincronía
+THE SYSTEM SHALL asignar a P: eco → división ¼/½/¾/1 beat y realimentación; reverb → tamaño (dos salas mezcladas); flanger y phaser → periodo 16…1 beats; gate → 1/½/¼ beat; crush → 12…3 bits; filtro → corte 120 Hz…18 kHz; y seguir el BPM del deck en eco, gate, flanger y phaser.
+#### ADDED spec: Resonancia del filtro de canal
+THE SYSTEM SHALL añadir `res` (0–1 → Q 0,707–8; 0,07 ≈ el Q 1,2 anterior) al filtro bipolar del canal, con ganancia compensadora por encima de ese Q y centro neutro con cualquier valor.
+#### ADDED design: fx.js, dsp-chain.js y mensaje mix
+`shared/fx.js` (`create(ctx).set({slots,bpm})`, `get()`, `mounted()`, `TYPES`, `SLOTS`); `shared/dsp-chain.js` aplica `m.fx` y `m.res` y añade el nodo `comp` tras el filtro; el mensaje `mix` lleva `fx: [{type,on,wet,p}×3]`, `bpm` y `res` en lugar de `fxType/fxWet/fxDiv`.
+### ui
+#### ADDED spec: Panel FX, XY pad y RES
+THE SYSTEM SHALL mostrar en el banco FX de cada deck tres ranuras (interruptor y nombre), tipo, cantidad y P de la ranura elegida y un pad XY (X cantidad, Y P; flechas ±0,02/±0,1; doble clic al centro) que enciende la ranura mientras se mantiene (ajuste `fxHold`); un knob RES junto a FILTER; todos los bancos miden lo mismo para que el deck no salte.
+#### ADDED spec: Persistencia, MIDI y Ajustes de efectos
+THE SYSTEM SHALL recordar la cadena de cada deck en `alyssdj.fx.<deck>` (ajuste `fxRemember`), conservarla al cargar pistas, registrar para MIDI learn `fx<n>On/Wet/P` y `res` (y mantener `fxOn`, `fxWet`, `fx.<tipo>` en la ranura 1) y ofrecer la sección «Efectos y filtros» con `fxHold`, `fxRemember` y `filterRes`.
+#### ADDED design: FxChain, fxpanel y fxpad
+`renderer/fxchain.js` (modelo puro con rampas y reloj inyectable), `renderer/fxpanel.js` (panel y MIDI), `renderer/fxpad.js` (pad); `Deck.fxSet(slot, patch)` y `Deck.fxRamp(slot, target, seconds)` para el AutoMix.
+
 ## Amendments
+
+### A1 · 2026-11-02
+Cambio: los bancos del deck (LOOP, JUMP/ROLL, FX, GRID) pasan a medir al menos 60 px, con los controles centrados, para que el deck no cambie de altura al cambiar de banco.
+Motivo: el panel FX necesita dos filas y, sin igualar, un deck con FX se desalineaba del otro.
+Afecta: REQ-3 (interfaz del panel); sin cambio de comportamiento.
+
+### A2 · 2026-11-02
+Cambio: con P = 0,5 el flanger tiene un ciclo de 4 beats (≈0,5 Hz a 120 BPM) en vez de 0,35 Hz fijos; el eco y el gate sí mantienen su sonido de siempre.
+Motivo: REQ-2 pide que el flanger siga el BPM, lo que cambia su velocidad por defecto.
+Afecta: REQ-1 (valor por defecto del flanger).
+
+### A3 · 2026-11-02
+Cambio: en el diseño de layout compacto (ventana de menos de 780 px de alto o 1280 de ancho) los bancos del deck, incluido FX, siguen ocultos como antes.
+Motivo: es el comportamiento existente del modo compacto; no se cambia en este cambio.
+Afecta: REQ-3 (disponibilidad del pad en pantallas pequeñas).

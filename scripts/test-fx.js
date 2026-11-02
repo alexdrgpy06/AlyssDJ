@@ -145,6 +145,19 @@ tests.settings = async () => {
   console.log('settings ok');
 };
 
+tests.docs = async () => {
+  const d2 = read('docs/02-decks-y-mezclador.md'); const d6 = read('docs/06-sampler-grabacion-midi.md'); const rd = read('README.md'); const cmp = read('docs/COMPARATIVA.md');
+  for (const k of ['cadena de tres efectos', 'pad XY', 'Mantener', 'Phaser', 'Crush', 'Filtro', 'RES', 'MIDI learn', 'img/08-fx.png']) assert.ok(d2.includes(k), `02: ${k}`);
+  assert.ok(!/\*\*FX\*\* enciende o apaga/.test(d2), 'sin la descripción antigua');
+  assert.ok(d6.includes('Efectos y filtros') && d6.includes('img/45-ajustes-efectos.png') && d6.includes('Siete secciones'));
+  assert.ok(/cadena de tres efectos/.test(rd) && /phaser/i.test(cmp) && !/🆕 4 \(eco/.test(cmp));
+  for (const f of ['08-fx.png', '45-ajustes-efectos.png']) assert.ok(fs.existsSync(path.join(root, 'docs/img', f)), f);
+  const ci = read('.github/workflows/ci.yml');
+  assert.ok(/for m in model docs; do node scripts\/test-fx\.js/.test(ci), 'CI rápida: model y docs');
+  assert.ok((ci.match(/for m in engine ui settings; do/g) || []).length === 2, 'CI con ventana: engine, ui y settings (Linux y resto)');
+  console.log('docs ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-fx.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });

@@ -63,13 +63,13 @@ tests.ui = async () => {
   assert.strictEqual(r.def.split, null); assert.strictEqual(r.def.wsp.role, 'separator'); assert.strictEqual(r.def.lsp.role, 'separator');
   assert.ok(Number(r.def.wsp.min) < Number(r.def.wsp.max));
   // arrastre real: las ondas crecen lo que se arrastra y la librería cede
-  near(r.waves60.waves, r.def.waves + 60, 14, 'ondas +60'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
+  near(r.waves60.waves, Math.min(r.def.waves + 60, r.def.waves + r.def.lib - 150), 14, 'ondas +60 (o el máximo que deja la consola)'); assert.ok(r.waves60.lib < r.def.lib); assert.strictEqual(r.waves60.split, 'waves'); noScroll(r.waves60, 'ondas +60');
   // máximo: lo que deja libre la consola sin quitar el mínimo a la librería
   near(r.wavesMax.waves, r.def.waves + r.def.lib - 150, 3, 'máximo de las ondas'); assert.ok(r.wavesMax.lib >= 149); noScroll(r.wavesMax, 'máximo');
   // doble clic restablece
   assert.strictEqual(r.reset.split, null); near(r.reset.waves, r.def.waves, 2, 'restablecido');
   // la librería manda al arrastrar su divisor y respeta el máximo (55 %)
-  near(r.lib80.lib, r.reset.lib + 40, 14, 'librería +40'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
+  near(r.lib80.lib, Math.min(r.reset.lib + 40, r.reset.waves + r.reset.lib - 90), 14, 'librería +40 (o el máximo)'); assert.strictEqual(r.lib80.split, 'lib'); noScroll(r.lib80, 'librería +40');
   near(r.libMax.lib, r.def.waves + r.def.lib - 90, 3, 'máximo de la librería'); assert.ok(r.libMax.waves >= 89); noScroll(r.libMax, 'máximo librería');
   // teclado: 8 px, 32 px con Mayús; ↑ agranda la librería
   near(r.kbUp.lib, r.kbBase.lib + 8, 2, '↑ 8 px'); near(r.kbUpBig.lib, r.kbUp.lib + 32, 2, 'Mayús+↑ 32 px'); near(r.kbDown.lib, r.kbUpBig.lib - 8, 2, '↓ 8 px');
