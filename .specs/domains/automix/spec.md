@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-02-automix-recetas-dj
+last_change: 2026-11-02-automix-transicion-suave
 ---
 # automix · spec
 
@@ -76,3 +76,9 @@ WHILE una pista del tema anterior suena THE SYSTEM SHALL dejarla sonar y pausar 
 WHEN AutoMix prepara una mezcla en modo Auto THE SYSTEM SHALL elegir la receta (bass swap, filtro, fundido, eco y corte o corte en la caída) según BPM, tonalidad, estructura y duración de outro e intro, y mostrar el motivo.
 WHILE una receta está en curso THE SYSTEM SHALL aplicar sus gestos de graves, filtro, fundido y efecto sobre la rejilla de la pista que sale, con el intercambio de graves en inicios de frase.
 WHERE el nivel de efectos es «apagado» THE SYSTEM SHALL omitir los gestos de efecto.
+
+## Transiciones suaves con bass swap
+
+WHEN AutoMix mezcla con cualquier receta distinta del fundido THE SYSTEM SHALL cortar el grave de la entrante al empezar e intercambiar los graves con una rampa de un compás, y aplicar el crossfader, el EQ y el filtro con rampas actualizadas cada 40 ms como máximo.
+WHILE el estilo es Auto THE SYSTEM SHALL elegir con el análisis la receta y su duración (8, 16 o 32 pulsos), y con tonalidades en conflicto y tempo parecido usar bass swap con filtro en vez de un corte.
+WHEN el usuario pulsa «Siguiente» o «Mezclar ahora» y la entrante se está analizando THE SYSTEM SHALL esperar su análisis hasta 8 s y entrar siempre por su punto de entrada, también en la mezcla de emergencia.

@@ -33,3 +33,12 @@ Etiquetas: `STYLE_LABEL['echo-cut'] = 'bass swap + eco'`, `['drop-cut'] = 'bass 
 Solo cambian los textos de dos botones del selector de estilo y la tira de gestos (que ahora muestra «graves» y «fundido» en vez de «corte»). Sin cambios de layout.
 
 ## Amendments
+
+## Domain deltas
+### automix
+#### ADDED spec: Transiciones suaves con bass swap
+WHEN AutoMix mezcla con cualquier receta distinta del fundido THE SYSTEM SHALL cortar el grave de la entrante al empezar e intercambiar los graves con una rampa de un compás, y aplicar el crossfader, el EQ y el filtro con rampas actualizadas cada 40 ms como máximo.
+WHILE el estilo es Auto THE SYSTEM SHALL elegir con el análisis la receta y su duración (8, 16 o 32 pulsos), y con tonalidades en conflicto y tempo parecido usar bass swap con filtro en vez de un corte.
+WHEN el usuario pulsa «Siguiente» o «Mezclar ahora» y la entrante se está analizando THE SYSTEM SHALL esperar su análisis hasta 8 s y entrar siempre por su punto de entrada, también en la mezcla de emergencia.
+#### ADDED design: Gestos cada 40 ms y duración sugerida
+`AutoMix.startTransition` arranca un `stepTimer` de 40 ms (sin retener el proceso en pruebas); `chooseStyle` devuelve `beats` y `planRecipe({ beats })` lo respeta; `maxLen()` da hasta 32 s al plan en Auto; `pendingMix` espera `prep.state === 'analyze'` hasta 8 s.

@@ -1,10 +1,11 @@
 ---
 change: 2026-11-02-preescucha-libreria
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 1c994a104a457afaa30d835adb812b5ab5a4ee7b937687b07ba3290524d22f99
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-02
 ---
 # Design · 2026-11-02-preescucha-libreria
 
