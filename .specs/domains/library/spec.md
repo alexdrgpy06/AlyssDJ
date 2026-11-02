@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-generos
+last_change: 2026-11-02-preescucha-libreria
 ---
 # library · spec
 
@@ -27,3 +27,9 @@ THE SYSTEM SHALL permitir exportar «todo lo analizado» o una playlist importad
 
 THE SYSTEM SHALL guardar hasta 5 géneros normalizados por pista, con origen metadatos, archivo o manual (el manual prevalece), permitir editarlos y filtrar la librería por género, y exportarlos en la columna «género» del CSV y el atributo Genre de Rekordbox.
 WHEN AutoMix puntúa candidatas THE SYSTEM SHALL dar una bonificación a las que comparten género con la pista de referencia.
+
+## Preescucha desde la Librería
+
+WHEN el usuario pulsa ▶ en una fila con la pista disponible como archivo local THE SYSTEM SHALL reproducirla por la salida de auriculares (o la de por defecto) sin cargarla en ningún deck, empezando en su punto de entrada de mezcla o, sin análisis, al 25 % de su duración.
+WHEN se inicia otra preescucha, se pulsa de nuevo en la misma pista o esta termina THE SYSTEM SHALL parar la anterior, de modo que suene una sola.
+IF la pista solo existe por streaming THEN THE SYSTEM SHALL mostrar ▶ deshabilitado con una ayuda y no descargar nada.

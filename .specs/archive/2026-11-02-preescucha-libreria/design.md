@@ -43,3 +43,18 @@ Atributos de la fila: botón `data-act="prev"` (clase `pv`, `.on` mientras suena
 - Respeta `prefers-reduced-motion` (no hay transiciones propias).
 
 ## Amendments
+
+## Domain deltas
+### library
+#### ADDED spec: Preescucha desde la Librería
+WHEN el usuario pulsa ▶ en una fila con la pista disponible como archivo local THE SYSTEM SHALL reproducirla por la salida de auriculares (o la de por defecto) sin cargarla en ningún deck, empezando en su punto de entrada de mezcla o, sin análisis, al 25 % de su duración.
+WHEN se inicia otra preescucha, se pulsa de nuevo en la misma pista o esta termina THE SYSTEM SHALL parar la anterior, de modo que suene una sola.
+IF la pista solo existe por streaming THEN THE SYSTEM SHALL mostrar ▶ deshabilitado con una ayuda y no descargar nada.
+#### ADDED design: preview.js
+`renderer/preview.js` (`startAt` puro y el singleton `preview` con un único `HTMLAudioElement`) emite `start`, `tick`, `end` y `blocked`; `Library` repinta solo la fila afectada y mueve la barra `.pv-bar` por `tick`.
+### audio
+#### ADDED spec: Preescucha sin interferir con la mezcla
+WHILE no hay salida de auriculares configurada y un deck suena THE SYSTEM SHALL parar la preescucha y avisarlo, para que nunca suene por el master a la vez que una mezcla.
+### ui
+#### ADDED spec: Barra de progreso en la fila
+WHILE una pista se preescucha THE SYSTEM SHALL mostrar su avance en una barra bajo el título que permite saltar con un clic.

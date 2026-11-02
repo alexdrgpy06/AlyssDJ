@@ -85,4 +85,4 @@ tests.docs = () => {
   assert.ok(/preescucha/i.test(doc) && /auriculares/i.test(read('docs/03-libreria-y-playlists.md')) && /25 %/.test(read('docs/03-libreria-y-playlists.md')), 'docs de la preescucha');
   console.log('preescucha docs: OK');
 };
-tests[mode]().catch((e) => (console.error(e), process.exit(1)));
+Promise.resolve().then(() => tests[mode]()).catch((e) => (console.error(e), process.exit(1)));

@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-jog-turntable
+last_change: 2026-11-02-preescucha-libreria
 ---
 # ui · spec
 
@@ -80,3 +80,7 @@ THE SYSTEM SHALL ofrecer un editor de géneros por pista y mostrar los géneros 
 ## Plato sujeto
 
 WHILE un plato está sujeto THE SYSTEM SHALL marcarlo con la clase `held` y AutoMix SHALL no iniciar transiciones.
+
+## Barra de progreso en la fila
+
+WHILE una pista se preescucha THE SYSTEM SHALL mostrar su avance en una barra bajo el título que permite saltar con un clic.
