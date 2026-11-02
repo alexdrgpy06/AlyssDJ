@@ -780,3 +780,11 @@ body[data-layout='compact'] { --tb: 40px; }
 :is(body[data-view='mix'], body[data-view='library'])[data-split][data-waves='top'] .waves { display: grid; grid-template-rows: 1fr 1fr; min-height: 0; }
 :is(body[data-view='mix'], body[data-view='library'])[data-split][data-waves='top'] .wave-row { height: auto; min-height: 0; }
 body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
+
+/* ---------- Ajustes: búsqueda ---------- */
+.set-search { display: flex !important; align-items: center; gap: var(--s-2); padding: 0 var(--s-2); margin-bottom: var(--s-2); background: var(--inset); border: 1px solid var(--line-2); border-radius: var(--r-2); }
+.set-search .ic { color: var(--dim); width: 14px; height: 14px; }
+.set-search input { border: 0 !important; background: transparent !important; padding: var(--s-1) 0; min-width: 0; outline: none; }
+.set-search:focus-within { border-color: var(--sel); }
+.set-nav button.dim { opacity: .4; }
+#settings .no-hit { display: none !important; }

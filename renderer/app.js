@@ -11,6 +11,7 @@ import { AddPanel } from './automix-add.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
+import { settingsFilter } from './settings-ui.js';
 import { SplitState, clampSplit, STORE as SPLIT_STORE, STEP, STEP_BIG } from './splits.js';
 
 const $ = (s) => document.querySelector(s);
@@ -883,28 +884,75 @@ class App {
     f.recordSource.value = s.recordSource || '';
     this.onMidiDevices(this.midi.devices());
     if (this.midi.error) $('#midi-devices').textContent = `MIDI no disponible: ${this.midi.error}`;
-    this.setSettingsPane('tools');
+    $('#set-search').value = '';
+    this.setSettingsPane(this.settingsPane || 'general');
     $('#settings').showModal();
   }
 
   // Una sección de ajustes a la vez; flechas arriba/abajo cambian de sección (patrón de pestañas WAI-ARIA).
+  // Recuerda la última sección usada durante la sesión.
   setSettingsPane(id) {
-    document.querySelectorAll('#settings .set-nav button').forEach((b) => {
+    this.settingsPane = id;
+    document.querySelectorAll('#settings .set-nav button[data-pane]').forEach((b) => {
       const on = b.dataset.pane === id;
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', String(on));
       b.tabIndex = on ? 0 : -1;
     });
     document.querySelectorAll('#settings .set-pane').forEach((p) => (p.hidden = p.dataset.pane !== id));
+    this.clearSettingsSearch(false);
+  }
+
+  // Búsqueda: muestra solo las opciones que coinciden, agrupadas por sección; sin resultados, el estado vacío.
+  searchSettings(query) {
+    const rows = [];
+    const items = [...document.querySelectorAll('#settings .set-pane > :not(h3)')];
+    for (const el of items) rows.push({ pane: el.parentElement.dataset.pane, text: el.textContent + ' ' + (el.title || '') });
+    const r = settingsFilter(query, rows);
+    items.forEach((el, i) => el.classList.toggle('no-hit', r.active && !r.hits.includes(i)));
+    document.querySelectorAll('#settings .set-pane').forEach((p) => (p.hidden = r.active ? !r.panes.has(p.dataset.pane) : p.dataset.pane !== this.settingsPane));
+    document.querySelectorAll('#settings .set-nav button[data-pane]').forEach((b) => b.classList.toggle('dim', r.active && !r.panes.has(b.dataset.pane)));
+    $('#set-empty').hidden = !(r.active && !r.hits.length);
+    return r;
+  }
+
+  clearSettingsSearch(restore = true) {
+    const inp = $('#set-search');
+    if (inp.value && restore) inp.value = '';
+    if (!inp.value) {
+      document.querySelectorAll('#settings .no-hit').forEach((el) => el.classList.remove('no-hit'));
+      document.querySelectorAll('#settings .set-nav .dim').forEach((el) => el.classList.remove('dim'));
+      $('#set-empty').hidden = true;
+      if (restore) document.querySelectorAll('#settings .set-pane').forEach((p) => (p.hidden = p.dataset.pane !== this.settingsPane));
+    }
   }
 
   bindSettingsNav() {
     const nav = document.querySelector('#settings .set-nav');
     nav.addEventListener('click', (e) => e.target.dataset.pane && this.setSettingsPane(e.target.dataset.pane));
+    $('#set-search').addEventListener('input', (e) => this.searchSettings(e.target.value));
+    $('#set-search').addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && e.target.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.clearSettingsSearch();
+      }
+    });
+    $('#set-clear').addEventListener('click', () => {
+      this.clearSettingsSearch();
+      $('#set-search').focus();
+    });
+    $('#settings').addEventListener('keydown', (e) => {
+      if (((e.key === 'f' || e.key === 'F') && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))) {
+        e.preventDefault();
+        $('#set-search').focus();
+      }
+    });
     nav.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      const tabs = [...nav.querySelectorAll('button')];
+      const tabs = [...nav.querySelectorAll('button[data-pane]')];
       const i = tabs.indexOf(e.target.closest('button'));
+      if (i < 0) return;
       const next = tabs[(i + (e.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length];
       e.preventDefault();
       this.setSettingsPane(next.dataset.pane);

@@ -85,6 +85,44 @@ tests.ui = async () => {
   console.log('ui ok');
 };
 
+tests.search = async () => {
+  const { settingsFilter, norm } = await import('../renderer/settings-ui.js');
+  assert.strictEqual(norm('Música ACTUALIZACIÓN'), 'musica actualizacion');
+  const rows = [{ pane: 'decks', text: 'Rango de pitch' }, { pane: 'decks', text: 'Curva del crossfader' }, { pane: 'general', text: 'Buscar actualizaciones automáticamente' }, { pane: 'library', text: 'Preferir la copia guardada' }];
+  assert.deepStrictEqual(settingsFilter('', rows), { panes: new Set(), hits: [], active: false });
+  assert.deepStrictEqual(settingsFilter('PITCH', rows).hits, [0]);
+  assert.deepStrictEqual(settingsFilter('actualizacion', rows).hits, [2], 'sin tildes ni mayúsculas');
+  assert.deepStrictEqual(settingsFilter('crossfader curva', rows).hits, [1], 'palabras en cualquier orden');
+  assert.deepStrictEqual([...settingsFilter('r', rows).panes].sort(), ['decks', 'general', 'library'], 'varias secciones');
+  assert.strictEqual(settingsFilter('zzz', rows).hits.length, 0);
+  const html = read('renderer/index.html');
+  // REQ-3: secciones por tema y cada opción en una sola
+  const panes = [...html.matchAll(/<section class="set-pane" data-pane="(\w+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(panes.sort(), ['audio', 'decks', 'general', 'library', 'midi', 'tools']);
+  const names = [...html.slice(html.indexOf('id="settings"')).matchAll(/name="(\w+)"/g)].map((m) => m[1]);
+  assert.strictEqual(new Set(names).size, names.length, 'cada opción aparece una vez');
+  assert.ok(html.includes('id="set-search"') && html.includes('id="set-empty"') && html.includes('id="btn-reset-views"'));
+  const { spawnSync } = require('child_process'); const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-ajustes-'));
+  spawnSync(require('electron'), ['.'], { cwd: root, timeout: 170000, env: { ...process.env, YTDJ_SELFTEST: '1', YTDJ_SELFTEST_MODULE: path.join(__dirname, 'ajustes-selftest.js'), YTDJ_USERDATA: path.join(tmp, 'data'), YTDJ_SELFTEST_OUT: tmp } });
+  const r = JSON.parse(fs.readFileSync(path.join(tmp, 'ajustes.json'), 'utf8'));
+  assert.ok(r.first.open && r.first.tabs[0] === 'general*' && r.first.panes.join() === 'general', JSON.stringify(r.first.tabs));
+  assert.deepStrictEqual(r.first.tabs.map((t) => t.replace(/[*~]/g, '')), ['general', 'audio', 'decks', 'library', 'midi', 'tools']);
+  assert.ok(r.first.sw <= r.first.cw && r.first.h <= r.first.ih, 'cabe en 1366×768');
+  assert.deepStrictEqual(r.pitch.panes, ['decks']); assert.strictEqual(r.pitch.shown.length, 1); assert.ok(/pitch/i.test(r.pitch.shown[0]));
+  assert.ok(r.pitch.tabs.some((t) => t.startsWith('general') && t.endsWith('~')), 'las secciones sin resultados se atenúan');
+  assert.deepStrictEqual(r.curve.panes, ['decks']);
+  assert.deepStrictEqual(r.upd.panes, ['general'], 'sin tildes ni mayúsculas');
+  assert.deepStrictEqual(r.help.panes, ['library'], 'busca también en la ayuda');
+  assert.ok(r.none.empty && r.none.panes.length === 0, 'sin resultados');
+  assert.ok(!r.cleared.empty && r.cleared.q === '' && r.cleared.panes.join() === 'general', 'limpiar vuelve a la sección');
+  assert.ok(r.esc.open && r.esc.q === '' && !r.esc.empty, 'Esc limpia y no cierra');
+  assert.strictEqual(r.remember.panes.join(), 'audio', 'recuerda la última sección');
+  assert.strictEqual(r.arrow.panes.join(), 'decks', 'flecha abajo: siguiente sección');
+  assert.strictEqual(r.arrowSearch.panes.join(), 'decks', 'las flechas en el buscador no cambian de sección');
+  console.log('search ok');
+};
+
 const which = process.argv[2];
 if (!tests[which]) { console.error('uso: test-vistas.js ' + Object.keys(tests).join('|')); process.exit(2); }
 tests[which]().catch((e) => { console.error(e); process.exit(1); });
