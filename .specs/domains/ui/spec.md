@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-01-vistas-y-ajustes
+last_change: 2026-11-02-fx-cadena
 ---
 # ui · spec
 
@@ -52,3 +52,11 @@ THE SYSTEM SHALL organizar Ajustes en General, Audio, Decks, Librería y música
 ## Guardado al cambiar y restablecer
 
 WHEN el usuario cambia una opción THE SYSTEM SHALL guardarla al instante y mostrar «Guardado»; IF falla THEN restaura el control y explica el motivo; «Restablecer sección» (con confirmación) y «Restablecer vistas» devuelven sus valores por defecto.
+
+## Panel FX, XY pad y RES
+
+THE SYSTEM SHALL mostrar en el banco FX de cada deck tres ranuras (interruptor y nombre), tipo, cantidad y P de la ranura elegida y un pad XY (X cantidad, Y P; flechas ±0,02/±0,1; doble clic al centro) que enciende la ranura mientras se mantiene (ajuste `fxHold`); un knob RES junto a FILTER; todos los bancos miden lo mismo para que el deck no salte.
+
+## Persistencia, MIDI y Ajustes de efectos
+
+THE SYSTEM SHALL recordar la cadena de cada deck en `alyssdj.fx.<deck>` (ajuste `fxRemember`), conservarla al cargar pistas, registrar para MIDI learn `fx<n>On/Wet/P` y `res` (y mantener `fxOn`, `fxWet`, `fx.<tipo>` en la ranura 1) y ofrecer la sección «Efectos y filtros» con `fxHold`, `fxRemember` y `filterRes`.

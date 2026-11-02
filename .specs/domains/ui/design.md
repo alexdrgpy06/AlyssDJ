@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-01-vistas-y-ajustes
+last_change: 2026-11-02-fx-cadena
 ---
 # ui · design
 
@@ -32,3 +32,7 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## SplitState y helpers de Ajustes
 
 `renderer/splits.js` (`SplitState`, `clampSplit(which, px, inner, fixed)`), `renderer/settings-ui.js` (`settingsFilter`, `settingPatch`, `sectionDefaults`); IPC `settings:defaults`; `settings.set` escribe antes de actualizar la caché.
+
+## FxChain, fxpanel y fxpad
+
+`renderer/fxchain.js` (modelo puro con rampas y reloj inyectable), `renderer/fxpanel.js` (panel y MIDI), `renderer/fxpad.js` (pad); `Deck.fxSet(slot, patch)` y `Deck.fxRamp(slot, target, seconds)` para el AutoMix.
