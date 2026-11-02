@@ -10,6 +10,7 @@ const side = (id) => (id === 'A' ? -1 : 1);
 const ease = (t) => t * t * (3 - 2 * t);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const posOf = (d) => (typeof d.pos === 'function' ? d.pos() : d.pos || 0);
+const FX_NAME = { 'eco-salida': 'eco de salida', 'cola-reverb': 'cola de reverb' };
 const MIN_DUR = 90; // la radio mete mixes y pistas larguísimas: se descartan
 const MAX_DUR = 600;
 
@@ -747,8 +748,8 @@ export class AutoMix {
     this.fxm.releaseAll();
     this.fxLive = null;
     this.fxWarn = '';
-    // Las salidas del estilo ya traen su eco; la reverb de rotura solo se añade en estilos de mezcla larga.
-    this.trans.moves = ['bass', 'filter', 'crossfade'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).filter((m) => m.id !== 'echo-out').map((m) => ({ ...m, state: 'wait', slot: null })) : [];
+    // Los estilos de corte traen su propio eco o reverb; en las mezclas largas siguen el eco de salida y la reverb de rotura.
+    this.trans.moves = ['bass', 'filter', 'crossfade'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null })) : [];
     this.note = `Mezclando ${from.id} → ${to.id} · ${STYLE_LABEL[style] || style} (${pick.why})${tempo ? ' · tempo igualado' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
     this.emit();
   }
@@ -772,13 +773,13 @@ export class AutoMix {
   recipeStep(t, tm) {
     const x = (v) => this.setX(side(t.from.id) + (side(t.to.id) - side(t.from.id)) * v);
     let xv = null;
-    for (const gs of t.recipe) {
+    for (const gs of t.recipe || []) {
       const v = gestureValue(gs, tm);
       if (v == null) continue;
       if (gs.param === 'x') xv = v;
       else if (gs.param === 'fx') {
         if (gs.state === 'wait') {
-          const slot = this.fxm.claim(t.from, { name: gs.id, type: gs.fx, p: gs.p });
+          const slot = this.fxm.claim(t.from, { name: FX_NAME[gs.id] || gs.id, type: gs.fx, p: gs.p });
           if (slot == null) { gs.state = 'skipped'; this.fxWarn = `sin ranura libre para ${gs.id}`; } else { gs.state = 'on'; gs.slot = slot; this.fxm.ramp(t.from, slot, { wet: gs.to }, Math.max(0.05, gs.end - gs.at)); }
           this.emit();
         }
@@ -893,7 +894,7 @@ export class AutoMix {
       chain: { canUndo: !!this.undoStack, total: items.reduce((x, i) => x + (i.cost || 0), 0), analyzed: items.filter((i) => i.bpm).length },
       plan: this.plan ? { exitAt: this.plan.exitAt, kind: this.plan.kind, mode: this.plan.mode, seconds: this.plan.seconds, warnings: this.plan.warnings, tempo: this.plan.tempo } : null,
       pos: this.cur ? posOf(this.cur) : null,
-      trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, why: t.why, len: t.len, warnings: t.warnings, recipe: t.recipe.map((x) => ({ id: x.id, label: GESTURE_LABEL[x.id] || x.id, deck: x.deck, at: x.at, end: x.end, state: x.state })) } : null,
+      trans: t ? { from: t.from.id, to: t.to.id, progress: Math.min(1, (performance.now() - t.t0) / 1000 / t.len), tempo: t.tempo, style: t.style, why: t.why, len: t.len, warnings: t.warnings, recipe: (t.recipe || []).map((x) => ({ id: x.id, label: GESTURE_LABEL[x.id] || x.id, deck: x.deck, at: x.at, end: x.end, state: x.state })) } : null,
       recipePreview: !t ? this.previewRecipe() : null,
       progress: t ? Math.min(1, (performance.now() - t.t0) / 1000 / t.len) : null,
       rem: this.cur ? this.cur.remaining() : null,

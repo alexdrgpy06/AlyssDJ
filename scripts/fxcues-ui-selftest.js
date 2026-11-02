@@ -20,7 +20,7 @@ module.exports = (win) => {
       A.analysis = { bpm: 120, offset: 0.5, duration: 84, mix: { phraseBeats: 16, phrases: [80, 80, 80, 80, 80, 30, 30, 90, 90, 90] } }; B.analysis = A.analysis;
       const realSt = A.st; Object.defineProperty(A, 'st', { configurable: true, get: () => ({ ...realSt, playing: true }), set() {} }); am.cur = A; am.on = true;`;
     await js(`__app.setView('automix'); return 1`); await wait(500);
-    await js(`${sc} am.setCfg({ fxLevel: 'subtle' }); am.startTransition(A, B, { seconds: 16, style: 'bass', tempo: false, exitAt: 36, enterAt: null, kind: 'outro', warnings: [] }); am.trans.t0 = performance.now() - 0.8 * 16000; am.stepTransition(); await new Promise((r) => setTimeout(r, 400)); am.emit(); return 1`);
+    await js(`${sc} am.setCfg({ fxLevel: 'subtle', style: 'bass' }); am.startTransition(A, B, { seconds: 16, style: 'bass', tempo: false, exitAt: 36, enterAt: null, kind: 'outro', warnings: [] }); am.trans.t0 = performance.now() - 0.8 * 16000; am.stepTransition(); await new Promise((r) => setTimeout(r, 400)); am.emit(); return 1`);
     R.trans = await js(`return { status: document.getElementById('amv-status').textContent, note: document.getElementById('amv-note').textContent, chipHidden: document.getElementById('imm-fx').hidden, chip: document.getElementById('imm-fx').textContent, immStatus: document.getElementById('imm-status').textContent }`);
     await js(`__app.automix.setCfg({ fxLevel: 'off' }); __app.automix.stop(); await new Promise((r) => setTimeout(r, 200)); return 1`);
     R.off = await js(`return { chipHidden: document.getElementById('imm-fx').hidden, note: document.getElementById('amv-note').textContent }`);

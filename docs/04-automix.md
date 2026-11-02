@@ -122,7 +122,7 @@ Cada pista de la cola muestra su **BPM**, **tonalidad**, **energía** y la **dif
 
 ### Sin cambios bruscos
 
-- Si una candidata supera un **8 %** de diferencia de BPM, se prefiere otra lista. Si no hay otra, la mezcla es **más larga, con filtro y sin forzar el tempo**, y se avisa (`salto de BPM −17 %`, en rojo con ⚠).
+- Si una candidata supera un **8 %** de diferencia de BPM, se prefiere otra lista. Si no hay otra, la mezcla **no fuerza el tempo** y, con *Auto*, se resuelve con **eco y corte** (con un estilo fijo, es más larga y con filtro), y se avisa (`salto de BPM −17 %`, en rojo con ⚠).
 - Al igualar el tempo, el ajuste está limitado a **±8 %**, y tras la mezcla el tempo natural de la pista **vuelve poco a poco** (unos 14 s), sin saltos.
 
 ![Cola con BPM, tonalidad y avisos](img/28-automix-puntos.png)

@@ -319,6 +319,7 @@ tests.engine = async () => {
   // REQ-5: salto de BPM brusco → filtro, sin forzar el tempo, transición larga y aviso
   {
     const { am, A, B } = setup(ana(124, '8A'), ana(150, '8A'));
+    am.cfg.style = 'bass'; // con un estilo fijo, el salto brusco fuerza el filtro largo; con Auto lo resuelve eco y corte (recetas DJ)
     await run(am, A, B, 120.1);
     assert.ok(am.trans, 'mezcla igualmente (no hay otra)');
     assert.strictEqual(am.trans.style, 'filter');

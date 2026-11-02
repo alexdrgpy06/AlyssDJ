@@ -127,12 +127,12 @@ tests.engine = async () => {
     am.mixNow(); am.tick(); await sleep(5); am.tick();
     assert.ok(am.trans && am.trans.len <= 4, `fundido corto (${am.trans?.len})`);
   }
-  // salto brusco: filtro y sin forzar el tempo
+  // salto brusco (estilo Auto): eco y corte, sin forzar el tempo
   {
     const { am, B } = setupEngine({ nextBpm: 150 });
     am.mixNow(); am.tick(); await sleep(5); am.tick();
     const exitAt = am.pendingMix.plan.exitAt; setupEngine; am.cur.pos = exitAt + 0.01; am.tick();
-    assert.ok(am.trans && am.trans.style === 'filter' && B.tempoCalls === 0);
+    assert.ok(am.trans && am.trans.style === 'echo-cut' && B.tempoCalls === 0);
   }
   console.log('mix-now engine: OK');
 };

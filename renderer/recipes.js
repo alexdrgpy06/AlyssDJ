@@ -47,7 +47,7 @@ export function chooseStyle(cur, next, plan, cfgStyle = 'auto') {
   return { style: 'filter', why: 'outro o intro cortos' };
 }
 
-const g = (id, deck, param, from, to, at, end, curve = 'ease', extra = {}) => ({ id, deck, param, from, to, at: r3(at), end: r3(end), curve, ...extra });
+const g = (id, deck, param, from, to, at, end, curve = 'ease', extra = {}) => ({ id, deck, param, from, to, at, end, curve, ...extra });
 
 // Receta de `style` sobre la rejilla de la saliente. Devuelve { style, len, gestures }; `len` ≤ plan.seconds.
 //   Gesto: { id, deck: 'from'|'to'|'x', param: 'eqLow'|'filter'|'x'|'fx', from, to, at, end, curve: 'lin'|'ease'|'step', fx? }
@@ -101,7 +101,7 @@ export function planRecipe({ style, cur, plan, level = 'subtle' }) {
     default: // crossfade
       out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
   }
-  return { style, len: r3(len), beat: r3(beat), swapBeat: swap, gestures: out.sort((a, b) => a.at - b.at || a.end - b.end) };
+  return { style, len, beat, swapBeat: swap, gestures: out.sort((a, b) => a.at - b.at || a.end - b.end) };
 }
 
 const ease = (t) => t * t * (3 - 2 * t);
