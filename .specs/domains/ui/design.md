@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-01-sin-video-fuentes-y-cola-analisis
+last_change: 2026-11-01-vistas-y-ajustes
 ---
 # ui · design
 
@@ -28,3 +28,7 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## Máquina de vistas
 
 `renderer/views.js` (`ViewState`: `set`, `setWaves`, `enterAutomixTab`, `leaveAutomixTab`, `effectiveWaves`, `compact`, `toJSON`) con `body[data-view]` y `body[data-waves]`; las ondas «en el deck» mueven el mismo canvas a `.deck-scroll`; la vista inmersiva es `#immersive` conectada a los métodos de `AutoMix`.
+
+## SplitState y helpers de Ajustes
+
+`renderer/splits.js` (`SplitState`, `clampSplit(which, px, inner, fixed)`), `renderer/settings-ui.js` (`settingsFilter`, `settingPatch`, `sectionDefaults`); IPC `settings:defaults`; `settings.set` escribe antes de actualizar la caché.
