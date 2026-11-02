@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-automix-fx-cues
+last_change: 2026-11-02-automix-visual
 ---
 # ui · spec
 
@@ -64,3 +64,11 @@ THE SYSTEM SHALL recordar la cadena de cada deck en `alyssdj.fx.<deck>` (ajuste 
 ## Selector Efectos y estado
 
 THE SYSTEM SHALL mostrar el selector «Efectos» en el grupo Transición, el nivel en el estado de la transición, la nota «Efecto: …» y una etiqueta en la vista Automix mientras hay un movimiento.
+
+## Visual de la vista Automix
+
+THE SYSTEM SHALL dibujar en un lienzo detrás de la portada anillos que se expanden una vez por beat (con más fuerza en el primer tiempo del compás de 4), con el color del deck (A cian, B rosa), intensidad según el nivel de audio y la ganancia del canal, los dos decks a la vez en las transiciones, un anillo que respira sin BPM y anillos quietos y tenues en pausa; la portada escala hasta +1,5 % con el beat.
+
+## Control, movimiento reducido y rendimiento
+
+THE SYSTEM SHALL ofrecer el botón «Visual» (activado por defecto, recordado en `AutoMix.cfg.visual`), mostrar el visual estático con `prefers-reduced-motion`, dibujar a ≤ 30 fps solo con la vista Automix, la ventana y el visual activos, y no cambiar el audio.

@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-02-fx-cadena
+last_change: 2026-11-02-automix-visual
 ---
 # ui · design
 
@@ -36,3 +36,7 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## FxChain, fxpanel y fxpad
 
 `renderer/fxchain.js` (modelo puro con rampas y reloj inyectable), `renderer/fxpanel.js` (panel y MIDI), `renderer/fxpad.js` (pad); `Deck.fxSet(slot, patch)` y `Deck.fxRamp(slot, target, seconds)` para el AutoMix.
+
+## viz.js
+
+`renderer/viz.js` exporta `beatPhase`, `beatInBar`, `deckRings`, `vizScene`, `pulseOf` (puros) y `Visualizer` (bucle con rAF limitado, cuadro estático solo cuando cambia algo visible en movimiento reducido).
