@@ -65,7 +65,7 @@
     </div>
     <div class="spacer"></div>
     <div class="tb-group tb-mix" role="group" aria-label="Herramientas de la mezcla">
-      <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Panel de AutoMix: estado y controles"><svg class="ic"><use href="#i-radio"/></svg><span>AutoMix</span></button>
+      <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Panel de AutoMix: estado y controles"><svg class="ic"><use href="#i-radio"/></svg><span>AutoMix</span><i class="am-btn-count" id="btn-automix-count" aria-hidden="true"></i></button>
       <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
       <button class="btn ghost" id="btn-rec" title="Grabar la mezcla (lo que sale por tu salida de audio)"><svg class="ic"><use href="#i-rec"/></svg><span>REC</span></button>
     </div>
@@ -371,8 +371,12 @@
       <div class="am-top">
         <div class="am-card am-now"><span class="lbl">SUENA</span><div class="am-title" id="amv-cur">—</div><div class="am-sub" id="amv-cur-sub"></div></div>
         <div class="am-card am-flow">
-          <div class="am-status" id="amv-status" aria-live="polite">Detenido</div>
+          <div class="am-status" id="amv-status" data-phase="stopped" aria-live="polite">Detenido</div>
           <div class="am-bar" id="amv-bar-wrap" hidden><i id="amv-bar"></i></div>
+          <div class="am-tl" id="amtl" hidden>
+            <canvas id="amtl-cv" tabindex="0" role="slider" aria-label="Línea de tiempo de la mezcla: salida, entrada y duración" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"></canvas>
+            <div class="am-tl-row"><span class="am-tl-info" id="amtl-info"></span><button class="btn ghost" id="amtl-preview" type="button"><svg class="ic"><use href="#i-headphones"/></svg><span>Escuchar</span></button></div>
+          </div>
           <div class="am-recipe" id="amv-recipe" role="img" aria-label="Gestos de la mezcla" hidden></div>
           <div class="am-sub" id="amv-note"></div>
         </div>
@@ -393,6 +397,9 @@
         </fieldset>
         <fieldset class="am-group" aria-labelledby="amg-trans">
           <h3 id="amg-trans">Transición</h3>
+          <div class="seg am-profile" id="amv-profile" role="group" aria-label="Perfil de AutoMix">
+            <button data-v="soft" type="button" title="24 s, fundido, efectos apagados">Suave</button><button data-v="club" type="button" title="12 s, receta automática, efectos sutiles">Club</button><button data-v="radio" type="button" title="32 s, fundido, orden de la cola">Radio</button><button data-v="custom" type="button" title="Tus propios ajustes">Personalizado</button>
+          </div>
           <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
             <button data-v="auto" type="button" class="on" title="Elige la receta por pista a pista según BPM, tonalidad y estructura">Auto</button><button data-v="crossfade" type="button">Fundido</button><button data-v="bass" type="button">Bass swap</button><button data-v="filter" type="button">Filtro</button><button data-v="echo-cut" type="button">Bass + eco</button><button data-v="drop-cut" type="button">En la caída</button>
           </div>
@@ -637,7 +644,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Tarjeta SIGUE</dt><dd>Arrastra la línea de entrada o usa ← → (un compás); «Auto» la quita</dd><dt>Mis listas</dt><dd>＋ en la fila o arrastrar para poner; Ctrl/Mayús+clic selecciona; Ctrl+Z deshace</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
+        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Tarjeta SIGUE</dt><dd>Arrastra la línea de entrada o usa ← → (un compás); «Auto» la quita</dd><dt>Línea de tiempo</dt><dd>Arrastra salida, entrada y duración de la próxima mezcla; «Escuchar» la prueba por auriculares</dd><dt>Perfil</dt><dd>Suave, Club, Radio o Personalizado: un clic fija duración, estilo y efectos</dd><dt>Mis listas</dt><dd>＋ en la fila o arrastrar para poner; Ctrl/Mayús+clic selecciona; Ctrl+Z deshace</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>

@@ -65,6 +65,8 @@ jobs:
           for m in store docs; do node scripts/test-playlists.js $m; done
           for m in pick plan; do node --experimental-default-type=module scripts/test-entrada.js $m; done
           node scripts/test-entrada.js docs
+          node --experimental-default-type=module scripts/test-automix-claro.mjs
+          node scripts/test-automix-claro.js docs
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
@@ -93,6 +95,7 @@ jobs:
           for m in ui filters; do xvfb-run -a node scripts/test-local.js $m; done
           xvfb-run -a node scripts/test-playlists.js ipc,ui,select,order,smart,export
           xvfb-run -a node scripts/test-entrada.js ui
+          xvfb-run -a node scripts/test-automix-claro.js ui,robust
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |
@@ -115,6 +118,7 @@ jobs:
           for m in ui filters; do node scripts/test-local.js $m; done
           node scripts/test-playlists.js ipc,ui,select,order,smart,export
           node scripts/test-entrada.js ui
+          node scripts/test-automix-claro.js ui,robust
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

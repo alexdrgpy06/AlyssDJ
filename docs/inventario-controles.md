@@ -78,3 +78,6 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 | `#amv-entry` | Entrada | Tarjeta «SIGUE»: `#amv-entry-time` (tiempo y compás), `#amv-entry-why` (motivo) |
 | `#amv-entry-strip` | Tira de energía | Línea arrastrable; ← → mueven un compás; guarda el punto de entrada editado |
 | `#amv-entry-auto` | Auto | Solo con entrada editada; quita solo la entrada |
+| `#amtl` | Línea de tiempo | Próxima mezcla: `#amtl-cv` (arrastrar salida, entrada y duración; ← → y Mayús + ← →), `#amtl-info` (texto), `#amtl-preview` (Escuchar por auriculares) |
+| `#amv-profile` | Perfil | Suave, Club, Radio, Personalizado; se recuerda en `automix-profile` |
+| `#amv-status` | Estado | Fase (`data-phase`), cuenta atrás y motivo; el botón `#btn-automix` lleva la misma fase y `#btn-automix-count` |

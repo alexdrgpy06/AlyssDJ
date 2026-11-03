@@ -403,6 +403,7 @@ export class Deck {
     this.hotcues = saved.hot || [null, null, null, null];
     this.st = { pos: this.cuePoint, dur: track.duration || 0, playing: false, rate: this.rate(), level: 0 };
     this.wantPlay = play;
+    this.loadError = null;
     this.broadcast({ type: 'loop' });
     this.playedMs = 0;
     this.logged = false;
@@ -413,7 +414,7 @@ export class Deck {
       this.sendStream({ type: 'pause' });
       const { engine } = this.ensureLocal();
       engine.handle({ type: 'load', videoId: track.videoId, url: `/localfile/${encodeURIComponent(savedId || track.videoId)}`, startAt: this.cuePoint, play })
-        .catch((e) => this.app.toast(`No se pudo abrir ${track.title}: ${e.message}`, true));
+        .catch((e) => { this.loadError = e.message; this.app.toast(`No se pudo abrir ${track.title}: ${e.message}`, true); });
     } else this.sendStream({ type: 'load', videoId: track.videoId, startAt: this.cuePoint, play });
     this.trimTouched = false;
     this.applyAutoGain();

@@ -11,6 +11,10 @@ import { MixEditor } from './mixeditor.js';
 import { renderUpdate } from './update-ui.js';
 import { AddPanel } from './automix-add.js';
 import { EntryStrip } from './automix-entry.js';
+import { Timeline } from './automix-timeline.js';
+import { describe } from './automix-status.js';
+import { LEVELS } from './automix-compat.js';
+import { applyProfile, detect } from './automix-profiles.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
@@ -325,6 +329,10 @@ class App {
     $('#amv-tempo').addEventListener('change', (e) => am.setCfg({ matchTempo: e.target.checked }));
     $('#amv-exit').addEventListener('change', (e) => am.setCfg({ exitMode: e.target.value }));
     $('#amv-fx').addEventListener('change', (e) => am.setCfg({ fxLevel: e.target.value }));
+    $('#amv-profile').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-v]');
+      if (b) applyProfile(am, b.dataset.v);
+    });
     $('#amv-skip').addEventListener('click', () => am.skipNext());
     $('#amv-shuffle').addEventListener('click', () => am.shuffle());
     $('#amv-order').addEventListener('change', (e) => am.setCfg({ smartOrder: e.target.checked }));
@@ -719,6 +727,9 @@ class App {
     $('#amv-tempo').checked = st.cfg.matchTempo;
     $('#amv-exit').value = st.exitMode;
     $('#amv-fx').value = st.fx.level;
+    const prof = detect(st.cfg);
+    const shown = prof === 'custom' ? 'custom' : prof;
+    document.querySelectorAll('#amv-profile button').forEach((b) => { const on = b.dataset.v === shown; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     $('#amv-skip').disabled = !st.canSkip;
     $('#amv-shuffle').disabled = !st.canShuffle;
     $('#amv-order').checked = st.cfg.smartOrder;
@@ -739,16 +750,25 @@ class App {
     $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     (this.entryStrip ||= new EntryStrip()).render(st.entry, getComputedStyle(document.documentElement).getPropertyValue(st.curDeck === 'A' ? '--b' : '--a').trim());
-    $('#amv-status').textContent = st.trans
-      ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${STYLE_LABEL[st.trans.style] || st.trans.style}${st.trans.why ? ` (${st.trans.why})` : ''}${st.trans.tempo ? ' · tempo igualado' : ''}${st.fx.level !== 'off' ? ` · efectos ${{ subtle: 'sutiles', full: 'marcados' }[st.fx.level]}` : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
-      : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}${Number.isFinite(st.pendingMix.seconds) ? ` · dura ${Math.round(st.pendingMix.seconds)} s` : ''}` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${planNote(st)}`) : 'Detenido';
+    const cs = getComputedStyle(document.documentElement);
+    (this.timeline ||= new Timeline(this)).render(st.timeline, { cur: cs.getPropertyValue(st.curDeck === 'A' ? '--a' : '--b').trim(), next: cs.getPropertyValue(st.curDeck === 'A' ? '--b' : '--a').trim() });
+    const ds = describe(st);
+    const stEl = $('#amv-status');
+    stEl.textContent = ds.text;
+    stEl.dataset.phase = ds.phase;
+    stEl.title = ds.reason || '';
+    // Tarjeta compacta (REQ-7): el botón de la barra, visible en todas las vistas, lleva la fase, la cuenta atrás y el motivo.
+    const bt = $('#btn-automix');
+    bt.dataset.phase = ds.phase;
+    bt.title = [ds.text, ds.reason].filter(Boolean).join(' · ') || 'Panel de AutoMix: estado y controles';
+    $('#btn-automix-count').textContent = st.on && ds.countdown != null ? `${Math.floor(ds.countdown / 60)}:${String(Math.floor(ds.countdown % 60)).padStart(2, '0')}` : '';
     $('#amv-bar-wrap').hidden = !st.trans;
     if (st.trans) $('#amv-bar').style.width = `${Math.round(st.trans.progress * 100)}%`;
     this.renderRecipe(st);
-    $('#amv-note').textContent = st.note || '';
+    $('#amv-note').textContent = [st.note, ds.reason && !String(st.note || '').includes(ds.reason) ? ds.reason : '', st.on && st.plan && !st.trans ? planNote(st).replace(/^ · /, '') : ''].filter(Boolean).join(' · ');
 
     if (this.amDragging) return; // no reconstruir la lista mientras se arrastra
-    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}:${t.cost}:${(t.genres || []).join('+')}`).join('|') + `|${st.curInfo?.bpm}`;
+    const sig = st.queue.map((t) => `${t.videoId}:${t.prep.state}:${Math.round((t.prep.progress || 0) * 20)}:${t.bpm}:${t.gapPct}:${t.pinned ? 1 : 0}:${t.energy}:${t.cost}:${t.compat.level}:${t.compat.marks.length}:${(t.genres || []).join('+')}`).join('|') + `|${st.curInfo?.bpm}`;
     const list = $('#amv-list');
     if (list.dataset.sig === sig) return;
     list.dataset.sig = sig;
@@ -762,7 +782,7 @@ class App {
           <span class="bpm">${t.bpm ? t.bpm.toFixed(1) : '—'}</span>
           ${t.camelot ? `<span class="kchip" style="--k:${camelotColor(t.camelot)}">${t.camelot}</span>` : '<span class="kchip">—</span>'}
           <span class="am-energy" title="Energía ${t.energy ?? '—'}"><i style="width:${t.energy ?? 0}%"></i></span>
-          <span class="am-q ${t.cost == null ? '' : t.cost < 6 ? 'good' : t.cost < 14 ? 'ok' : 'poor'}" title="Calidad de la transición desde la anterior (BPM, tonalidad y energía): ${t.cost == null ? 'sin analizar' : `${t.cost < 6 ? 'muy buena' : t.cost < 14 ? 'aceptable' : 'floja'} · coste ${t.cost}`}">${t.cost == null ? '·' : t.cost < 6 ? '●●●' : t.cost < 14 ? '●●○' : '●○○'}</span>
+          <span class="am-q ${t.compat.level}" title="${esc(`${LEVELS[t.compat.level].label}: ${t.compat.why}`)}" aria-label="${esc(`${LEVELS[t.compat.level].label}: ${t.compat.why}`)}">${LEVELS[t.compat.level].icon}</span>${t.compat.marks.map((m) => `<span class="am-mark">${m}</span>`).join('')}
           <span class="am-gap ${t.jump ? 'jump' : Math.abs(t.gapPct || 0) > 4 ? 'warn' : ''}" title="${t.jump ? 'Salto brusco de BPM: la mezcla será larga, con filtro y sin forzar el tempo' : 'Diferencia de BPM con lo que suena'}">${t.gapPct == null ? '' : `${t.gapPct > 0 ? '+' : ''}${t.gapPct.toFixed(1)} %${t.jump ? ' ⚠' : ''}`}</span>
         </span>
         <span class="am-badge ${cls}" title="${esc(t.prep.error || '')}">${label}</span>

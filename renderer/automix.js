@@ -1,5 +1,7 @@
 // AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual);
 // la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
+import { fileUrl } from './mixpreview.js';
+import { compat } from './automix-compat.js';
 import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
 import { genres } from './genres.js';
@@ -599,9 +601,25 @@ export class AutoMix {
     try {
       await next.load(t, { play: false, force: true });
       if (this.cfg.analyze && !this.cfg.preferLocal && !t.local && !next.analysis) next.analyze();
+    } catch (e) {
+      this.failHead(t, e?.message);
     } finally {
       this.loadingNext = false;
     }
+  }
+
+  // La cabeza de la cola no se pudo cargar (archivo roto, sin conexión…): se descarta y AutoMix sigue con la siguiente, explicándolo en la nota.
+  failHead(t, why) {
+    if (!t || this.queue[0] !== t) return;
+    const reason = why ? ` (${why})` : '';
+    if (this.queue.length > 1) {
+      this.remove(0);
+      this.note = `Falló “${t.title}”${reason}: sigo con la siguiente`;
+    } else {
+      this.prep.set(t.videoId, { state: 'error', error: why || 'no se pudo cargar' });
+      this.note = `Falló “${t.title}”${reason}: no hay otra pista en la cola`;
+    }
+    this.emit();
   }
 
   tick() {
@@ -622,6 +640,7 @@ export class AutoMix {
       this.prep.set(h0.videoId, { state: 'ready', stream: true, error });
     }
     this.reorder();
+    if (this.queue[0] && next.loadError && next.track?.videoId === this.queue[0].videoId) { const t = this.queue[0]; const why = next.loadError; next.loadError = null; this.failHead(t, why); }
     const head = this.queue[0];
     // Solo se precarga la cabeza cuando está lista (así el deck abre el archivo local y no el stream).
     if (head && this.isReady(head) && !this.loadingNext && !next.st.playing && next.track?.videoId !== head.videoId) this.preload(next);
@@ -736,6 +755,28 @@ export class AutoMix {
     const m = a?.mix;
     const strip = a?.bpm && m?.phrases?.length ? { phrases: m.phrases, offset: a.offset || 0, beat: 60 / a.bpm, phraseSec: ((m.phraseBeats || 16) * 60) / a.bpm } : null;
     return { t: e.t, kind: e.kind, why: e.why, bar: e.bar, user: e.kind === 'edit', id: head.videoId, duration: a?.duration || head.duration || 0, strip, outs: a?.mixEdit?.outs || [], free: !!a?.mixEdit?.free };
+  }
+
+  // Datos de la línea de tiempo de la próxima mezcla (o de la que está sonando, con el cabezal avanzando).
+  timelineOf(curAna) {
+    const head = this.queue[0];
+    const live = this.trans && this.tlLast;
+    if (!this.on || !this.cur || (!live && (!this.plan || !head))) return live ? { ...this.tlLast, pos: this.tlLast.exitAt + this.trans.len * Math.min(1, (performance.now() - this.trans.t0) / 1000 / this.trans.len) } : null;
+    const a = this.ana.get(head.videoId);
+    const side = (ana, track, id) => {
+      const strip = ana?.bpm && ana.mix?.phrases?.length ? { phrases: ana.mix.phrases, offset: ana.offset || 0, phraseSec: ((ana.mix.phraseBeats || 16) * 60) / ana.bpm } : null;
+      return { strip, beat: ana?.bpm ? 60 / ana.bpm : 0, offset: ana?.offset || 0, duration: ana?.duration || track?.duration || 0, edit: ana?.mixEdit || null, url: track && ana ? fileUrl(track, ana) : null, ana, id };
+    };
+    const rec = this.previewRecipe();
+    const tl = {
+      curId: this.cur.track?.videoId, nextId: head.videoId,
+      exitAt: this.plan.exitAt, enterAt: this.plan.enterAt ?? 0, len: this.plan.seconds, pos: posOf(this.cur),
+      cur: side(curAna, this.cur.track),
+      next: side(a, head),
+      gestures: rec?.gestures || [], recipeLen: rec?.len || 0,
+    };
+    if (!this.trans) this.tlLast = tl;
+    return tl;
   }
 
   makeNearestPlan(cur, next, head) {
@@ -941,11 +982,14 @@ export class AutoMix {
       const a = tr.local || this.ana.get(tr.videoId) ? this.ana.get(tr.videoId) : null;
       const g = bpmGap(curAna?.bpm, a?.bpm);
       const cost = prevAna?.bpm && a?.bpm ? edgeCost(prevAna, a) : null;
+      const prep = this.prepOf(tr);
+      const cp = compat(prevAna, a, { cost, analyzed: !!a?.bpm, file: !!tr.local || (prep.state === 'ready' && !prep.stream) });
       prevAna = a?.bpm ? a : prevAna;
       return {
+        compat: cp,
         cost: cost == null ? null : Math.round(cost * 10) / 10,
         ...tr,
-        prep: this.prepOf(tr),
+        prep,
         bpm: a?.bpm || null,
         camelot: a?.camelot || null,
         energy: a?.mix?.energy ?? null,
@@ -957,6 +1001,7 @@ export class AutoMix {
     });
     return {
       entry: this.entryOf(curAna),
+      timeline: this.timelineOf(curAna),
       on: this.on,
       cur: this.cur?.track || null,
       curDeck: this.cur?.id || null,

@@ -45,6 +45,37 @@ Arriba, tres tarjetas: **SUENA** (con lo que falta), el estado de la mezcla con 
 
 Cada pista de la cola tiene: **⤒** (poner a continuación), **▲ ▼** (subir o bajar), **✕** (quitar), y se puede **arrastrar** para reordenar. Funciona **también durante una transición** sin interrumpir lo que suena: al terminar, se retira la pista que entró y se conserva lo que cambiaste.
 
+## Entender qué está haciendo
+
+### Línea de estado
+
+La tarjeta del centro dice en una frase **en qué fase está AutoMix**, con un punto de color: **Detenido** (gris), **Sonando** (verde), **Preparando la siguiente** (ámbar: aún se descarga o analiza), **Esperando el punto de salida** (ámbar: ya está lista y falta poco, menos de 30 s) y **Mezclando** (azul). Junto a la fase va el tiempo que falta para la mezcla y, debajo, el **motivo** de cualquier espera o cambio («Falló “…”: sigo con la siguiente», «no hay otra pista en la cola»). El botón **AutoMix** de la barra superior, visible en todas las vistas, lleva la misma fase (el punto), la cuenta atrás y, al pasar el ratón, la frase completa.
+
+### Línea de tiempo de la mezcla
+
+![Línea de tiempo de la mezcla](img/49-automix-linea-de-tiempo.png)
+
+Bajo el estado se dibuja la **próxima transición**: arriba la pista que sale y abajo la que entra, con la energía por frase de cada una, alineadas en el punto de mezcla. La banda clara es el **solape**, las marcas finas son los **gestos de la receta** (graves, filtro, eco, fundido) y la línea roja es la **posición actual**. Durante la mezcla el cabezal avanza por ella.
+
+- **Arrastra la línea blanca de la izquierda, mitad de arriba**, para cambiar dónde **sale** la pista que suena; **la mitad de abajo** cambia dónde **entra** la siguiente. Se ajustan al compás más cercano y se guardan como puntos editados de esa pista (mandan siempre).
+- **Arrastra la línea de la derecha** para cambiar la **duración** (de 4 a 48 s). Mientras arrastras, el texto de debajo («Sale 1:37 · entra 0:00 · 12 s») y los gestos se actualizan al instante.
+- Con el foco en la línea: **← →** mueven la salida un compás y **Mayús + ← →** cambian la duración de un segundo en un segundo.
+- **Escuchar** reproduce esa transición por los **auriculares** (salida de preescucha) antes de que ocurra. Necesita las dos pistas guardadas como archivo local.
+
+Los cambios valen para la siguiente mezcla (y para la actual si aún no ha empezado).
+
+### Compatibilidad en la cola
+
+Cada pista de la cola lleva una señal de tres niveles respecto a la anterior: **✓** muy buena, **~** aceptable, **!** difícil, y **?** si no hay datos. Pasa el ratón para ver el motivo en palabras («mismo BPM · tonalidad compatible · energía parecida»). Las pistas **sin análisis** o **sin archivo** local llevan una etiqueta aparte.
+
+### Perfiles
+
+En la parte alta del grupo **Transición**, la fila **Perfil**: **Suave** (24 s, fundido, sin efectos), **Club** (12 s, receta automática, efectos sutiles), **Radio** (32 s, fundido, en el orden de la cola) y **Personalizado**. Un clic fija duración, estilo, orden y efectos; en cuanto cambias uno de esos ajustes a mano, pasa a **Personalizado**. El último perfil se recuerda entre sesiones.
+
+### Si una pista falla
+
+Si la que sigue no se puede abrir (archivo dañado, sin conexión), AutoMix la **quita de la cola y sigue con la siguiente**, sin dejar el deck en silencio, y lo explica en el estado. Si era la última de la cola, se queda y avisa; la pista que suena continúa. Si una pista no está analizada, se mezcla por streaming con fundido y sin igualar el tempo, y se marca como **sin análisis**.
+
 ## Siempre analizar y usar el archivo (sin anuncios)
 
 Con **Analizar y usar archivo** activado, las próximas pistas de YouTube se **descargan sin sesión, se analizan y se guardan** en tu librería local con antelación (las 3 siguientes), y cuando están listas el deck **abre el archivo, no el stream**. Así no hay anuncios y hay BPM para igualar el tempo y la fase.
