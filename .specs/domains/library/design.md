@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-stems-manuales
+last_change: 2026-11-03-playlists-locales
 ---
 # library · design
 
@@ -36,3 +36,11 @@ last_change: 2026-11-02-stems-manuales
 ## StemStore
 
 `main/stems.js`: cola de una pista, cancelación ordenada (el hijo cierra su codificador y borra lo parcial), vigilancia de memoria (parada ordenada con `code: 'memoria'`), límite de 15 minutos y escritura a `.part` que se renombra al terminar.
+
+## Índice local
+
+`main/local-search.js` (`LocalSearch`, `collect`, `keysCompatible`) se reconstruye de forma perezosa cuando cambian los archivos locales, los géneros, los análisis o las listas; IPC `lib:search-local` y `local:similar`; la UI lo usa desde `Library.runSearch` con el ámbito guardado en `localStorage alyssdj.search.scope`.
+
+## Almacén de playlists
+
+`main/playlists.js` (`PlaylistStore`: `create`, `add`, `remove`/`restore`, `reorder`, `sortBy`, `setFilter`, `fromCrate`) con IPC `pl:*` y evento `pl:event`; la exportación acepta la fuente `pl:<id>`; la copia de una importada usa `pl:from-crate`.

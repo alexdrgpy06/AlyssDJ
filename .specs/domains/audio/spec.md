@@ -1,7 +1,7 @@
 ---
 domain: audio
 paths: [shared/fx.js, shared/dsp-chain.js, renderer/deck.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/fxpad.js, main/settings.js, scripts/**, docs/**, README.md, .github/**]
-last_change: 2026-11-03-stems-gpu-automaticos
+last_change: 2026-11-03-efectos-ampliados
 ---
 # audio · spec
 
@@ -38,3 +38,7 @@ WHEN hay un proveedor de GPU candidato en la plataforma (DirectML en Windows, Co
 ## Cambio sin salto a los stems
 
 WHEN el usuario pulsa un stem de una pista con stems listos THE SYSTEM SHALL activarlos con el silencio o solo ya aplicado en una sola acción, con un fundido cruzado lineal de 40 ms desde la pista completa; WHEN no queda ningún stem silenciado o aislado THE SYSTEM SHALL volver a la pista completa con el mismo fundido.
+
+## Siete efectos nuevos con coste acotado
+
+THE SYSTEM SHALL ofrecer, además de los siete efectos de siempre, cinta, reducer, stutter, frenazo, transformer, drive y pitch, sincronizados al BPM del deck cuando proceda, con división de beat elegible (1, ½, ¼, ⅛, tresillo) en eco, cinta, gate, stutter y transformer; WHEN una ranura está apagada o con cantidad 0 THE SYSTEM SHALL no montar sus nodos ni dejar temporizadores; THE SYSTEM SHALL mantener cada tipo sin NaN, con pico por debajo de 1,6 con cantidad 1, sin saltos al cambiar de tipo y por debajo del 5 % del tiempo real de CPU.

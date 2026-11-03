@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-03-stems-gpu-automaticos
+last_change: 2026-11-03-playlists-locales
 ---
 # library · spec
 
@@ -41,3 +41,19 @@ THE SYSTEM SHALL guardar los stems en `userData/stems` con un índice, marcar en
 ## Preparación automática y cuota de stems
 
 WHEN el ajuste de preparación es automático y la GPU está comprobada, o es «Siempre» THE SYSTEM SHALL separar la pista cargada en un deck (prioridad 0) y la siguiente de AutoMix (prioridad 1) antes que las peticiones manuales (prioridad 2); WHILE los stems superen la cuota (5 GB por defecto) THE SYSTEM SHALL borrar primero los menos usados, sin tocar los cargados en un deck ni el recién hecho.
+
+## Buscar en todo lo local
+
+WHEN el usuario busca con el ámbito «Mi equipo» o «Todo» THE SYSTEM SHALL consultar un índice local (archivos, pistas guardadas, analizadas y de listas) sin tildes ni mayúsculas por título, artista, álbum y género, sin exponer la ruta de los archivos, y filtrar por BPM, tonalidad y compatibilidad con la pista cargada; WHILE no hay conexión THE SYSTEM SHALL mostrar los resultados locales con un aviso en lugar de un error.
+
+## Playlists locales
+
+THE SYSTEM SHALL guardar playlists propias (manuales o inteligentes) en `userData/playlists-local.json` de forma atómica, conservar una copia `.bad-…` si el archivo está dañado, no modificar nunca archivos de música, y permitir crearlas, renombrarlas, duplicarlas y borrarlas con su número de pistas y duración.
+
+## Poner, sacar y ordenar pistas
+
+WHEN el usuario arrastra pistas a una lista, usa «Añadir a playlist» o la barra de selección THE SYSTEM SHALL añadirlas sin repetir la pista en la misma lista; WHEN las quita THE SYSTEM SHALL conservar archivos y demás listas y permitir deshacer en su posición original; THE SYSTEM SHALL ordenar por título, artista, BPM, tonalidad, género o duración (las pistas sin dato al final) y permitir reordenar arrastrando, guardando el resultado.
+
+## Listas inteligentes
+
+THE SYSTEM SHALL resolver una lista inteligente a partir de sus filtros (BPM, tonalidad y compatibles, géneros, solo analizadas, solo con stems) sobre el índice local cada vez que se abre, sin permitir editar sus pistas a mano.

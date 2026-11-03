@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-03-interfaz-ordenada
+last_change: 2026-11-03-arquitectura-documentada
 ---
 # ui · design
 
@@ -44,3 +44,23 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## Inventario de controles
 
 `docs/inventario-controles.md` lista cada control, su lugar y los retirados; `scripts/test-orden.js` (modos automix, topbar, deck, banks, layout, docs) y `scripts/orden-selftest.js` lo comprueban a 1280×720.
+
+## Módulo de la interfaz
+
+`renderer/playlists.js` (`PlaylistsUI`) lo monta `Library` (`library.pls`) con ganchos en `show`, `render`, `onClick` y el arrastre de filas.
+
+## Tira de entrada
+
+`renderer/automix-entry.js` (`EntryStrip`) pinta `snapshot().entry` (`AutoMix.entryOf`) y guarda con `analysis.setMixEdit`.
+
+## Timeline, compatibilidad en la cola y botón de la barra
+
+`renderer/automix-timeline.js` (`Timeline`, `geometry`, `hit`) sobre `snapshot().timeline` (`AutoMix.timelineOf`); la cola pinta `compat` con ✓ ~ ! ? y etiquetas «sin análisis» / «sin archivo»; `#btn-automix` lleva `data-phase` y `#btn-automix-count` como tarjeta compacta en todas las vistas.
+
+## fxpresets, move, route y mirrorFx
+
+`renderer/fxpresets.js` (`FxPresets`, `FACTORY`) guarda en `alyssdj.fxpresets`; `FxChain.move`, `d` y `route` en el modelo; `fxpanel.js` monta el popover `.fx-pop` y `hold(i, down)`; `Deck.mirrorFx` copia las ranuras con ruta `both` al otro deck.
+
+## Herramientas del mapa
+
+`scripts/arquitectura-lib.js` (lectura del código), `arquitectura-gen.js` (escribe registro y documentos), `test-arquitectura.js` (registry, ipc, docs) y `visual-check.js` con `visual-check-selftest.js` (comparación dentro de Electron, `--approve` para aceptar un cambio intencionado).

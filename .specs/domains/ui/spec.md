@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-03-interfaz-ordenada
+last_change: 2026-11-03-arquitectura-documentada
 ---
 # ui · spec
 
@@ -104,3 +104,31 @@ THE SYSTEM SHALL permitir abrir y cerrar cada banco de pads del deck (LOOP, JUMP
 ## Ajustes por tarea
 
 THE SYSTEM SHALL agrupar los ajustes en Aspecto y vistas, Audio, Decks, Efectos y filtros, Librería, Entrada y MIDI y Sistema, con la búsqueda de ajustes.
+
+## Ámbito y filtros del buscador
+
+THE SYSTEM SHALL ofrecer en el buscador el ámbito Todo, Mi equipo o YouTube Music (recordado entre sesiones) y, en la librería, filtros de BPM, tonalidad y compatibles con un botón para limpiarlos.
+
+## AutoMix con la música del equipo
+
+WHILE el modo local está activo o el ámbito es «Mi equipo» THE SYSTEM SHALL armar la cola de AutoMix con las pistas analizadas del equipo más compatibles (`local.similar`) sin consultar la radio de YouTube Music; IF no hay candidatas THEN THE SYSTEM SHALL avisar «Analiza más música de tu equipo para sugerir pistas».
+
+## Mis listas y selección múltiple
+
+THE SYSTEM SHALL mostrar «Mis listas» en las fuentes (nombre editable en línea, soltar pistas encima), un botón «＋» y un menú «Añadir a playlist» en cada fila, selección con clic, Ctrl/Cmd, Mayús y Ctrl+A, y una barra con añadir, quitar, cola de AutoMix y analizar cuando hay dos o más pistas seleccionadas.
+
+## Entrada visible y editable en SIGUE
+
+THE SYSTEM SHALL mostrar en la tarjeta «SIGUE» la entrada (tiempo y compás), el motivo en una frase y una tira con la energía por frase con una línea en el punto elegido; WHEN el usuario arrastra la línea o usa ← → THE SYSTEM SHALL guardarla en el compás más cercano como punto de entrada editado de esa pista, y «Auto» SHALL quitar solo esa entrada conservando las salidas.
+
+## Línea de tiempo de la mezcla
+
+THE SYSTEM SHALL dibujar la próxima transición con la energía de la pista que sale y de la que entra, el solape, los gestos de la receta y la posición actual; WHEN el usuario arrastra la salida, la entrada o el final del solape (o usa ← → y Mayús + ← →) THE SYSTEM SHALL guardar el punto en el compás más cercano o la duración y mostrar al instante el efecto; WHERE las dos pistas son archivos locales THE SYSTEM SHALL permitir escucharla por los auriculares.
+
+## Presets, orden, ruta e Instant FX
+
+THE SYSTEM SHALL permitir, desde el botón ⋯ del panel FX, elegir la división de beat, la ruta (este deck o ambos decks), mover la ranura antes o después y aplicar, guardar y borrar presets (siete de fábrica y hasta 40 propios); WHEN el usuario mantiene E, R, T, U, I u O THE SYSTEM SHALL aplicar la ranura 1–3 del deck A o B con una rampa de entrada de 30 ms y quitarla con otra de 60 ms al soltar, sin tocar una ranura que ya estaba encendida ni actuar al escribir en un campo de texto.
+
+## Mapa de arquitectura mantenido por pruebas
+
+THE SYSTEM SHALL mantener en docs/arquitectura un registro por módulo (modulos.json) y documentos generados, y fallar la integración continua si un módulo, canal IPC o cita de archivo diverge del código, y si una de las seis capturas de referencia cambia más del 0,5 % de sus píxeles.

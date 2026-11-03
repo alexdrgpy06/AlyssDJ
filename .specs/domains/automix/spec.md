@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-03-interfaz-ordenada
+last_change: 2026-11-03-efectos-ampliados
 ---
 # automix · spec
 
@@ -86,3 +86,15 @@ WHEN el usuario pulsa «Siguiente» o «Mezclar ahora» y la entrante se está a
 ## Un solo panel de control
 
 THE SYSTEM SHALL ofrecer los controles de AutoMix (iniciar o detener, mezclar ahora, estilo, duración, siguiente, cola) únicamente en el panel de la fuente AutoMix; la vista Automix SHALL mostrar solo el estado y un botón para abrir ese panel, y el botón de la barra SHALL mostrar el estado (activo o mezclando).
+
+## Entrada elegida entre varios puntos
+
+WHEN AutoMix prepara una transición (programada, «Mezclar ahora» o «Siguiente») THE SYSTEM SHALL evaluar como puntos de entrada de la pista que sigue el inicio de la intro, la frase que salta una intro larga, la primera frase con energía y el primer drop, siempre en límite de frase y nunca antes del primer compás con música, y elegir el de menor coste según la energía de salida frente a la de entrada, que la entrada no se quede en una intro vacía al acabar la transición y que la transición quepa antes del final; WHEN la pista tiene una entrada editada a mano THE SYSTEM SHALL usarla tal cual; IF la pista no está analizada THEN THE SYSTEM SHALL entrar por el inicio y avisarlo.
+
+## Estado, perfiles y robustez de AutoMix
+
+THE SYSTEM SHALL describir en todo momento la fase de AutoMix (Detenido, Sonando, Preparando la siguiente, Esperando el punto de salida, Mezclando) con la cuenta atrás hasta la mezcla y el motivo de cualquier espera; WHERE el usuario elige un perfil (Suave, Club, Radio, Personalizado) THE SYSTEM SHALL fijar duración, estilo, orden y efectos con un clic y recordar el último; IF la pista que sigue no se puede abrir THEN THE SYSTEM SHALL descartarla, seguir con la siguiente de la cola sin silencio y explicarlo en el estado, o, si era la última, conservarla y avisar.
+
+## Frenazo en la caída
+
+WHEN la receta es «En la caída», el nivel de efectos es «Marcado» y la transición dura al menos 8 s THE SYSTEM SHALL frenar la pista que sale en los últimos 4 pulsos usando una ranura libre; IF no hay ranura libre THEN THE SYSTEM SHALL omitirlo y anotarlo.

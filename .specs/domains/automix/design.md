@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-02-automix-transicion-suave
+last_change: 2026-11-03-automix-claro
 ---
 # automix · design
 
@@ -48,3 +48,11 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## Gestos cada 40 ms y duración sugerida
 
 `AutoMix.startTransition` arranca un `stepTimer` de 40 ms (sin retener el proceso en pruebas); `chooseStyle` devuelve `beats` y `planRecipe({ beats })` lo respeta; `maxLen()` da hasta 32 s al plan en Auto; `pendingMix` espera `prep.state === 'analyze'` hasta 8 s.
+
+## pickEntry
+
+`renderer/mixplan.js` (`entryCandidates`, `pickEntry`) devuelve `{ t, kind, why, bar, cost, cands }`; `planTransition`, `planNearest` y `previewPlan` lo usan y el plan lleva `entry`; `energyAt` tolera 10 ms de redondeo en los límites de frase.
+
+## Módulos de estado, compatibilidad y perfiles
+
+`renderer/automix-status.js` (`describe`), `renderer/automix-compat.js` (`compat`) y `renderer/automix-profiles.js` (`PROFILES`, `applyProfile`, `detect`); `AutoMix.failHead` descarta la cabeza que falla (`Deck.loadError` o excepción de `preload`) y `snapshot()` añade `timeline` y `compat` por elemento de la cola.
