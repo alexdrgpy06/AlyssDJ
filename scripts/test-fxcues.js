@@ -65,10 +65,10 @@ tests.moves = async () => {
   // reservar: primera ranura apagada; configura el efecto y guarda el estado previo
   let a = mk('A'); let m = mv();
   const s0 = m.claim(a, { name: 'eco de salida', type: 'echo', p: 0.5 });
-  assert.strictEqual(s0, 0); assert.deepStrictEqual(a.fxc.slots[0], { type: 'echo', on: true, wet: 0, p: 0.5 }); assert.strictEqual(a.fxc.owners[0], 'auto');
+  assert.strictEqual(s0, 0); assert.deepStrictEqual(a.fxc.slots[0], { type: 'echo', on: true, wet: 0, p: 0.5, d: null, route: 'deck' }); assert.strictEqual(a.fxc.owners[0], 'auto');
   // REQ-5: nunca toca una ranura encendida por el usuario
   a = mk('A'); m = mv(); a.fxc.set(0, { type: 'flanger', on: true, wet: 0.7 }); a.fxc.set(1, { on: true });
-  assert.strictEqual(m.claim(a, { name: 'x', type: 'reverb' }), 2, 'salta las encendidas'); assert.deepStrictEqual(a.fxc.slots[0], { type: 'flanger', on: true, wet: 0.7, p: 0.5 }, 'la del usuario intacta');
+  assert.strictEqual(m.claim(a, { name: 'x', type: 'reverb' }), 2, 'salta las encendidas'); assert.deepStrictEqual(a.fxc.slots[0], { type: 'flanger', on: true, wet: 0.7, p: 0.5, d: null, route: 'deck' }, 'la del usuario intacta');
   assert.strictEqual(m.claim(a, { name: 'riser', type: 'phaser' }), null, 'sin ranura libre → null'); assert.deepStrictEqual(m.takeSkipped(), ['riser']); assert.deepStrictEqual(m.takeSkipped(), []);
   // dos reservas no comparten ranura
   a = mk('A'); m = mv(); assert.strictEqual(m.claim(a, { name: 'a', type: 'echo' }), 0); assert.strictEqual(m.claim(a, { name: 'b', type: 'reverb' }), 1); assert.deepStrictEqual(m.active(), ['a', 'b']);
@@ -82,7 +82,7 @@ tests.moves = async () => {
   // restaurar: estado previo completo (tipo, cantidad, P, apagada)
   a = mk('B'); m = mv(); a.fxc.set(1, { type: 'crush', wet: 0.8, p: 0.1, on: false }); a.fxc.set(0, { on: true });
   const sl = m.claim(a, { name: 'riser', type: 'phaser', p: 0.7 }); assert.strictEqual(sl, 1); m.set(a, 1, { wet: 0.5 });
-  m.release(a, 1); assert.deepStrictEqual(a.fxc.slots[1], { type: 'crush', on: false, wet: 0.8, p: 0.1 }); assert.strictEqual(a.fxc.owners[1], 'user'); assert.deepStrictEqual(m.active(), []);
+  m.release(a, 1); assert.deepStrictEqual(a.fxc.slots[1], { type: 'crush', on: false, wet: 0.8, p: 0.1, d: null, route: 'deck' }); assert.strictEqual(a.fxc.owners[1], 'user'); assert.deepStrictEqual(m.active(), []);
   // cola del eco: se suelta tras el retardo, no antes
   a = mk('A'); m = mv(); timers.length = 0; m.claim(a, { name: 'eco de salida', type: 'echo' }); m.set(a, 0, { wet: 0.6 }); m.release(a, 0, 4000);
   assert.strictEqual(a.fxc.slots[0].on, true, 'sigue sonando la cola'); assert.strictEqual(timers[0].ms, 4000); timers[0].fn(); assert.strictEqual(a.fxc.slots[0].on, false); assert.deepStrictEqual(m.active(), []);
@@ -150,7 +150,7 @@ const electronRun = (selftest, name) => {
 tests.engine = async () => {
   const r = electronRun('fxcues-selftest.js', 'fxcues.json');
   assert.ok(!r.__err, JSON.stringify(r.__err));
-  const def = (t) => ({ type: t, on: false, wet: 0.5, p: 0.5 }); const defs = [def('echo'), def('reverb'), def('filter')];
+  const def = (t) => ({ type: t, on: false, wet: 0.5, p: 0.5, d: null, route: 'deck' }); const defs = [def('echo'), def('reverb'), def('filter')];
   // REQ-3: transición en Sutil
   assert.deepStrictEqual(r.planned, ['echo-out', 'reverb-break']);
   assert.deepStrictEqual(r.early, defs, 'al 30 % todavía no hay efectos');

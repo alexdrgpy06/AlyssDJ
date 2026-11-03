@@ -10,21 +10,21 @@ const tests = {};
 
 tests.model = async () => {
   const { FxChain, FX_TYPES, SLOTS, defaultChain, clampSlot } = await import('../renderer/fxchain.js');
-  assert.deepStrictEqual(FX_TYPES, ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter']);
+  assert.deepStrictEqual(FX_TYPES.slice(0, 7), ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter'], 'los siete de siempre siguen primero'); assert.strictEqual(FX_TYPES.length, 14);
   assert.strictEqual(SLOTS, 3);
   // REQ-1: por defecto, ranura 1 = eco apagado 0,5 (como hoy)
   const d = defaultChain();
-  assert.deepStrictEqual(d[0], { type: 'echo', on: false, wet: 0.5, p: 0.5 });
+  assert.deepStrictEqual(d[0], { type: 'echo', on: false, wet: 0.5, p: 0.5, d: null, route: 'deck' });
   assert.strictEqual(d.length, 3); assert.ok(d.every((s) => !s.on));
   // límites y valores inválidos
-  assert.deepStrictEqual(clampSlot({ type: 'nope', on: 'si', wet: 4, p: -2 }, 1), { type: 'reverb', on: false, wet: 1, p: 0 });
-  assert.deepStrictEqual(clampSlot({ type: 'crush', on: true, wet: 'x', p: null }, 0), { type: 'crush', on: true, wet: 0.5, p: 0.5 });
+  assert.deepStrictEqual(clampSlot({ type: 'nope', on: 'si', wet: 4, p: -2 }, 1), { type: 'reverb', on: false, wet: 1, p: 0, d: null, route: 'deck' });
+  assert.deepStrictEqual(clampSlot({ type: 'crush', on: true, wet: 'x', p: null }, 0), { type: 'crush', on: true, wet: 0.5, p: 0.5, d: null, route: 'deck' });
   const c = new FxChain(null);
   assert.deepStrictEqual(c.snapshot(), d);
   const seen = [];
   c.onChange = (i, s) => seen.push([i, s.type, s.on]);
   c.set(1, { type: 'phaser', on: true, wet: 0.8 });
-  assert.deepStrictEqual(c.slots[1], { type: 'phaser', on: true, wet: 0.8, p: 0.5 });
+  assert.deepStrictEqual(c.slots[1], { type: 'phaser', on: true, wet: 0.8, p: 0.5, d: null, route: 'deck' });
   assert.deepStrictEqual(seen, [[1, 'phaser', true]], 'avisa al cambiar');
   c.set(0, { wet: 9 }); assert.strictEqual(c.slots[0].wet, 1);
   assert.strictEqual(c.set(7, { on: true }), null); assert.strictEqual(c.select(5), 0); assert.strictEqual(c.select(2), 2);
@@ -62,7 +62,7 @@ const electronRun = (selftest, name) => {
 tests.engine = async () => {
   const r = electronRun('fx-selftest.js', 'fx.json');
   assert.ok(!r.__err, r.__err);
-  assert.deepStrictEqual(r.types, ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter']); assert.strictEqual(r.slots, 3);
+  assert.deepStrictEqual(r.types.slice(0, 7), ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter']); assert.strictEqual(r.types.length, 14); assert.strictEqual(r.slots, 3);
   // REQ-1: transparente con ranuras apagadas o con wet 0, y sin efectos montados
   assert.ok(r.offDist < 1e-6, `apagadas: ${r.offDist}`); assert.ok(r.wet0Dist < 1e-3, `wet 0: ${r.wet0Dist}`);
   assert.deepStrictEqual(r.offMounted, [null, null, null]); assert.deepStrictEqual(r.wet0Mounted, [null, null, null], 'wet 0 no monta nada');
@@ -81,7 +81,7 @@ tests.engine = async () => {
   assert.ok(r.bpmDist > 0.01, 'el eco sigue el BPM'); assert.ok(r.gateBpmDist > 0.01, 'el gate sigue el BPM');
   // montaje bajo demanda y límites
   assert.deepStrictEqual(r.mount, [[null, null, null], ['echo', null, null], ['phaser', 'crush', null], [null, null, null]]);
-  assert.deepStrictEqual(r.clamped, { type: 'phaser', on: true, wet: 1, p: 0 }, 'tipo inválido conserva el anterior; valores acotados'); assert.deepStrictEqual(r.after, ['phaser', null, null]);
+  assert.deepStrictEqual(r.clamped, { type: 'phaser', on: true, wet: 1, p: 0, d: null }, 'tipo inválido conserva el anterior; valores acotados'); assert.deepStrictEqual(r.after, ['phaser', null, null]);
   // REQ-4: resonancia
   assert.ok(r.res.diff > 0.005, 'la resonancia cambia el sonido'); assert.ok(!r.res.nan);
   assert.ok(r.res.lo1 < r.res.lo0 * 2.5, `ganancia limitada (${JSON.stringify(r.res)})`); assert.ok(r.res.hiPeak < 4, `pico del pasa-altos resonante (${r.res.hiPeak})`);
@@ -100,7 +100,7 @@ tests.ui = async () => {
   const near = (a, b, t, m) => assert.ok(Math.abs(a - b) <= t, `${m}: ${a} vs ${b}`);
   // REQ-1/3: tres ranuras; por defecto como hoy
   assert.deepStrictEqual(r.start.pads, ['ECO', 'REVERB', 'FILTRO']); assert.deepStrictEqual(r.start.pows, [false, false, false]); assert.deepStrictEqual(r.start.selSlot, [true, false, false]);
-  assert.deepStrictEqual(r.start.slots[0], { type: 'echo', on: false, wet: 0.5, p: 0.5 });
+  assert.deepStrictEqual(r.start.slots[0], { type: 'echo', on: false, wet: 0.5, p: 0.5, d: null, route: 'deck' });
   assert.ok(r.start.pane && r.start.pad && r.start.pad.w >= 56 && Math.abs(r.start.pad.w - r.start.pad.h) < 24, JSON.stringify(r.start.pad));
   // sin desbordes si la pantalla da para el diseño normal (la consola sola mide ~600 px); en pantallas pequeñas el CI no lo exige
   if (r.start.ih >= 800) { assert.ok(r.start.sw <= r.start.w && r.start.sh <= r.start.ih + 1, 'sin desbordes'); assert.ok(r.start.lib.h >= 150, `la librería conserva su mínimo (${r.start.lib.h})`); }
@@ -124,7 +124,7 @@ tests.ui = async () => {
   near(r.midi.s[0].wet, 0.31, 0.001, 'fx1Wet'); assert.strictEqual(r.midi.s[0].type, 'crush', 'fx.<tipo> apunta a la ranura 1'); assert.strictEqual(r.midi.s[0].on, true, 'fxOn alterna la ranura 1'); near(r.midi.s[2].p, 0.12, 0.001, 'fx3P'); assert.strictEqual(r.midi.s[1].on, true); near(r.midi.res, 0.4, 0.001, 'MIDI RES');
   assert.deepStrictEqual([r.api0.type, r.api0.on, r.api0.wet, r.api0.p], ['filter', true, 0.9, 0.2], 'fxSet'); assert.ok(r.api1.wet < 0.05, `fxRamp llega al destino (${r.api1.wet})`);
   assert.deepStrictEqual(r.stored.map((s) => s.type), ['gate', 'crush', 'filter']); assert.deepStrictEqual(r.reloaded.slice(0, 2), r.stored.slice(0, 2), 'se recuerda entre sesiones');
-  assert.deepStrictEqual(r.noRemember[0], { type: 'echo', on: false, wet: 0.5, p: 0.5 }, 'sin «recordar», cadena por defecto'); assert.strictEqual(r.loadKeeps, true, 'cargar una pista conserva la cadena');
+  assert.deepStrictEqual(r.noRemember[0], { type: 'echo', on: false, wet: 0.5, p: 0.5, d: null, route: 'deck' }, 'sin «recordar», cadena por defecto'); assert.strictEqual(r.loadKeeps, true, 'cargar una pista conserva la cadena');
   assert.ok(r.small.sw <= r.small.w && r.small.sh <= r.small.ih + 1, `1366×768 sin desbordes (${r.small.sw}x${r.small.sh})`);
   console.log('ui ok');
 };

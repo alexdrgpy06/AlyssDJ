@@ -13,6 +13,8 @@ import { AddPanel } from './automix-add.js';
 import { EntryStrip } from './automix-entry.js';
 import { Timeline } from './automix-timeline.js';
 import { describe } from './automix-status.js';
+// Instant FX: mantener la tecla aplica la ranura (deck, ranura) y soltarla la quita.
+const FX_KEYS = { e: ['A', 0], r: ['A', 1], t: ['A', 2], u: ['B', 0], i: ['B', 1], o: ['B', 2] };
 import { LEVELS } from './automix-compat.js';
 import { applyProfile, detect } from './automix-profiles.js';
 import { Sampler } from './sampler.js';
@@ -889,6 +891,8 @@ class App {
         e.preventDefault();
         return;
       }
+      const fxk = FX_KEYS[e.key.toLowerCase()];
+      if (fxk && !e.shiftKey) return e.repeat || (e.preventDefault(), this.decks[fxk[0]].fxPanel?.hold(fxk[1], true));
       const id = keys[e.key.toLowerCase()] || keys[e.code.replace('Digit', '')];
       if (!id || e.repeat) return;
       e.preventDefault();
@@ -898,6 +902,8 @@ class App {
     });
     window.addEventListener('keyup', (e) => {
       if (typing(e)) return;
+      const fxk = FX_KEYS[e.key.toLowerCase()];
+      if (fxk) return this.decks[fxk[0]].fxPanel?.hold(fxk[1], false);
       const id = keys[e.key.toLowerCase()] || keys[e.code.replace('Digit', '')];
       if (id && /cue$|nudge/.test(id)) press(id, false);
     });

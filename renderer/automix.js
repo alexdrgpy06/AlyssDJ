@@ -864,7 +864,7 @@ export class AutoMix {
     this.fxLive = null;
     this.fxWarn = '';
     // Los estilos de corte traen su propio eco o reverb; en las mezclas largas siguen el eco de salida y la reverb de rotura.
-    this.trans.moves = ['bass', 'filter', 'crossfade'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null })) : [];
+    this.trans.moves = ['bass', 'filter', 'crossfade', 'drop-cut'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null })) : [];
     this.note = `Mezclando ${from.id} → ${to.id} · ${STYLE_LABEL[style] || style} (${pick.why})${tempo ? ' · tempo igualado' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
     this.emit();
   }

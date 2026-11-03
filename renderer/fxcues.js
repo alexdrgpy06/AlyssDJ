@@ -60,6 +60,12 @@ export function planTransitionMoves({ level, cur, plan, style }) {
   const moves = [];
   const bpm = cur?.bpm > 0 ? cur.bpm : 120;
   const beat = 60 / bpm;
+  // «En la caída»: con efectos marcados, la saliente frena en los últimos 4 pulsos, justo antes de que entren los graves de la entrante.
+  if (style === 'drop-cut') {
+    if (level !== 'full' || plan.seconds < 8) return [];
+    const end = plan.exitAt + plan.seconds;
+    return [{ id: 'brake-drop', name: 'frenazo en la caída', deck: 'from', type: 'brake', p: 0.25, targetWet: 0.9, atPos: end - 4 * beat, endPos: end, rampSeconds: beat / 2, tailMs: 800 }];
+  }
   if (plan.seconds >= 4) {
     moves.push({ id: 'echo-out', name: 'eco de salida', deck: 'from', type: 'echo', p: 0.5, targetWet: 0.6, startP: 0.75, rampSeconds: plan.seconds * 0.25, tailMs: 4000 });
   }

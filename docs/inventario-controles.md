@@ -81,3 +81,15 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 | `#amtl` | Línea de tiempo | Próxima mezcla: `#amtl-cv` (arrastrar salida, entrada y duración; ← → y Mayús + ← →), `#amtl-info` (texto), `#amtl-preview` (Escuchar por auriculares) |
 | `#amv-profile` | Perfil | Suave, Club, Radio, Personalizado; se recuerda en `automix-profile` |
 | `#amv-status` | Estado | Fase (`data-phase`), cuenta atrás y motivo; el botón `#btn-automix` lleva la misma fase y `#btn-automix-count` |
+
+## Efectos ampliados (⋯, Instant FX)
+
+| Selector | Control | Qué hace |
+|---|---|---|
+| `.fx-more` | ⋯ | Abre las opciones de la ranura elegida (`.fx-pop`) |
+| `.fx-div` | División | Auto, 1, ½, ¼, ⅛, tresillo (solo Eco, Cinta, Gate, Stutter y Transformer) |
+| `.fx-route` | Ruta | Este deck / Ambos decks (copia la ranura al otro deck) |
+| `.fx-mv` | Orden | ◀ Antes / Después ▶ dentro de la cadena |
+| `.fx-preset` | Preset | De fábrica y propios; aplicar no enciende la ranura |
+| `.fx-pname` | Nombre | Con `.fx-psave` guarda un preset propio; `.fx-pdel` borra uno propio |
+| teclas E R T · U I O | Instant FX | Mantener = aplicar con rampa; soltar = quitar (deck A · deck B, ranuras 1–3) |

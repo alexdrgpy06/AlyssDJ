@@ -491,7 +491,10 @@ menu { display: flex; justify-content: flex-end; margin: 0; padding: 0; }
 .fx-pow { flex: none; width: 24px; font-weight: 800; background: transparent; color: var(--dim); }
 .fx-pow.on { background: var(--accent); color: var(--accent-ink); }
 .fx-pick { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: transparent; letter-spacing: .06em; font-weight: 700; }
-.fx-ctl { grid-column: 1; display: grid; grid-template-columns: 82px minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: center; }
+.fx-ctl { grid-column: 1; display: grid; grid-template-columns: 82px minmax(0, 1fr) minmax(0, 1fr) 26px; gap: 6px; align-items: center; }
+.fx-more { min-height: 26px; width: 26px; padding: 0; font-weight: 800; }
+.fx-more.on { background: var(--raised-2); border-color: var(--sel); }
+.fx-slot.both .fx-pick::after { content: ' ↔'; color: var(--faint); }
 .fx-ctl select { padding: 2px 4px; font-size: 11px; min-height: 24px; }
 .fx-xy { grid-column: 2; grid-row: 1 / span 2; }
 .xy-pad { position: relative; border: 1px solid var(--line-2); border-radius: var(--r-2); background: var(--inset); cursor: crosshair; touch-action: none; outline: none;
@@ -976,3 +979,14 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 #btn-automix[data-phase='mixing']::before { background: #4aa3ff; }
 .am-btn-count { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--dim); margin-left: 4px; }
 .am-btn-count:empty { display: none; }
+
+.fx-pop { position: fixed; z-index: 60; width: 292px; display: grid; gap: 6px; padding: 8px; background: var(--raised); border: 1px solid var(--line-2); border-radius: var(--r-2); box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.fx-pop[hidden] { display: none; }
+.fx-pop-row { display: flex; align-items: center; gap: 6px; }
+.fx-pop-row .lbl { width: 52px; flex: none; }
+.fx-pop .seg { display: flex; flex: 1; }
+.fx-pop button { min-height: 26px; font-size: 11px; }
+.fx-pop .seg button { flex: 1; padding: 0 4px; }
+.fx-pop select, .fx-pop input { flex: 1; min-width: 0; min-height: 26px; font-size: 11px; }
+.fx-pmsg { margin: 0; min-height: 14px; font-size: 11px; color: var(--dim); }
+.fx-pmsg.err { color: var(--err); }

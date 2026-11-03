@@ -53,6 +53,7 @@ jobs:
           for m in state docs; do node scripts/test-vistas.js $m; done
           for m in model docs; do node scripts/test-fx.js $m; done
           for m in cues moves plan docs; do node scripts/test-fxcues.js $m; done
+          for m in model presets automix docs; do node scripts/test-fx-ampliados.js $m; done
           for m in model docs; do node scripts/test-visual.js $m; done
           for m in model docs; do node scripts/test-export.js $m; done
           for m in model engine docs; do node --experimental-default-type=module scripts/test-generos.js $m; done
@@ -84,6 +85,7 @@ jobs:
           xvfb-run -a node scripts/test-salida.js ui
           for m in ui search save; do xvfb-run -a node scripts/test-vistas.js $m; done
           for m in engine ui settings; do xvfb-run -a node scripts/test-fx.js $m; done
+          xvfb-run -a node scripts/test-fx-ampliados.js engine,ui
           for m in engine ui; do xvfb-run -a node scripts/test-fxcues.js $m; done
           xvfb-run -a node scripts/test-visual.js ui
           xvfb-run -a node scripts/test-export.js ui
@@ -107,6 +109,7 @@ jobs:
           node scripts/test-salida.js ui
           for m in ui search save; do node scripts/test-vistas.js $m; done
           for m in engine ui settings; do node scripts/test-fx.js $m; done
+          node scripts/test-fx-ampliados.js engine,ui
           for m in engine ui; do node scripts/test-fxcues.js $m; done
           node scripts/test-visual.js ui
           node scripts/test-export.js ui

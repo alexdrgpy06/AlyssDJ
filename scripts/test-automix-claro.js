@@ -33,8 +33,9 @@ tests.ui = () => {
   assert.deepStrictEqual(r.club.cfg, { len: 12, style: 'auto', smartOrder: true, fxLevel: 'subtle' }, 'REQ-6: Club'); assert.deepStrictEqual(r.club.on, ['club']); assert.strictEqual(r.club.saved, 'club');
   assert.deepStrictEqual(r.soft.cfg, { len: 24, style: 'crossfade', smartOrder: true, fxLevel: 'off' }, 'REQ-6: Suave'); assert.deepStrictEqual(r.soft.on, ['soft']);
   assert.deepStrictEqual(r.custom, ['custom'], 'REQ-6: tocar un ajuste pasa a Personalizado');
-  assert.match(r.lenDrag, /· 1[1-3] s$/, `REQ-3: la duración se ve mientras se arrastra: ${r.lenDrag}`);
-  assert.ok(r.len.len >= 11 && r.len.len <= 13, `REQ-3: duración aplicada: ${r.len.len}`);
+  const shown = Number(/· (\d+) s$/.exec(r.lenDrag)?.[1]);
+  assert.ok(Math.abs(shown - (r.len0 + 4)) <= 1, `REQ-3: la duración se ve mientras se arrastra (${r.len0} + 4 ≈ ${shown}): ${r.lenDrag}`);
+  assert.ok(Math.abs(r.len.len - (r.len0 + 4)) <= 1, `REQ-3: duración aplicada: ${r.len0} → ${r.len.len}`);
   assert.ok(r.exit.saved?.outs?.length === 1 && Math.abs(r.exit.saved.outs[0].t - (r.exit.before + 2 * r.exit.bar)) < 0.05 + r.exit.bar, `REQ-3: salida guardada: ${JSON.stringify(r.exit)}`);
   assert.ok(r.exit.view.tl.exitAt > r.exit.before, 'REQ-3: el plan usa la salida movida');
   assert.strictEqual(r.key.len, r.len.len + 1, 'REQ-3: Mayús + → suma un segundo');

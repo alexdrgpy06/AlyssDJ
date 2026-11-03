@@ -1,20 +1,24 @@
 // Cadena de efectos de un deck: tres ranuras en serie. Modelo puro (sin DOM ni audio): el deck lo envía entero en cada
 // mensaje `mix` y el motor (shared/fx.js) lo aplica.
-export const FX_TYPES = ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter'];
+export const FX_TYPES = ['echo', 'reverb', 'flanger', 'gate', 'phaser', 'crush', 'filter', 'tape', 'reducer', 'stutter', 'brake', 'transformer', 'drive', 'pitch'];
+// Qué usa cada tipo: división de beat (`d`) y qué mueve P.
+export const USES_DIV = ['echo', 'gate', 'tape', 'stutter', 'transformer'];
+export const ROUTES = ['deck', 'both'];
 export const SLOTS = 3;
 export const STORE = 'alyssdj.fx.';
 
 const DEFAULT_TYPES = ['echo', 'reverb', 'filter'];
 const clamp01 = (v, d) => (Number.isFinite(+v) && v !== null && v !== '' ? Math.max(0, Math.min(1, +v)) : d);
 
-export const defaultSlot = (i = 0) => ({ type: DEFAULT_TYPES[i] || 'echo', on: false, wet: 0.5, p: 0.5 });
+export const defaultSlot = (i = 0) => ({ type: DEFAULT_TYPES[i] || 'echo', on: false, wet: 0.5, p: 0.5, d: null, route: 'deck' });
 export const defaultChain = () => Array.from({ length: SLOTS }, (_, i) => defaultSlot(i));
 
 // Devuelve una ranura válida; lo que falte o esté fuera de rango toma su valor por defecto.
 export function clampSlot(slot, i = 0) {
   const d = defaultSlot(i);
   const s = slot && typeof slot === 'object' ? slot : {};
-  return { type: FX_TYPES.includes(s.type) ? s.type : d.type, on: s.on === true, wet: clamp01(s.wet, d.wet), p: clamp01(s.p, d.p) };
+  const div = s.d == null || s.d === '' || !Number.isFinite(+s.d) ? null : Math.max(0, Math.min(4, Math.round(+s.d)));
+  return { type: FX_TYPES.includes(s.type) ? s.type : d.type, on: s.on === true, wet: clamp01(s.wet, d.wet), p: clamp01(s.p, d.p), d: div, route: ROUTES.includes(s.route) ? s.route : 'deck' };
 }
 
 export class FxChain {
@@ -42,6 +46,21 @@ export class FxChain {
     this.owners[i] = owner;
     this.onChange(i, next);
     return next;
+  }
+
+  // Mueve la ranura `from` a la posición `to` (el motor aplica `slots[i]` a su i-ésima etapa en serie, así que esto reordena la cadena).
+  move(from, to) {
+    if (!(from >= 0 && from < SLOTS && to >= 0 && to < SLOTS) || from === to) return false;
+    for (let i = 0; i < SLOTS; i++) this.cancel(i);
+    const [slot] = this.slots.splice(from, 1);
+    const [owner] = this.owners.splice(from, 1);
+    this.slots.splice(to, 0, slot);
+    this.owners.splice(to, 0, owner);
+    if (this.selected === from) this.selected = to;
+    else if (from < this.selected && to >= this.selected) this.selected--;
+    else if (from > this.selected && to <= this.selected) this.selected++;
+    for (let i = Math.min(from, to); i <= Math.max(from, to); i++) this.onChange(i, this.slots[i]);
+    return true;
   }
 
   cancel(i) {

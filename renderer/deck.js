@@ -85,7 +85,7 @@ export class Deck {
         savedFx = JSON.parse(localStorage.getItem(FX_STORE + this.id) || 'null');
       } catch {}
     }
-    this.fxc = new FxChain(savedFx, { onChange: () => this.onFxChange() });
+    this.fxc = new FxChain(savedFx, { onChange: (i, slot) => { this.onFxChange(); this.mirrorFx(i, slot); } });
     this.playedMs = 0;
     this.lastRender = performance.now();
     this.logged = false;
@@ -345,6 +345,15 @@ export class Deck {
     });
   }
   // Cambio en la cadena de efectos: al motor al instante y a disco (con retraso) si se recuerda entre sesiones.
+  // Una ranura con ruta «ambos» se copia a la misma ranura del otro deck (no hay un bus master común: ver efectos-ampliados, A1).
+  mirrorFx(i, slot) {
+    if (!slot || slot.route !== 'both' || this.app.fxMirroring) return;
+    const other = this.app.other?.(this);
+    if (!other?.fxc || other === this) return;
+    this.app.fxMirroring = true;
+    try { other.fxc.set(i, { type: slot.type, on: slot.on, wet: slot.wet, p: slot.p, d: slot.d, route: 'both' }); } finally { this.app.fxMirroring = false; }
+  }
+
   onFxChange() {
     this.pushMix();
     this.fxPanel?.sync();

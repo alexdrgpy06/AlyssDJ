@@ -32,7 +32,8 @@ module.exports = (win) => {
       // línea de tiempo: arrastrar el final del solape (duración)
       const ptr = (type, x, y) => js(`const cv = document.getElementById('amtl-cv'); const r = cv.getBoundingClientRect(); cv.dispatchEvent(new PointerEvent('${type}', { clientX: r.left + ${x}, clientY: r.top + ${y}, pointerId: 1, bubbles: true })); return 1`);
       const geo = (len) => js(`const cv = document.getElementById('amtl-cv'); const w = cv.getBoundingClientRect().width; const span = 20 + ${len} + 12; return { w, x0: 20 / span * w, x1: (20 + ${len}) / span * w, perSec: w / span }`);
-      const g0 = await geo(8);
+      R.len0 = await js(`return __app.automix.snapshot().timeline.len`);
+      const g0 = await geo(R.len0);
       await ptr('pointerdown', g0.x1, 40); await ptr('pointermove', g0.x1 + 4 * g0.perSec, 40);
       R.lenDrag = await js(`return document.getElementById('amtl-info').textContent`);
       await ptr('pointerup', g0.x1 + 4 * g0.perSec, 40); await wait(600);

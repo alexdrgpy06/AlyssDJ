@@ -87,6 +87,30 @@ Cada deck tiene una **cadena de tres efectos en serie** (1 → 2 → 3). Pestañ
 | **Phaser** | Muescas que se mueven | Velocidad, por beats (16 → 1) |
 | **Crush** | Reduce los bits (12 → 3) | Bits |
 | **Filtro** | Pasa-bajos resonante | Frecuencia de corte |
+| **Cinta** | Eco de cinta: repetición sincronizada con saturación suave, filtro oscuro en cada vuelta y un leve vaivén | Realimentación (la división se elige en ⋯) |
+| **Reducer** | Reduce la resolución y oscurece el sonido | Reducción (bits y corte) |
+| **Stutter** | Captura un trozo de beat y lo repite, renovándolo cada compás | Longitud del trozo: 1, ½, ¼ o ⅛ de beat |
+| **Frenazo** | Frenazo de vinilo: el tono baja hasta casi parar, y vuelve a empezar | Rapidez del frenazo |
+| **Transformer** | Corte rítmico por pasos, con cuatro patrones (3-3-2, corcheas, bloques…) | Patrón |
+| **Drive** | Distorsión y saturación con control de tono | Saturación |
+| **Pitch** | Cambia el tono de −12 a +12 semitonos sin cambiar la duración; el centro no lo toca | Semitonos (centro = 0) |
+
+### Más opciones (⋯)
+
+El botón **⋯** junto a los deslizadores abre las opciones de la ranura elegida:
+
+- **División**: *Auto* o 1, ½, ¼, ⅛ y tresillo de beat. La usan Eco, Cinta, Gate, Stutter y Transformer; en los demás tipos los botones se deshabilitan.
+- **Ruta**: *Este deck* o *Ambos decks*. Con **Ambos decks**, la ranura se copia a la misma ranura del otro deck y la sigue cuando la cambias (↔ junto al nombre). No hay un bus master común: cada deck suma su ganancia al salir, así que «ambos» hace de envío al master.
+- **Orden**: **◀ Antes** y **Después ▶** mueven la ranura dentro de la cadena. El orden importa (filtro → crush no suena igual que crush → filtro) y la fila de ranuras de arriba lo muestra.
+- **Presets**: siete de fábrica («Eco largo», «Eco de cinta sucio», «Barrido de filtro», «Roll de redoble», «Frenazo», «Reverb enorme», «Octava abajo») y los tuyos: escribe un nombre y pulsa **Guardar** (hasta 40); **Borrar** quita uno propio. Aplicar un preset cambia el tipo y los parámetros pero **no enciende** la ranura.
+
+### Instant FX
+
+Mantén una tecla y el efecto entra con una rampa corta (30 ms); al soltarla sale con otra (60 ms) y la ranura queda como estaba, sin chasquidos. **E, R, T** son las ranuras 1–3 del deck A y **U, I, O** las del deck B. Si la ranura ya estaba encendida, la tecla no la toca; si escribes en un campo de texto, tampoco actúa.
+
+### Efectos en AutoMix
+
+Con el nivel de efectos **Marcado**, la receta **En la caída** frena la pista que sale en los últimos 4 pulsos con el **Frenazo**, justo antes de que entren los graves de la siguiente. Solo usa una ranura libre: si las tres están en uso, no la toca y lo avisa en la nota («sin ranura libre para frenazo en la caída»). Con *Sutil* o *Apagado* no se usa.
 
 Puedes repetir el mismo tipo en varias ranuras. Con una ranura apagada o con cantidad 0 el audio pasa intacto y no gasta procesador. Los efectos sincronizados siguen al tempo aunque muevas el pitch. La cadena de cada deck se recuerda entre sesiones (se puede apagar en Ajustes) y cargar otra pista no la cambia.
 
