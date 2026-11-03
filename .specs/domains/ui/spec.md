@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-preescucha-libreria
+last_change: 2026-11-02-stems-manuales
 ---
 # ui · spec
 
@@ -84,3 +84,7 @@ WHILE un plato está sujeto THE SYSTEM SHALL marcarlo con la clase `held` y Auto
 ## Barra de progreso en la fila
 
 WHILE una pista se preescucha THE SYSTEM SHALL mostrar su avance en una barra bajo el título que permite saltar con un clic.
+
+## Tira STEMS en el deck
+
+THE SYSTEM SHALL mostrar en cada deck una tira con Separar / progreso con tiempo restante y cancelar / Activar stems / cuatro botones (clic silencia, Mayús o Ctrl + clic aísla) y Completa, con `aria-pressed` y etiquetas que no dependen solo del color.

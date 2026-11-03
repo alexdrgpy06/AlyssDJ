@@ -1,7 +1,7 @@
 ---
 domain: audio
 paths: [shared/fx.js, shared/dsp-chain.js, renderer/deck.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/fxpad.js, main/settings.js, scripts/**, docs/**, README.md, .github/**]
-last_change: 2026-11-02-preescucha-libreria
+last_change: 2026-11-02-stems-manuales
 ---
 # audio · spec
 
@@ -25,3 +25,8 @@ IF no hay buffer decodificado (más de 15 min o sin archivo) THEN THE SYSTEM SHA
 ## Preescucha sin interferir con la mezcla
 
 WHILE no hay salida de auriculares configurada y un deck suena THE SYSTEM SHALL parar la preescucha y avisarlo, para que nunca suene por el master a la vez que una mezcla.
+
+## Stems manuales
+
+WHEN el usuario separa una pista local THE SYSTEM SHALL procesarla en segundo plano, de una en una y con prioridad baja, en un proceso hijo que guarda un FLAC de 8 canales (batería, bajo, resto, voz; L/R) con el modelo HTDemucs, sin cortar ni distorsionar lo que suena en los decks.
+WHEN una pista con stems se activa en un deck THE SYSTEM SHALL reproducir el FLAC con una matriz de cuatro ganancias, permitiendo silenciar o aislar cada stem con transición de ≈ 15 ms, y conservar tempo, posición, loops, cues, EQ, filtro, efectos y keylock del deck.

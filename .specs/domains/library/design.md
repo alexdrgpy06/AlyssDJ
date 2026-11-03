@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-preescucha-libreria
+last_change: 2026-11-02-stems-manuales
 ---
 # library · design
 
@@ -32,3 +32,7 @@ last_change: 2026-11-02-preescucha-libreria
 ## preview.js
 
 `renderer/preview.js` (`startAt` puro y el singleton `preview` con un único `HTMLAudioElement`) emite `start`, `tick`, `end` y `blocked`; `Library` repinta solo la fila afectada y mueve la barra `.pv-bar` por `tick`.
+
+## StemStore
+
+`main/stems.js`: cola de una pista, cancelación ordenada (el hijo cierra su codificador y borra lo parcial), vigilancia de memoria (parada ordenada con `code: 'memoria'`), límite de 15 minutos y escritura a `.part` que se renombra al terminar.

@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-preescucha-libreria
+last_change: 2026-11-02-stems-manuales
 ---
 # library · spec
 
@@ -33,3 +33,7 @@ WHEN AutoMix puntúa candidatas THE SYSTEM SHALL dar una bonificación a las que
 WHEN el usuario pulsa ▶ en una fila con la pista disponible como archivo local THE SYSTEM SHALL reproducirla por la salida de auriculares (o la de por defecto) sin cargarla en ningún deck, empezando en su punto de entrada de mezcla o, sin análisis, al 25 % de su duración.
 WHEN se inicia otra preescucha, se pulsa de nuevo en la misma pista o esta termina THE SYSTEM SHALL parar la anterior, de modo que suene una sola.
 IF la pista solo existe por streaming THEN THE SYSTEM SHALL mostrar ▶ deshabilitado con una ayuda y no descargar nada.
+
+## Almacén de stems
+
+THE SYSTEM SHALL guardar los stems en `userData/stems` con un índice, marcar en la Librería las pistas que los tienen (chip con el tamaño) y permitir borrarlos por pista o todos, indicando cuánto ocupan.

@@ -53,3 +53,24 @@ Archivo de stems: FLAC 16 bit, 8 canales, 44,1 kHz, mismo largo que la pista; ca
 - Colores por stem solo como acento secundario (nunca como único indicador).
 
 ## Amendments
+
+## Domain deltas
+### audio
+#### ADDED spec: Stems manuales
+WHEN el usuario separa una pista local THE SYSTEM SHALL procesarla en segundo plano, de una en una y con prioridad baja, en un proceso hijo que guarda un FLAC de 8 canales (batería, bajo, resto, voz; L/R) con el modelo HTDemucs, sin cortar ni distorsionar lo que suena en los decks.
+WHEN una pista con stems se activa en un deck THE SYSTEM SHALL reproducir el FLAC con una matriz de cuatro ganancias, permitiendo silenciar o aislar cada stem con transición de ≈ 15 ms, y conservar tempo, posición, loops, cues, EQ, filtro, efectos y keylock del deck.
+#### ADDED design: Motor de stems
+`shared/stems-dsp.js` (STFT/iSTFT y ventanas por solape), `main/stems-worker.js` (decodifica con ffmpeg, ejecuta onnxruntime-node sin arena de memoria y codifica por trozos) y la operación `stems` de `shared/deck-engine.js` (segundo `<audio>` → `ChannelSplitter(8)` → cuatro mezcladores estéreo → ganancias → cadena del deck).
+### library
+#### ADDED spec: Almacén de stems
+THE SYSTEM SHALL guardar los stems en `userData/stems` con un índice, marcar en la Librería las pistas que los tienen (chip con el tamaño) y permitir borrarlos por pista o todos, indicando cuánto ocupan.
+#### ADDED design: StemStore
+`main/stems.js`: cola de una pista, cancelación ordenada (el hijo cierra su codificador y borra lo parcial), vigilancia de memoria (parada ordenada con `code: 'memoria'`), límite de 15 minutos y escritura a `.part` que se renombra al terminar.
+### platform
+#### ADDED spec: Modelo bajo demanda y disponibilidad
+WHEN el modelo no está en el equipo THE SYSTEM SHALL pedir permiso con nombre, origen y tamaño antes de descargarlo, verificar su SHA-256 y descartarlo si no coincide; el instalador no lo incluye.
+IF la plataforma no tiene binario de onnxruntime-node (macOS con Intel) THEN THE SYSTEM SHALL deshabilitar Stems con un aviso claro.
+IF la separación falla THEN THE SYSTEM SHALL decir la causa en una frase y dejar la pista completa funcionando.
+### ui
+#### ADDED spec: Tira STEMS en el deck
+THE SYSTEM SHALL mostrar en cada deck una tira con Separar / progreso con tiempo restante y cancelar / Activar stems / cuatro botones (clic silencia, Mayús o Ctrl + clic aísla) y Completa, con `aria-pressed` y etiquetas que no dependen solo del color.
