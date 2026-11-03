@@ -16,6 +16,7 @@ const authImport = require('./auth-import');
 const { LocalLibrary } = require('./local-library');
 const { createUpdater } = require('./updater');
 const libSave = require('./library-save');
+const stemsLib = require('./stems');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
@@ -41,6 +42,8 @@ let toolDirs = [];
 let coversDir = '';
 let libraryView = null;
 let analyzer = null;
+let stems = null;
+let stemModel = null;
 let backlog = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
 
@@ -87,6 +90,7 @@ function registerAppProtocol() {
       if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
       if (rel === 'build/icon.png') return serveFile(path.join(ROOT, 'build/icon.png'), request);
       if (rel.startsWith('localfile/')) return serveFile(localLib.pathOf(decodeURIComponent(rel.slice(10))), request);
+      if (rel.startsWith('stemfile/') && stems?.has(decodeURIComponent(rel.slice(9)))) return serveFile(stems.fileOf(decodeURIComponent(rel.slice(9))), request);
       if (rel.startsWith('cache/')) return serveFile(safeJoin(analyzer.cacheDir, rel.slice(6)), request);
       const base = rel.startsWith('shared/') ? ROOT : path.join(ROOT, 'renderer');
       return serveFile(safeJoin(base, rel || 'index.html'), request);
@@ -362,6 +366,24 @@ ipcMain.handle('analysis:remove-audio', (_e, id) => analyzer.removeAudio(id));
 ipcMain.handle('analysis:open-cache', () => shell.openPath(analyzer.cacheDir));
 
 // ---------- ajustes y herramientas ----------
+// Stems manuales: separación en segundo plano de pistas con archivo local (el modelo se descarga solo con permiso).
+const stemSource = (id) => {
+  const a = analyzer.get(id) || {};
+  const f = a.saved?.path && fs.existsSync(a.saved.path) ? a.saved.path : localLib.pathOf(id) || analyzer.audioFile(id) || '';
+  return f && fs.existsSync(f) ? f : '';
+};
+ipcMain.handle('stems:status', () => ({ ...stemsLib.available(ROOT), model: stemModel?.status(), usedBytes: stems?.usage() || 0, count: Object.keys(stems?.list() || {}).length }));
+ipcMain.handle('stems:list', () => stems?.list() || {});
+ipcMain.handle('stems:request', (_e, id) => {
+  const av = stemsLib.available(ROOT);
+  if (!av.available) return { ok: false, error: av.why };
+  const file = stemSource(String(id));
+  if (!file) return { ok: false, error: 'Esta pista no tiene un archivo local: guárdala o analízala primero' };
+  return { ok: stems.request(String(id), file) };
+});
+ipcMain.handle('stems:cancel', (_e, id) => stems?.cancel(String(id)) || false);
+ipcMain.handle('stems:remove', (_e, id) => stems?.remove(String(id)) || false);
+ipcMain.handle('stems:remove-all', () => stems?.removeAll() || false);
 ipcMain.handle('settings:get', () => settings.get());
 ipcMain.handle('settings:defaults', () => settings.defaults());
 // Carpeta donde se guardan las pistas de YouTube analizadas/reproducidas; forma parte de las carpetas de música.
@@ -518,6 +540,26 @@ app.whenReady().then(() => {
       send('analysis:event', ev);
       backlog?.onAnalyzerEvent(ev);
     },
+  });
+  stemModel = new stemsLib.ModelManager({
+    dir: path.join(app.getPath('userData'), 'models'),
+    onEvent: (ev) => send('stems:event', ev),
+    confirm: async (info) => {
+      if (process.env.YTDJ_SELFTEST) return process.env.YTDJ_STEMS_ALLOW === '1';
+      const r = await dialog.showMessageBox(win, {
+        type: 'question', buttons: ['Descargar', 'Cancelar'], defaultId: 0, cancelId: 1, title: 'Modelo de separación',
+        message: `Stems necesita descargar el modelo ${info.name}`,
+        detail: `Origen: ${info.url}\nTamaño: ${(info.bytes / 1048576).toFixed(0)} MB · Licencia: ${info.license}\nSe guarda en tu carpeta de datos y solo se descarga esta vez.`,
+      });
+      return r.response === 0;
+    },
+  });
+  stems = new stemsLib.StemStore({
+    dir: path.join(app.getPath('userData'), 'stems'),
+    ffmpeg: () => ffmpegBin,
+    modelPath: () => stemModel.path(),
+    ensureModel: () => stemModel.ensure(),
+    onEvent: (ev) => send('stems:event', ev),
   });
   // Cola de análisis de listas: persistente y de a una pista, sin competir con lo que pide el usuario.
   backlog = new Backlog({

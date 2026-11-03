@@ -56,7 +56,10 @@
         }
       ],
       "icon": "build/icon.png",
-      "artifactName": "AlyssDJ-Setup-${version}.${ext}"
+      "artifactName": "AlyssDJ-Setup-${version}.${ext}",
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v6/{linux,darwin}/**"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -78,7 +81,10 @@
       "icon": "build/icon.png",
       "category": "public.app-category.music",
       "artifactName": "AlyssDJ-${version}-${arch}.${ext}",
-      "identity": null
+      "identity": null,
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v6/{linux,win32}/**"
+      ]
     },
     "linux": {
       "target": [
@@ -95,7 +101,10 @@
       "synopsis": "DJ de dos decks con YouTube Music y música local",
       "description": "AlyssDJ: DJ de dos decks con YouTube Music Premium y música local",
       "maintainer": "Alejandro Ramírez <alexdrg06@gmail.com>",
-      "vendor": "AlystechPY"
+      "vendor": "AlystechPY",
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32}/**"
+      ]
     },
     "extraMetadata": {
       "main": "main/main.js"
@@ -108,7 +117,8 @@
     }
   },
   "dependencies": {
-    "electron-updater": "^6.8.11"
+    "electron-updater": "^6.8.11",
+    "onnxruntime-node": "^1.31.1"
   },
   "desktopName": "alyssdj.desktop"
 }

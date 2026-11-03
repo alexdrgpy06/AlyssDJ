@@ -24,6 +24,7 @@
     let rampTimer = null;
     let held = null; // plato sujeto: { wasPlaying, buffered }
     let scratch = null;
+    let stems = null; // stems activos: { el, orig, split, merge, gain, vol, mute, solo }
 
     function attach(el) {
       if (!el || el === media) return;
@@ -84,7 +85,7 @@
     // sin él, freno y arranque suaves del <audio> y búsqueda al arrastrar.
     async function scratchOp(cmd) {
       if (cmd.op === 'prepare') {
-        if (!Scratch || !media) return false;
+        if (!Scratch || !media || stems) return false; // el FLAC de 8 canales no se decodifica para el scratch
         scratch = scratch || Scratch.create(ctx, chain.input);
         return scratch.prepare(media.currentSrc);
       }
@@ -127,11 +128,113 @@
       return false;
     }
 
+    // Stems manuales: un segundo <audio> con el FLAC de 8 canales (batería, bajo, resto, voz; L/R) sustituye a la pista completa.
+    // Una matriz ChannelSplitter(8) → 4 mezcladores estéreo → 4 ganancias lleva cada stem a la cadena; el elemento hereda
+    // sincronía, keylock, loops y seek, así que todo lo demás del deck sigue usando `media`.
+    function applyStemGains() {
+      if (!stems) return;
+      const solo = stems.solo.some(Boolean);
+      stems.gain.forEach((g, i) => {
+        const on = !stems.mute[i] && (!solo || stems.solo[i]);
+        g.gain.setTargetAtTime(on ? stems.vol[i] : 0, ctx.currentTime, 0.015); // ≈ 15 ms: sin chasquidos
+      });
+    }
+
+    function stemsTeardown(restore = true) {
+      if (!stems) return;
+      const s = stems;
+      stems = null;
+      try {
+        s.el.pause();
+        s.src.disconnect();
+        s.split.disconnect();
+        s.gain.forEach((g) => g.disconnect());
+        s.el.removeAttribute('src');
+        s.el.load();
+      } catch { /* el grafo ya estaba suelto */ }
+      if (restore && media === s.el) {
+        media = s.orig;
+        sources.get(s.orig)?.connect(chain.input);
+      }
+    }
+
+    async function stemsOn(url) {
+      if (!media || stems) return !!stems;
+      const orig = media;
+      const el = new Audio();
+      el.preload = 'auto';
+      el.src = url;
+      await new Promise((res, rej) => {
+        el.addEventListener('canplay', res, { once: true });
+        el.addEventListener('error', () => rej(new Error('No se pudo abrir el archivo de stems')), { once: true });
+      });
+      el.currentTime = orig.currentTime;
+      el.playbackRate = orig.playbackRate;
+      el.preservesPitch = keylock;
+      const src = ctx.createMediaElementSource(el);
+      const split = ctx.createChannelSplitter(8);
+      src.connect(split);
+      const merge = [];
+      const gain = [];
+      for (let i = 0; i < 4; i++) {
+        const m = ctx.createChannelMerger(2);
+        split.connect(m, 2 * i, 0);
+        split.connect(m, 2 * i + 1, 1);
+        const g = ctx.createGain();
+        m.connect(g);
+        g.connect(chain.input);
+        merge.push(m);
+        gain.push(g);
+      }
+      const wasPlaying = !orig.paused;
+      stems = { el, orig, src, split, merge, gain, vol: [1, 1, 1, 1], mute: [false, false, false, false], solo: [false, false, false, false] };
+      if (wasPlaying) {
+        if (ctx.state !== 'running') await ctx.resume();
+        await el.play();
+        if (Math.abs(el.currentTime - orig.currentTime) > 0.03) el.currentTime = orig.currentTime;
+      }
+      sources.get(orig)?.disconnect();
+      orig.pause();
+      media = el;
+      applyRate();
+      return true;
+    }
+
+    async function stemsOp(cmd) {
+      switch (cmd.op) {
+        case 'on':
+          return stemsOn(cmd.url);
+        case 'off': {
+          if (!stems) return false;
+          const { el, orig } = stems;
+          orig.currentTime = el.currentTime;
+          const wasPlaying = !el.paused;
+          stemsTeardown(true);
+          if (wasPlaying) await orig.play();
+          applyRate();
+          return true;
+        }
+        case 'gain': // v: volumen 0–1 del stem i
+        case 'mute':
+        case 'solo': {
+          if (!stems || !(cmd.i >= 0 && cmd.i < 4)) return false;
+          if (cmd.op === 'gain') stems.vol[cmd.i] = Math.max(0, Math.min(1, Number(cmd.v)));
+          else stems[cmd.op][cmd.i] = !!cmd.v;
+          applyStemGains();
+          return true;
+        }
+      }
+      return false;
+    }
+
     async function handle(cmd) {
       switch (cmd.type) {
         case 'scratch':
           return scratchOp(cmd);
+        case 'stems':
+          return stemsOp(cmd);
         case 'load':
+          stemsTeardown(true);
           held = null;
           ramp = 1;
           scratch?.drop();
@@ -197,6 +300,7 @@
         rate: effectiveRate(),
         level: chain.level(),
         loop,
+        stems: stems ? { on: true, vol: [...stems.vol], mute: [...stems.mute], solo: [...stems.solo] } : { on: false },
       };
     }
 

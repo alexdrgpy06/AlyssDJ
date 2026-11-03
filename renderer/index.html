@@ -215,6 +215,20 @@
             <button class="keylock on" data-tip="Keylock: cambia el tempo sin cambiar el tono">KEY</button>
             <button class="quant on" data-tip="Cuantizar cues y loops al beat">QUANT</button>
           </div>
+          <div class="stems" data-mode="off" aria-label="Stems">
+            <span class="stems-lbl">STEMS</span>
+            <button class="stems-go" type="button"></button>
+            <span class="stems-msg" role="status" aria-live="polite"></span>
+            <button class="stems-x" type="button" hidden aria-label="Cancelar la separación" title="Cancelar la separación">✕</button>
+            <span class="stems-btns" hidden>
+              <button class="stem" type="button" data-s="3" aria-pressed="false" aria-label="Voz" title="Voz: clic silencia, Mayús o Ctrl + clic la aísla">Voz</button>
+              <button class="stem" type="button" data-s="0" aria-pressed="false" aria-label="Batería" title="Batería: clic silencia, Mayús o Ctrl + clic la aísla">Batería</button>
+              <button class="stem" type="button" data-s="1" aria-pressed="false" aria-label="Bajo" title="Bajo: clic silencia, Mayús o Ctrl + clic lo aísla">Bajo</button>
+              <button class="stem" type="button" data-s="2" aria-pressed="false" aria-label="Resto" title="Resto: clic silencia, Mayús o Ctrl + clic lo aísla">Resto</button>
+            </span>
+            <button class="stems-off" type="button" hidden title="Volver a la pista completa">Completa</button>
+            <i class="stems-bar" hidden><b></b></i>
+          </div>
         </div>
       </section>
     </template>
@@ -276,8 +290,10 @@
           <button role="menuitem" data-fmt="csv">CSV (hoja de cálculo)</button>
           <button role="menuitem" data-fmt="rekordbox">Rekordbox XML</button>
         </div>
+
       </div>
       <button class="btn sm" id="btn-add-folder" hidden><svg class="ic"><use href="#i-plus"/></svg>Añadir carpeta…</button>
+      <span class="stems-sum" id="stems-sum" hidden><span id="stems-sum-txt" role="status"></span><button class="btn sm ghost" id="stems-clear" type="button" title="Borra todos los archivos de stems para liberar espacio">Borrar stems</button></span>
       <span class="lib-msg" id="lib-msg" role="status" aria-live="polite"></span>
       <span class="spacer"></span>
       <label class="check compact"><input type="checkbox" id="only-compat" /> Solo compatibles</label>

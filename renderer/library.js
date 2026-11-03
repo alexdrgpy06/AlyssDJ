@@ -4,6 +4,7 @@ import { camelotColor, keysCompatible, bpmCompatible } from './camelot.js';
 import { resolveSource, originChip } from './source.js';
 import { preview } from './preview.js';
 import { fileUrl } from './mixpreview.js';
+import { fmtSize } from './stems.js';
 
 const fmtDur = (s) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -17,6 +18,10 @@ export class Library {
     this.jobs = new Map();
     this.body = document.getElementById('tracks');
     this.msg = document.getElementById('lib-msg');
+    document.getElementById('stems-clear')?.addEventListener('click', async () => {
+      const st = this.app.stems;
+      if (window.confirm(`¿Borrar los stems de ${Object.keys(st.done).length} pistas? Liberas ${fmtSize(st.status.usedBytes)}.`)) await st.removeAll();
+    });
     this.search = document.getElementById('search');
     this.addFolder = document.getElementById('btn-add-folder');
     this.addFolder.addEventListener('click', () => this.chooseFolder());
@@ -203,6 +208,7 @@ export class Library {
     }
     if (!btn) return;
     if (btn.dataset.act === 'prev') return this.togglePreview(row);
+    if (btn.dataset.act === 'stems') return this.stemsAction(row);
     if (btn.dataset.act === 'A' || btn.dataset.act === 'B') this.app.decks[btn.dataset.act].load(row);
     if (btn.dataset.act === 'radio') {
       this.app.automix.start({ seed: row });
@@ -259,11 +265,11 @@ export class Library {
     return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
       <td>${art}</td>
       <td title="${esc(r.title)}">${esc(r.title)}${preview.state?.id === r.videoId ? `<div class="pv-bar" style="--p:${preview.state.dur ? Math.min(1, preview.state.t / preview.state.dur) : 0}"><i></i></div>` : ''}</td>
-      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}${genres.chips(r.videoId)}</td>
+      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}${genres.chips(r.videoId)}${this.stemsChip(r)}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>
-      <td class="actions">${this.previewBtn(r, a)}<button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
+      <td class="actions">${this.previewBtn(r, a)}${this.stemsBtn(r, a)}<button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
     </tr>`;
   }
 
@@ -529,6 +535,53 @@ export class Library {
       history: 'Aquí aparece lo que suena más de 20 s.',
     }[this.tab] || 'Sin pistas.';
     document.getElementById('lib-empty-text').textContent = this.onlyCompat && this.base?.length ? 'Ninguna pista es compatible con el deck en juego. Desactiva «Solo compatibles».' : hint;
+  }
+
+  // ---------- stems ----------
+  stemsBtn(r, a) {
+    const v = this.app.stems.view(r.videoId, { hasFile: !!fileUrl(r, a) });
+    const name = esc(r.title);
+    const cfg = {
+      off: ['Stems', '', ' disabled', v.why || 'Stems no está disponible'],
+      none: ['Stems', '', '', 'Separa la pista en voz, batería, bajo y resto (en segundo plano)'],
+      error: ['Stems', '', '', `${v.text || ''} · clic para reintentar`],
+      work: [`${Math.round((this.app.stems.jobs[r.videoId]?.progress || 0) * 100)} %`, ' on', '', `${v.text || ''} · clic para cancelar`],
+      ready: ['✓ Stems', ' on', '', `Stems listos (${fmtSize(this.app.stems.done[r.videoId]?.bytes)}) · clic para borrarlos`],
+      active: ['✓ Stems', ' on', '', 'Stems listos · clic para borrarlos'],
+    }[v.mode];
+    return `<button data-act="stems" class="stm${cfg[1]}"${cfg[2]} aria-label="Stems de ${name}: ${esc(cfg[3])}" title="${esc(cfg[3])}">${cfg[0]}</button>`;
+  }
+
+  stemsChip(r) {
+    const d = this.app.stems.done[r.videoId];
+    return d ? `<span class="stm-chip" title="Stems · ${fmtSize(d.bytes)}">STEMS</span>` : '';
+  }
+
+  async stemsAction(row) {
+    const st = this.app.stems;
+    const id = row.videoId;
+    const v = st.view(id, { hasFile: !!fileUrl(row, this.analyzed.get(id)) });
+    if (v.mode === 'work') return st.cancel(id);
+    if (v.mode === 'ready' || v.mode === 'active') {
+      if (window.confirm(`¿Borrar los stems de «${row.title}»? Libera ${fmtSize(st.done[id]?.bytes)}.`)) await st.remove(id);
+      return;
+    }
+    if (v.mode === 'none' || v.mode === 'error') {
+      const r = await st.request(id);
+      if (r && r.ok === false) this.app.toast(r.error, true);
+    }
+  }
+
+  onStemsChange(id) {
+    if (id) this.updateRow(id);
+    else this.render();
+    const st = this.app.stems;
+    const n = Object.keys(st.done).length;
+    const sum = document.getElementById('stems-sum');
+    if (sum) {
+      sum.hidden = !n;
+      document.getElementById('stems-sum-txt').textContent = st.summary();
+    }
   }
 
   updateRow(id) {

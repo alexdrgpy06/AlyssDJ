@@ -54,6 +54,15 @@ contextBridge.exposeInMainWorld('ytdj', {
   crate: (id) => ipcRenderer.invoke('crates:get', id),
   genres: { all: () => ipcRenderer.invoke('genres:all'), set: (id, list) => ipcRenderer.invoke('genres:set', id, list), onEvent: (cb) => ipcRenderer.on('genres:event', (_e, ev) => cb(ev)) },
   export: { run: (source, format) => ipcRenderer.invoke('export:run', source, format) },
+  stems: {
+    status: () => ipcRenderer.invoke('stems:status'),
+    list: () => ipcRenderer.invoke('stems:list'),
+    request: (id) => ipcRenderer.invoke('stems:request', id),
+    cancel: (id) => ipcRenderer.invoke('stems:cancel', id),
+    remove: (id) => ipcRenderer.invoke('stems:remove', id),
+    removeAll: () => ipcRenderer.invoke('stems:remove-all'),
+    onEvent: on('stems:event'),
+  },
   analysis: {
     request: (id, opts) => ipcRenderer.invoke('analysis:request', id, opts),
     cancel: (id) => ipcRenderer.invoke('analysis:cancel', id),

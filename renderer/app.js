@@ -15,6 +15,7 @@ import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
 import { Visualizer } from './viz.js';
 import { settingsFilter, settingPatch, sectionDefaults } from './settings-ui.js';
+import { StemsStore } from './stems.js';
 import { SplitState, clampSplit, STORE as SPLIT_STORE, STEP, STEP_BIG } from './splits.js';
 
 const $ = (s) => document.querySelector(s);
@@ -23,6 +24,7 @@ class App {
   async init() {
     this.settings = await window.ytdj.settings.get();
     this.masterGain = 1;
+    this.stems = new StemsStore(window.ytdj.stems, (id) => this.library?.onStemsChange(id));
     this.learning = false;
     this.decks = {};
     this.decks.A = new Deck('A', this);
@@ -69,6 +71,7 @@ class App {
     this.midi = new Midi(this);
     this.midi.init();
 
+    this.stems.init();
     window.ytdj.deck.onState((id, s) => this.decks[id]?.onStreamState(s));
     window.ytdj.analysis.onEvent((ev) => {
       this.library.onAnalysisEvent(ev);

@@ -97,6 +97,76 @@ export class Deck {
     this.buildDeck();
   }
 
+  // ---------- stems manuales ----------
+  stemsView() {
+    const t = this.track;
+    if (!t) return { mode: 'off', why: 'Carga una pista para separarla' };
+    const hasFile = !!(t.local || this.analysis?.saved || this.source === 'local');
+    return this.app.stems.view(t.videoId, { hasFile, active: !!this.st.stems?.on });
+  }
+
+  paintStems() {
+    const s = this.el.stems;
+    const v = this.stemsView();
+    const st = this.st.stems || { on: false };
+    const local = this.source === 'local';
+    const job = this.track && this.app.stems.jobs[this.track.videoId];
+    const key = JSON.stringify([v, local, st.mute, st.solo, job?.progress]);
+    if (key === this.stemsKey) return;
+    this.stemsKey = key;
+    s.root.dataset.mode = v.mode;
+    const label = { none: 'Separar', ready: 'Activar stems', error: 'Reintentar', off: 'Separar' }[v.mode];
+    s.go.hidden = !label;
+    if (label) {
+      s.go.textContent = label;
+      const blocked = v.mode === 'off' || (v.mode === 'ready' && !local);
+      s.go.disabled = blocked;
+      s.go.title = v.mode === 'off' ? v.why : v.mode === 'ready' && !local ? 'Cambia la fuente a ARCHIVO para usar los stems' : v.mode === 'ready' ? 'Reproduce la pista separada en cuatro stems' : 'Separa la pista en voz, batería, bajo y resto (en segundo plano)';
+    }
+    setText(s.msg, v.mode === 'work' || v.mode === 'error' ? v.text : v.mode === 'off' && this.track ? v.why || '' : '');
+    s.x.hidden = v.mode !== 'work';
+    s.bar.hidden = v.mode !== 'work';
+    if (v.mode === 'work') s.bar.style.setProperty('--p', String(job?.progress || 0));
+    s.group.hidden = s.off.hidden = v.mode !== 'active';
+    s.btns.forEach((b) => {
+      const ch = Number(b.dataset.s);
+      const name = b.getAttribute('aria-label').replace(/ \(.*\)$/, '');
+      const muted = !!st.mute?.[ch];
+      const solo = !!st.solo?.[ch];
+      b.setAttribute('aria-pressed', String(muted));
+      b.classList.toggle('solo', solo);
+      b.setAttribute('aria-label', solo ? `${name} (aislada)` : muted ? `${name} (silenciada)` : name);
+      b.title = solo ? `${name} aislada: Mayús o Ctrl + clic para quitar el solo` : muted ? `${name} silenciada: clic para activarla` : `${name}: clic silencia, Mayús o Ctrl + clic la aísla`;
+    });
+  }
+
+  bindStems() {
+    const s = this.el.stems;
+    const id = () => this.track?.videoId;
+    s.go.addEventListener('click', async () => {
+      const v = this.stemsView();
+      if (!id()) return;
+      if (v.mode === 'ready') {
+        try {
+          await this.sendLocal({ type: 'stems', op: 'on', url: `/stemfile/${encodeURIComponent(id())}` });
+        } catch (e) {
+          this.app.toast(`Deck ${this.id}: ${e.message}`, true);
+        }
+      } else if (v.mode === 'none' || v.mode === 'error') {
+        const r = await this.app.stems.request(id());
+        if (r && r.ok === false) this.app.toast(r.error, true);
+      }
+    });
+    s.x.addEventListener('click', () => id() && this.app.stems.cancel(id()));
+    s.off.addEventListener('click', () => this.sendLocal({ type: 'stems', op: 'off' }));
+    s.btns.forEach((b) => b.addEventListener('click', (e) => {
+      const ch = Number(b.dataset.s);
+      const st = this.st.stems || {};
+      if (e.shiftKey || e.ctrlKey || e.metaKey) this.sendLocal({ type: 'stems', op: 'solo', i: ch, v: !st.solo?.[ch] });
+      else this.sendLocal({ type: 'stems', op: 'mute', i: ch, v: !st.mute?.[ch] });
+    }));
+  }
+
   // ---------- motores ----------
   sendStream(cmd) {
     window.ytdj.deck.cmd(this.id, cmd);
@@ -700,6 +770,7 @@ export class Deck {
       scroll: document.getElementById(`scroll-${this.id}`),
       spin: q('.platter .spin'),
       platter: q('.platter'),
+      stems: { root: q('.stems'), go: q('.stems-go'), msg: q('.stems-msg'), x: q('.stems-x'), group: q('.stems-btns'), btns: [...root.querySelectorAll('.stem')], off: q('.stems-off'), bar: q('.stems-bar') },
     });
     q('.deck-letter').textContent = this.id;
     q('.art-letter').textContent = this.id;
@@ -761,6 +832,7 @@ export class Deck {
 
     // Plato: tocarlo lo sujeta como un vinilo (frena), arrastrarlo hace scratch (hacia atrás incluido) y soltarlo lo
     // reanuda. Sin audio local decodificado (streaming o aún cargando) hay freno y arranque suaves.
+    this.bindStems();
     el.platter.addEventListener('pointerenter', () => this.prepareScratch());
     el.platter.addEventListener('pointerdown', (e) => {
       if (this.app.learning || !this.track) return;
@@ -920,6 +992,7 @@ export class Deck {
     const loading = t && this.source === 'stream' && this.st.videoId === t.videoId && !this.st.ready;
     setText(el.state, this.st.ad ? 'anuncio (sin Premium)' : loading ? 'cargando…' : t ? ORIGINS[this.srcInfo?.origin] || '' : '');
 
+    this.paintStems();
     el.play.classList.toggle('on', this.st.playing);
     el.cue.classList.toggle('on', !this.st.playing && Math.abs(pos - this.cuePoint) < 0.08 && !!t);
     el.hcs.forEach((b, i) => {
