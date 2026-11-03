@@ -71,6 +71,7 @@ jobs:
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
+          for m in registry ipc docs; do node scripts/test-arquitectura.js $m; done
       - name: Arranque de la app (Linux, pantalla virtual)
         if: runner.os == 'Linux'
         run: |
@@ -98,6 +99,7 @@ jobs:
           xvfb-run -a node scripts/test-playlists.js ipc,ui,select,order,smart,export
           xvfb-run -a node scripts/test-entrada.js ui
           xvfb-run -a node scripts/test-automix-claro.js ui,robust
+          xvfb-run -a node scripts/visual-check.js
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |

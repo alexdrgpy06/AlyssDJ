@@ -1,0 +1,2959 @@
+{
+  "main/analysis-backlog.js": {
+    "capa": "principal",
+    "dominio": "analysis",
+    "responsabilidad": "Cola de análisis de listas: guarda en disco las pistas pendientes y se las va dando al Analyzer de a una, solo cuando este está libre (lo pedido a mano pasa primero) y mientras yt-dlp no esté bloqueado por la comprobación de bot.",
+    "api": [
+      "Backlog",
+      "STATES"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "flush()",
+        "hace": "Escritura atómica: archivo temporal y renombrar, para no dejar la cola a medias si se cierra la app."
+      },
+      {
+        "nombre": "onAnalyzerEvent(ev)",
+        "hace": "Eventos del Analyzer ({ id, stage, progress?, error? })."
+      },
+      {
+        "nombre": "start()",
+        "hace": "Arranque: retomar lo que quedó pendiente."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/analysis-backlog.js",
+    "lineas": 203,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/analysis-worker.js": {
+    "capa": "principal",
+    "dominio": "analysis",
+    "responsabilidad": "Hilo de trabajo del análisis: recibe el audio decodificado de analyzer.js, llama a shared/analysis.js y devuelve la forma de onda, el BPM y la rejilla sin bloquear el proceso principal.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "main/decode.js",
+      "shared/analysis.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "main/analysis-worker.js",
+    "lineas": 10,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/analyze-cli.js": {
+    "capa": "principal",
+    "dominio": "analysis",
+    "responsabilidad": "Uso: npm run analyze -- <archivo de audio> (prueba el análisis sin abrir la app)",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "main/decode.js",
+      "shared/analysis.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "main/analyze-cli.js",
+    "lineas": 18,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/analyzer.js": {
+    "capa": "principal",
+    "dominio": "analysis",
+    "responsabilidad": "Cola de análisis: yt-dlp → ffmpeg → análisis en worker → cache/<id>.json. Una pista a la vez para no competir con la reproducción en vivo.",
+    "api": [
+      "Analyzer"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "setMixEdit(id, edit)",
+        "hace": "Edición manual de los puntos de mezcla (null = volver al cálculo automático). Avisa a la interfaz."
+      },
+      {
+        "nombre": "request(id, opts = {})",
+        "hace": "opts: { meta: {title, artist, thumb}, force, keepAudio }"
+      },
+      {
+        "nombre": "registerSaved({ id, file, thumb, record })",
+        "hace": "El archivo guardado entra al índice local (con etiquetas y carátula) y recibe una copia del análisis, así la pista local no se vuelve a analizar y no se duplica si ya estaba."
+      }
+    ],
+    "depende": [
+      "main/library-save.js",
+      "main/mixedit.js",
+      "main/ytdlp.js"
+    ],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/analyzer.js",
+    "lineas": 193,
+    "qa": {
+      "logica": null,
+      "estatica": "test-local.js",
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/auth-import.js": {
+    "capa": "principal",
+    "dominio": "auth",
+    "responsabilidad": "Importa la sesión de YouTube Music desde un navegador instalado. Google bloquea el inicio de sesión dentro de Electron, así que se reutiliza la sesión que el usuario ya tiene en su navegador: yt-dlp (que sabe descifrar las cookies de cada navegador) las vuelca a un archivo temporal, se filtran las de youtube.com y google.com en memoria y se cargan en la sesión de la app. El temporal se borra siempre y los valores nunca se registran.",
+    "api": [
+      "BROWSERS",
+      "detectBrowsers",
+      "isYoutubeGoogle",
+      "parseNetscape",
+      "toElectron",
+      "dumpCookies",
+      "importFromBrowser"
+    ],
+    "contrato": [
+      {
+        "nombre": "BROWSERS",
+        "hace": "Rutas de perfil relativas al HOME, por plataforma (yt-dlp lee las cookies de ahí)."
+      },
+      {
+        "nombre": "parseNetscape",
+        "hace": "Formato Netscape de yt-dlp: dominio, subdominios, ruta, seguro, expira, nombre, valor (las HttpOnly llevan el prefijo #HttpOnly_)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/auth-import.js",
+    "lineas": 121,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "login-flow-selftest.js",
+      "visual": null
+    }
+  },
+  "main/decode.js": {
+    "capa": "principal",
+    "dominio": "analysis",
+    "responsabilidad": "Decodifica cualquier archivo a PCM mono float32 con ffmpeg.",
+    "api": [
+      "decode"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/analysis-worker.js",
+      "main/analyze-cli.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/decode.js",
+    "lineas": 22,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/export.js": {
+    "capa": "principal",
+    "dominio": "export",
+    "responsabilidad": "Exportar la librería a otros programas (M3U8, CSV, Rekordbox XML). Lógica pura, sin Electron: la usan main.js y las pruebas.",
+    "api": [
+      "normalize",
+      "toM3u8",
+      "toCsv",
+      "toRekordbox",
+      "esc",
+      "fileUri",
+      "writeAtomic",
+      "safeName",
+      "FORMATS"
+    ],
+    "contrato": [
+      {
+        "nombre": "normalize",
+        "hace": "Una pista lista para escribir. `rec` es el registro de análisis o la fila de una playlist; `ana` el análisis (si lo hay). `resolvePath(id, rec, ana)` devuelve la ruta del audio en el disco o ''."
+      },
+      {
+        "nombre": "esc",
+        "hace": "Escapa texto para XML 1.0 y quita los caracteres de control que no se admiten."
+      },
+      {
+        "nombre": "fileUri",
+        "hace": "file://localhost/ruta con cada segmento codificado (también rutas de Windows: C:\\a\\b → /C:/a/b)."
+      },
+      {
+        "nombre": "writeAtomic",
+        "hace": "Escribe a un temporal y renombra: nunca deja un archivo a medias."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/export.js",
+    "lineas": 113,
+    "qa": {
+      "logica": "test-export.js",
+      "estatica": null,
+      "arranque": "export-selftest.js",
+      "visual": null
+    }
+  },
+  "main/genres.js": {
+    "capa": "principal",
+    "dominio": "genres",
+    "responsabilidad": "Géneros por pista: etiquetas de texto libre en userData/genres.json, aparte del análisis para que lo escrito a mano sobreviva a un reanálisis. Mapa id → { genres: string[], source: 'metadatos'|'archivo'|'manual' }. Lógica sin Electron.",
+    "api": [
+      "GenreStore",
+      "normalize",
+      "tagFromFfmpeg",
+      "MAX"
+    ],
+    "contrato": [
+      {
+        "nombre": "normalize",
+        "hace": "\"house; deep HOUSE / tech-house\" → ['House', 'Deep House', 'Tech-house']. Quita vacíos y repetidos y limita a 5."
+      },
+      {
+        "nombre": "tagFromFfmpeg",
+        "hace": "Etiqueta «genre» del texto que imprime `ffmpeg -i` por stderr."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "setManual(id, list)",
+        "hace": "Lo escrito a mano manda. Lista vacía: quita lo manual y la pista vuelve a lo automático (si había)."
+      },
+      {
+        "nombre": "setAuto(id, list, source)",
+        "hace": "Lectura automática: no pisa lo manual ni escribe si no hay nada."
+      },
+      {
+        "nombre": "autoFromFile(id, file, ffmpeg, source)",
+        "hace": "Lee la etiqueta de un archivo con ffmpeg (sin ffprobe) y la guarda como automática."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/genres.js",
+    "lineas": 96,
+    "qa": {
+      "logica": null,
+      "estatica": "test-generos.js",
+      "arranque": "generos-selftest.js",
+      "visual": null
+    }
+  },
+  "main/library-save.js": {
+    "capa": "principal",
+    "dominio": "library",
+    "responsabilidad": "Lógica pura (sin Electron) de \"guardar en la librería local\": dónde se guarda, con qué argumentos de yt-dlp, cómo se encuentra lo ya guardado y cómo se limpian los parciales. La usan el analizador y las pruebas.",
+    "api": [
+      "ensureWritableDir",
+      "formatArgs",
+      "defaultLibraryDir",
+      "withLibraryDir",
+      "wantsSave",
+      "saveArgs",
+      "findSaved",
+      "findThumb",
+      "cleanPartials",
+      "friendlyError",
+      "safeId"
+    ],
+    "contrato": [
+      {
+        "nombre": "ensureWritableDir",
+        "hace": "Crea la carpeta solo si es realmente escribible. Comprueba antes el primer ancestro existente: un `mkdir -p` recursivo sobre rutas como /proc puede quedarse en bucle en el proceso principal y colgar toda la app."
+      },
+      {
+        "nombre": "formatArgs",
+        "hace": "Selección de formato: 'audio' = mejor audio por bitrate; 'any' = cualquier audio (aunque venga con video), para el reintento."
+      },
+      {
+        "nombre": "withLibraryDir",
+        "hace": "La carpeta de la librería de YouTube forma parte de las carpetas de música (sin duplicarse)."
+      },
+      {
+        "nombre": "wantsSave",
+        "hace": "¿Hay que descargar para guardar? Sí si la opción está activa (o se pidió expresamente) y aún no está guardada."
+      },
+      {
+        "nombre": "saveArgs",
+        "hace": "Argumentos de yt-dlp: mejor audio disponible, original sin convertir, etiquetas y carátula aparte."
+      },
+      {
+        "nombre": "findSaved",
+        "hace": "Archivo de audio ya guardado para un id de YouTube (el id va entre corchetes en el nombre)."
+      },
+      {
+        "nombre": "cleanPartials",
+        "hace": "Tras un fallo no deben quedar parciales de ese id (ni .part, ni .ytdl, ni la miniatura suelta)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/analyzer.js",
+      "main/main.js",
+      "main/ytdlp.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/library-save.js",
+    "lineas": 111,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/local-library.js": {
+    "capa": "principal",
+    "dominio": "library",
+    "responsabilidad": "Música local: carpetas del disco y archivos sueltos. Índice persistente con título/artista/duración (vía ffmpeg).",
+    "api": [
+      "LocalLibrary",
+      "EXT"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "scan(dirs)",
+        "hace": "Añade/actualiza los archivos de las carpetas y lanza la lectura de etiquetas en segundo plano."
+      },
+      {
+        "nombre": "register(p)",
+        "hace": "Registra un archivo suelto (arrastrado a un deck) y espera a leer sus etiquetas para que el deck las muestre."
+      },
+      {
+        "nombre": "setCover(id, src)",
+        "hace": "Carátula externa (p. ej. la miniatura que bajó yt-dlp): se copia a la caché de carátulas y se borra el original."
+      },
+      {
+        "nombre": "probe(p, id)",
+        "hace": "ffmpeg -i imprime duración y etiquetas por stderr; así no hace falta ffprobe."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/local-library.js",
+    "lineas": 185,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/local-search.js": {
+    "capa": "principal",
+    "dominio": "library",
+    "responsabilidad": "Búsqueda sobre todo lo que hay en el equipo: música local, análisis guardados, playlists importadas y géneros. Sin red y sin rutas: cada resultado se identifica por id. Los datos entran por `build(items)`; main los reúne.",
+    "api": [
+      "LocalSearch",
+      "keysCompatible",
+      "norm"
+    ],
+    "contrato": [
+      {
+        "nombre": "keysCompatible",
+        "hace": "Misma regla que renderer/camelot.js (la prueba comprueba que no se separen)."
+      },
+      {
+        "nombre": "norm",
+        "hace": "Búsqueda sobre todo lo que hay en el equipo: música local, análisis guardados, playlists importadas y géneros. Sin red y sin rutas: cada resultado se identifica por id. Los datos entran por `build(items)`; main los reúne."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "build(items)",
+        "hace": "items: [{ videoId, title, artist, album, duration, thumb, local, bpm, camelot, genres: [], source }]. Una misma videoId de varias fuentes se fusiona: gana el dato presente y se acumulan las etiquetas de fuente."
+      },
+      {
+        "nombre": "search(q, { bpm, key, compatKey = false, genres, limit = 200 } = {})",
+        "hace": "q: texto (vacío = todo con los filtros). filtros: bpm [min,max], key (exacta o compatible), genres (alguno), onlyLocal."
+      },
+      {
+        "nombre": "similar(videoId, limit = 10)",
+        "hace": "Pistas analizadas parecidas a `videoId` (BPM ±6 % también a mitad/doble y tonalidad compatible), de más a menos cercana."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/local-search.js",
+    "lineas": 116,
+    "qa": {
+      "logica": "test-local.js",
+      "estatica": null,
+      "arranque": "local-selftest.js",
+      "visual": null
+    }
+  },
+  "main/main.js": {
+    "capa": "principal",
+    "dominio": "app",
+    "responsabilidad": "Arranque de Electron: crea la ventana de la interfaz y las de los decks (YouTube Music), registra el protocolo app:// y todos los canales IPC, y enlaza los módulos de main/.",
+    "api": [
+      "loggedIn"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "main/analysis-backlog.js",
+      "main/analyzer.js",
+      "main/auth-import.js",
+      "main/export.js",
+      "main/genres.js",
+      "main/library-save.js",
+      "main/local-library.js",
+      "main/local-search.js",
+      "main/net-gate.js",
+      "main/playlists.js",
+      "main/settings.js",
+      "main/stems-device.js",
+      "main/stems.js",
+      "main/tools.js",
+      "main/updater.js",
+      "main/ytdlp.js",
+      "main/ytm-library.js"
+    ],
+    "usadoPor": [],
+    "persiste": [
+      "userData:analysis-queue.json",
+      "userData:genres.json",
+      "userData:local-index.json",
+      "userData:playlists-local.json",
+      "userData:playlists.json",
+      "userData:popularity.json"
+    ],
+    "debeVivir": "main/main.js",
+    "notas": "Mezcla arranque, ventanas, protocolo app:// y todos los canales IPC en un solo archivo (705 líneas): candidato a dividir por dominio.",
+    "lineas": 705,
+    "qa": {
+      "logica": null,
+      "estatica": "test-export.js",
+      "arranque": "login-flow-selftest.js",
+      "visual": null
+    }
+  },
+  "main/mixedit.js": {
+    "capa": "principal",
+    "dominio": "automix",
+    "responsabilidad": "Ediciones manuales de los puntos de mezcla de una pista. Van en un archivo aparte (<id>.mixedit.json) para que volver a analizar la pista no las borre.",
+    "api": [
+      "sanitize",
+      "read",
+      "write",
+      "MAX_OUTS"
+    ],
+    "contrato": [
+      {
+        "nombre": "sanitize",
+        "hace": "Deja la edición en su forma canónica: entrada dentro de la pista y hasta 6 salidas sin repetir, en orden de preferencia."
+      },
+      {
+        "nombre": "write",
+        "hace": "edit = null restaura el cálculo automático. Devuelve la edición guardada (o null)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/analyzer.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/mixedit.js",
+    "lineas": 50,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "mix-edit-selftest.js",
+      "visual": null
+    }
+  },
+  "main/net-gate.js": {
+    "capa": "principal",
+    "dominio": "platform",
+    "responsabilidad": "Modo local: si el ajuste `localMode` está activo, la app no hace ninguna petición de red. Todo punto que sale a internet pregunta aquí (búsqueda online, sesión de YouTube Music, actualizaciones, descarga de herramientas y modelos, yt-dlp).",
+    "api": [
+      "createGate",
+      "MESSAGE"
+    ],
+    "contrato": [
+      {
+        "nombre": "MESSAGE",
+        "hace": "Modo local: si el ajuste `localMode` está activo, la app no hace ninguna petición de red. Todo punto que sale a internet pregunta aquí (búsqueda online, sesión de YouTube Music, actualizaciones, descarga de herramientas y modelos, yt-dlp)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/net-gate.js",
+    "lineas": 27,
+    "qa": {
+      "logica": "test-local.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/playlists.js": {
+    "capa": "principal",
+    "dominio": "library",
+    "responsabilidad": "Playlists locales: listas manuales y listas inteligentes guardadas en `userData`. Lógica pura, sin Electron: la usan main.js y las pruebas. No toca nunca archivos de música; las pistas se guardan sin rutas (la ruta se resuelve al abrir la lista).",
+    "api": [
+      "PlaylistStore",
+      "SORT_KEYS"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "add(id, tracks, { allowDup = false } = {})",
+        "hace": "Añade al final sin repetir la pista en la misma lista, salvo `allowDup`."
+      },
+      {
+        "nombre": "restore(id, removed)",
+        "hace": "Deshace `remove`: cada pista vuelve a su posición original (de menor a mayor índice)."
+      },
+      {
+        "nombre": "reorder(id, videoIds)",
+        "hace": "Orden manual: `videoIds` es el nuevo orden; las pistas que falten se quedan al final."
+      },
+      {
+        "nombre": "fromCrate(crate, name)",
+        "hace": "Copia una playlist importada de YouTube Music (`{ id, title, tracks }`) como lista local editable."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/playlists.js",
+    "lineas": 207,
+    "qa": {
+      "logica": null,
+      "estatica": "test-playlists.js",
+      "arranque": "playlists-selftest.js",
+      "visual": null
+    }
+  },
+  "main/selftest.js": {
+    "capa": "principal",
+    "dominio": "platform",
+    "responsabilidad": "Autoprueba (YTDJ_SELFTEST=1): todo con los canales en 0, no suena nada. Escribe capturas y un informe JSON en YTDJ_SELFTEST_OUT.",
+    "api": [
+      "selftest"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [],
+    "persiste": [
+      "userData:selftest.json"
+    ],
+    "debeVivir": "main/selftest.js",
+    "lineas": 68,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/settings.js": {
+    "capa": "principal",
+    "dominio": "settings",
+    "responsabilidad": "Ajustes persistentes en userData/settings.json.",
+    "api": [
+      "get",
+      "set",
+      "defaults"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [
+      "userData:settings.json"
+    ],
+    "debeVivir": "main/settings.js",
+    "lineas": 76,
+    "qa": {
+      "logica": "test-fx.js",
+      "estatica": "test-local.js",
+      "arranque": "ajustes-selftest.js",
+      "visual": null
+    }
+  },
+  "main/stems-device.js": {
+    "capa": "principal",
+    "dominio": "stems",
+    "responsabilidad": "Selector de dispositivo para los stems: qué proveedor de ONNX Runtime usar (GPU o CPU), con sondeo y caché. El sondeo lo hace el proceso hijo (`stems-worker.js`, mensaje `probe`): separa una ventana sintética en el proveedor y en CPU, y devuelve { ok, rt, cpuRt, snr }. Aquí solo se decide y se recuerda: `userData/stems/device.json`.",
+    "api": [
+      "DeviceSelector",
+      "candidates",
+      "hasCuda",
+      "MIN_SNR",
+      "LABELS"
+    ],
+    "contrato": [
+      {
+        "nombre": "candidates",
+        "hace": "Proveedores a intentar por plataforma, de más a menos deseable; `cpu` no se lista (es el último recurso)."
+      },
+      {
+        "nombre": "hasCuda",
+        "hace": "¿Están las bibliotecas de CUDA junto a onnxruntime-node? (el paquete no las trae: se instalan aparte)"
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "info()",
+        "hace": "Resultado vigente sin sondear (para pintar Ajustes): { device, label, rt, probe }."
+      },
+      {
+        "nombre": "select()",
+        "hace": "Elige el dispositivo: usa la caché si es de esta versión de app y de modelo; si no, sondea de a uno en orden."
+      },
+      {
+        "nombre": "markBad(provider, reason)",
+        "hace": "El proveedor murió o dio error en una pista real: se descarta hasta que cambie la versión de la app o del modelo."
+      },
+      {
+        "nombre": "noteRt(provider, rt)",
+        "hace": "Velocidad medida en una pista real: sustituye a la del sondeo (más fiel, con música de verdad)."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [
+      "userData:device.json"
+    ],
+    "debeVivir": "main/stems-device.js",
+    "lineas": 103,
+    "qa": {
+      "logica": "test-stems.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/stems-worker.js": {
+    "capa": "principal",
+    "dominio": "stems",
+    "responsabilidad": "Proceso hijo de la separación de stems: decodifica la pista, ejecuta HTDemucs (ONNX) por ventanas y escribe un FLAC de 8 canales (batería, bajo, resto, voz; L y R de cada uno) por trozos. Se lanza con `child_process.fork` y habla por IPC. padre → hijo: { type: 'start', file, out, ffmpeg, model, maxSeconds, provider, variant } | { type: 'cancel' } { type: 'probe', model, provider } (sondeo: una ventana sintética en `provider` y en CPU) hijo → padre: { type: 'progress', progress, etaS, rssMB } | { type: 'done', bytes, rt } | { type: 'error', code, error } { type: 'probe', ok, rt, cpuRt, snr, error? } variant 'cpu': htdemucs.ort con la STFT fuera (entradas input + x); 'gpu': ONNX con la STFT dentro (mix → stems).",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/stems-dsp.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "main/stems-worker.js",
+    "lineas": 178,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "main/stems.js": {
+    "capa": "principal",
+    "dominio": "stems",
+    "responsabilidad": "Almacén de stems: una pista a la vez, en un proceso hijo de baja prioridad, con cancelación y límites. Guarda `userData/stems/<id>.flac` (8 canales: batería, bajo, resto, voz) y un índice `index.json`.",
+    "api": [
+      "StemStore",
+      "ModelManager",
+      "ModelSet",
+      "MODEL",
+      "MODELS",
+      "available",
+      "probeDevice",
+      "MAX_SECONDS",
+      "MAX_RSS_MB"
+    ],
+    "contrato": [
+      {
+        "nombre": "ModelManager",
+        "hace": "Modelo bajo demanda: pide permiso, descarga a `.part`, verifica el SHA-256 y renombra. Una descarga a la vez."
+      },
+      {
+        "nombre": "ModelSet",
+        "hace": "Las dos variantes con la misma carpeta y el mismo flujo de permiso: path(v), present(v), ensure(v), status()."
+      },
+      {
+        "nombre": "MODELS",
+        "hace": "Dos variantes del mismo modelo: `cpu` (formato ORT optimizado para CPU, STFT fuera del grafo) y `gpu` (ONNX sin optimizar, STFT dentro; el único que corre entero en CUDA/DirectML/CoreML/WebGPU). La de GPU solo se pide cuando hay un dispositivo útil."
+      },
+      {
+        "nombre": "available",
+        "hace": "¿Puede esta instalación separar? Comprueba que onnxruntime-node trae el binario de esta plataforma (no hay para Mac Intel)."
+      },
+      {
+        "nombre": "probeDevice",
+        "hace": "Sondeo de un proveedor en un hijo aparte: { ok, rt, cpuRt, snr } o { ok: false, error } (también si el hijo muere o tarda)."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "touch(id)",
+        "hace": "Marca una pista como usada ahora (se carga en un deck): los menos usados son los primeros en borrarse por cuota."
+      },
+      {
+        "nombre": "trim(limitBytes, except = [])",
+        "hace": "Cuota: borra primero los menos usados hasta caber en `limitBytes`, sin tocar `keep` (decks) ni `except` (la recién hecha). Devuelve los ids borrados y avisa con un evento 'trimmed'."
+      },
+      {
+        "nombre": "request(id, file, priority = 2)",
+        "hace": "Encola una pista. `file`: ruta del audio local. `priority`: 0 = pista de un deck, 1 = siguiente de AutoMix, 2 = el resto (por defecto). Una petición de menor número adelanta a las demás; a igual prioridad, por orden de llegada. Devuelve false si ya la tiene o ya está en marcha; pedir de nuevo una que espera la sube de prioridad."
+      },
+      {
+        "nombre": "runChild(job, cur, part, model, plan)",
+        "hace": "Lanza el hijo con un plan { provider, variant } y espera su resultado: { ok, bytes } | { code, error }."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [
+      "userData:index.json",
+      "userData:package.json"
+    ],
+    "debeVivir": "main/stems.js",
+    "lineas": 329,
+    "qa": {
+      "logica": "test-stems.js",
+      "estatica": null,
+      "arranque": "playlists-selftest.js",
+      "visual": null
+    }
+  },
+  "main/tools.js": {
+    "capa": "principal",
+    "dominio": "install",
+    "responsabilidad": "Herramientas externas que AlyssDJ necesita: yt-dlp (se descarga solo, binario oficial) y ffmpeg. Lo usan tanto scripts/setup.js (npm install) como la app al arrancar, así que no depende de Electron.",
+    "api": [
+      "ensureYtdlp",
+      "findYtdlp",
+      "findFfmpeg",
+      "ensureFfmpeg",
+      "ffmpegUrl",
+      "maybeUpdate",
+      "installHint",
+      "BIN_NAME"
+    ],
+    "contrato": [
+      {
+        "nombre": "ensureYtdlp",
+        "hace": "Descarga el binario oficial de yt-dlp a `dir` si no hay ninguno utilizable. Devuelve { bin, version, installed }."
+      },
+      {
+        "nombre": "findYtdlp",
+        "hace": "Busca yt-dlp en las carpetas dadas (la propia del proyecto/app primero) y luego en el sistema."
+      },
+      {
+        "nombre": "findFfmpeg",
+        "hace": "ffmpeg: el configurado, el de bin/ (descargado por nosotros), el del sistema o el del paquete opcional ffmpeg-static."
+      },
+      {
+        "nombre": "maybeUpdate",
+        "hace": "yt-dlp se rompe cuando YouTube cambia: si el binario es el nuestro y tiene más de STALE_DAYS, se actualiza solo."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js",
+      "main/ytdlp.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/tools.js",
+    "lineas": 155,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "packaged-selftest.js",
+      "visual": null
+    }
+  },
+  "main/updater.js": {
+    "capa": "principal",
+    "dominio": "updater",
+    "responsabilidad": "Actualizaciones: comprueba si hay un release nuevo en GitHub (solo la API pública, sin enviar datos personales), avisa, y descarga e instala solo si el usuario lo acepta y no hay un deck sonando. En macOS sin firma solo avisa.",
+    "api": [
+      "createUpdater",
+      "REPO",
+      "HOURS"
+    ],
+    "contrato": [
+      {
+        "nombre": "createUpdater",
+        "hace": "deps: { autoUpdater, settings, send, isPlaying, platform, isPackaged, now }. Todo inyectable para probarlo sin Electron."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/updater.js",
+    "lineas": 93,
+    "qa": {
+      "logica": "test-local.js",
+      "estatica": "test-updater.js",
+      "arranque": "updater-selftest.js",
+      "visual": null
+    }
+  },
+  "main/ytdlp.js": {
+    "capa": "principal",
+    "dominio": "install",
+    "responsabilidad": "Descarga bajo demanda con yt-dlp. Nunca se llama sola: solo cuando el usuario pide \"Analizar\" (o activó \"analizar al cargar en cue\").",
+    "api": [
+      "download",
+      "downloadToLibrary",
+      "findYtdlp",
+      "setManagedDirs",
+      "cookieArgs",
+      "runtime",
+      "isFormatError",
+      "withFormatRetry",
+      "FORMAT_ERROR",
+      "isBotError",
+      "botBlocked",
+      "resetBot",
+      "BOT_ERROR",
+      "BOT_COOLDOWN_MS"
+    ],
+    "contrato": [
+      {
+        "nombre": "download",
+        "hace": "Descarga el audio de un videoId. 141 = AAC 256k (solo Premium con cookies); si no, el mejor disponible."
+      },
+      {
+        "nombre": "downloadToLibrary",
+        "hace": "Descarga directo a la librería local: mejor audio disponible, original sin convertir, etiquetas incrustadas y carátula en .thumbs (el índice local la recoge). Si falla, no quedan parciales."
+      },
+      {
+        "nombre": "cookieArgs",
+        "hace": "yt-dlp va SIN sesión: las cookies de la cuenta son solo para el streaming de los decks. Con cookies, YouTube obliga a clientes web que hoy no entregan formatos de audio (\"Requested format is not available\"). Solo si el usuario lo pide a mano (opción avanzada) se usan las de un navegador."
+      },
+      {
+        "nombre": "withFormatRetry",
+        "hace": "Ejecuta `run(formato)`; si YouTube dice \"formato no disponible\", un solo reintento con la selección más abierta."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "main/library-save.js",
+      "main/tools.js"
+    ],
+    "usadoPor": [
+      "main/analyzer.js",
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/ytdlp.js",
+    "lineas": 158,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "login-flow-selftest.js",
+      "visual": null
+    }
+  },
+  "main/ytm-library.js": {
+    "capa": "principal",
+    "dominio": "library",
+    "responsabilidad": "Biblioteca de YouTube Music a través de la API interna (innertube) que usa la propia web, ejecutada dentro de una vista de music.youtube.com con tu sesión: búsqueda, \"Me gusta\", playlists.",
+    "api": [
+      "PAGE_CALL",
+      "parsePlays",
+      "YtmLibrary",
+      "parseSongs",
+      "parsePlaylists",
+      "parseRadio"
+    ],
+    "contrato": [
+      {
+        "nombre": "PAGE_CALL",
+        "hace": "Se ejecuta en el main world de music.youtube.com (necesita window.ytcfg y las cookies de la página)."
+      },
+      {
+        "nombre": "parseRadio",
+        "hace": "Radio de YouTube Music (\"Iniciar radio\"): cola infinita de pistas parecidas a la semilla."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "popularity(videoId)",
+        "hace": "Reproducciones de una pista (endpoint `player` de YouTube Music: videoDetails.viewCount). Caché de 30 días y 3 consultas a la vez."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "main/main.js"
+    ],
+    "persiste": [],
+    "debeVivir": "main/ytm-library.js",
+    "lineas": 275,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "preload/app.js": {
+    "capa": "preload",
+    "dominio": "app",
+    "responsabilidad": "Puente entre la UI (app://ui) y el proceso principal.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "preload/app.js",
+    "notas": "Un solo objeto `window.api` con todos los grupos: crece con cada función nueva.",
+    "lineas": 141,
+    "qa": {
+      "logica": null,
+      "estatica": "test-export.js",
+      "arranque": "automix-claro-selftest.js",
+      "visual": null
+    }
+  },
+  "preload/deck.js": {
+    "capa": "preload",
+    "dominio": "audio",
+    "responsabilidad": "Corre dentro de music.youtube.com (mundo aislado). Toma el <video> del reproductor de YT Music, lo pasa por la cadena DSP del deck y obedece los comandos del deck. Nada sale de la página salvo el estado de reproducción (posición, nivel, metadata) hacia la UI.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/deck-engine.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "preload/deck.js",
+    "lineas": 107,
+    "qa": {
+      "logica": null,
+      "estatica": "test-stream-guard.js",
+      "arranque": "automix-claro-robust-selftest.js",
+      "visual": null
+    }
+  },
+  "shared/analysis.js": {
+    "capa": "compartido",
+    "dominio": "analysis",
+    "responsabilidad": "Análisis offline de una pista ya decodificada (mono, float32): waveform 3 bandas, BPM + beatgrid, tonalidad, ganancia. Funciones puras: las usa el worker de la app y el CLI de pruebas.",
+    "api": [
+      "analyze",
+      "tempo",
+      "key",
+      "waveform",
+      "loudness",
+      "ANALYSIS_SR",
+      "_internals",
+      "combScore"
+    ],
+    "contrato": [
+      {
+        "nombre": "loudness",
+        "hace": "---------- Ganancia ----------"
+      },
+      {
+        "nombre": "combScore",
+        "hace": "Puntuación de una rejilla: energía media de onset en los beats, maximizada sobre la fase."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "shared/structure.js"
+    ],
+    "usadoPor": [
+      "main/analysis-worker.js",
+      "main/analyze-cli.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/analysis.js",
+    "lineas": 330,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "automix-add-selftest.js",
+      "visual": null
+    }
+  },
+  "shared/deck-engine.js": {
+    "capa": "compartido",
+    "dominio": "audio",
+    "responsabilidad": "Motor de un deck sobre un HTMLMediaElement. Las dos fuentes lo comparten: - stream: el <video> de music.youtube.com (sesión Premium), dentro de la vista del deck - local: un <audio> con el archivo que bajó yt-dlp, dentro del renderer Lo que cambia entre ambas es el \"adapter\" (cómo se carga una pista y se lee su metadata).",
+    "api": [
+      "createDeckEngine"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/dsp-chain.js",
+      "shared/scratch.js"
+    ],
+    "usadoPor": [
+      "preload/deck.js",
+      "renderer/index.html"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/deck-engine.js",
+    "lineas": 390,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "shared/dsp-chain.js": {
+    "capa": "compartido",
+    "dominio": "audio",
+    "responsabilidad": "Cadena de canal de un deck: trim → EQ 3 bandas → filtro bipolar → (fader → master) + (PFL → cue) + medidor. Se usa igual en la vista de YouTube Music (stream) y en el renderer (archivo local de yt-dlp).",
+    "api": [
+      "create",
+      "findSinkId"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/fx.js"
+    ],
+    "usadoPor": [
+      "renderer/index.html",
+      "shared/deck-engine.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/dsp-chain.js",
+    "lineas": 186,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "shared/fx.js": {
+    "capa": "compartido",
+    "dominio": "fx",
+    "responsabilidad": "Efectos de un deck (insert): tres ranuras en serie, cada una con un tipo a elegir entre Eco, Reverb, Flanger, Gate, Phaser, Crush, Filtro, Cinta, Reducer, Stutter, Brake, Transformer, Drive y Pitch, una cantidad (wet, 0–1) y un segundo parámetro propio (P, 0–1). Cada ranura: out = dry + efecto·wet. Solo se monta el efecto de una ranura mientras está activa (on y wet > 0); apagada, el audio pasa tal cual y no gasta CPU. Eco, Gate, Flanger y Phaser siguen el BPM del deck.",
+    "api": [
+      "delay",
+      "depth",
+      "osc",
+      "shaper",
+      "vg"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/index.html",
+      "shared/dsp-chain.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/fx.js",
+    "lineas": 500,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "fx-ampliados-selftest.js",
+      "visual": null
+    }
+  },
+  "shared/scratch-math.js": {
+    "capa": "compartido",
+    "dominio": "jog",
+    "responsabilidad": "Núcleo del scratch: lee un buffer estéreo con posición fraccionaria y velocidad variable (negativa incluida), con interpolación lineal y la velocidad suavizada para que no haya clics. Sin DOM ni audio: lo usan el worklet y las pruebas.",
+    "api": [
+      "SLEW_S",
+      "makeState",
+      "render",
+      "SECONDS_PER_TURN",
+      "velFromDrag",
+      "bufferMiB"
+    ],
+    "contrato": [
+      {
+        "nombre": "SLEW_S",
+        "hace": "Núcleo del scratch: lee un buffer estéreo con posición fraccionaria y velocidad variable (negativa incluida), con interpolación lineal y la velocidad suavizada para que no haya clics. Sin DOM ni audio: lo usan el worklet y las pruebas."
+      },
+      {
+        "nombre": "render",
+        "hace": "buf: { L, R: Float32Array }. Escribe n muestras en outL/outR y avanza el estado. Fuera del buffer devuelve silencio y deja la posición en el borde (la velocidad se anula para que no se acumule)."
+      },
+      {
+        "nombre": "SECONDS_PER_TURN",
+        "hace": "Velocidad de la pista (muestras por muestra) a partir del giro del plato: 33⅓ rpm ⇒ 1,8 s de pista por vuelta."
+      },
+      {
+        "nombre": "bufferMiB",
+        "hace": "Memoria de un buffer decodificado (dos canales Float32) en MiB."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "shared/scratch-worklet.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/scratch-math.js",
+    "lineas": 47,
+    "qa": {
+      "logica": "test-jog.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "shared/scratch-worklet.js": {
+    "capa": "compartido",
+    "dominio": "jog",
+    "responsabilidad": "AudioWorklet del scratch: reproduce el buffer con la velocidad que le manda el hilo principal.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/scratch-math.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "shared/scratch-worklet.js",
+    "lineas": 33,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "shared/scratch.js": {
+    "capa": "compartido",
+    "dominio": "jog",
+    "responsabilidad": "Controlador del scratch en el hilo principal: decodifica el audio local, lo entrega al worklet y lo manda sujetar, mover a la velocidad del plato y soltar. Si algo falla (stream, sin worklet, pista enorme) `prepare` devuelve false y el deck usa el respaldo de freno y arranque suaves.",
+    "api": [
+      "create"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/index.html",
+      "shared/deck-engine.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/scratch.js",
+    "lineas": 99,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "jog-selftest.js",
+      "visual": null
+    }
+  },
+  "shared/stems-dsp.js": {
+    "capa": "compartido",
+    "dominio": "stems",
+    "responsabilidad": "Separación de stems con HTDemucs (ONNX): el preproceso y el posproceso de Demucs, sin ONNX ni DOM. El modelo recibe cada ventana en dos formas (onda `input` y espectrograma `x`) y devuelve la rama temporal y la de frecuencia; aquí se calcula la STFT, se suman las ramas con la iSTFT y se unen las ventanas con solape. La inferencia se inyecta (`infer`) para poder probar todo con un modelo falso. Salida por trozos ya finales: la memoria no crece con la duración.",
+    "api": [
+      "SR",
+      "W",
+      "HOP",
+      "NFFT",
+      "FQ",
+      "T",
+      "STEMS",
+      "spec",
+      "ispec",
+      "normalizeStats",
+      "windowsFor",
+      "separate"
+    ],
+    "contrato": [
+      {
+        "nombre": "spec",
+        "hace": "STFT de Demucs (`_spec`) de una ventana estéreo [L, R] de W muestras → Float32Array [4, FQ, T] (canal = c·2 + re/im)."
+      },
+      {
+        "nombre": "normalizeStats",
+        "hace": "Media y desviación de la mezcla (mono) para normalizar como `demucs.separate`."
+      },
+      {
+        "nombre": "windowsFor",
+        "hace": "Cuántas ventanas hacen falta para `length` muestras."
+      },
+      {
+        "nombre": "separate",
+        "hace": "Separa `mix` ([L, R] Float32Array, SIN normalizar). `infer({ input: Float32Array(2·W), x: Float32Array(4·FQ·T) })` → { time: Float32Array(4·2·W), freq: Float32Array(4·4·FQ·T) } (con `direct`: solo `time`, y `x` llega null). `onChunk(Float32Array)` recibe audio final intercalado de 8 canales (batería L R, bajo L R, resto L R, voz L R), en orden y sin huecos. `shouldStop()` cancela entre ventanas."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "main/stems-worker.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/stems-dsp.js",
+    "lineas": 214,
+    "qa": {
+      "logica": "test-stems.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "shared/structure.js": {
+    "capa": "compartido",
+    "dominio": "automix",
+    "responsabilidad": "Estructura de una pista a partir de su rejilla: energía por frase de 16 beats, fin de la intro, comienzo del outro y puntos de mezcla candidatos. Funciones puras; las usa el análisis y las pruebas.",
+    "api": [
+      "structure",
+      "beatEnergies",
+      "PHRASE_BEATS",
+      "STRONG"
+    ],
+    "contrato": [
+      {
+        "nombre": "beatEnergies",
+        "hace": "Energía (RMS) de la señal filtrada a < 2 kHz: refleja el bombo y el bajo, no los hats."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "shared/analysis.js"
+    ],
+    "persiste": [],
+    "debeVivir": "shared/structure.js",
+    "lineas": 109,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/app.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Punto de entrada de la interfaz: crea los dos decks y el mezclador y cablea sesión, librería, AutoMix, sampler, grabación, vistas, ajustes, atajos y MIDI.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/automix-add.js",
+      "renderer/automix-compat.js",
+      "renderer/automix-entry.js",
+      "renderer/automix-profiles.js",
+      "renderer/automix-status.js",
+      "renderer/automix-timeline.js",
+      "renderer/automix.js",
+      "renderer/camelot.js",
+      "renderer/controls.js",
+      "renderer/deck.js",
+      "renderer/genres.js",
+      "renderer/knob.js",
+      "renderer/layout.js",
+      "renderer/library.js",
+      "renderer/midi.js",
+      "renderer/mixeditor.js",
+      "renderer/recipes.js",
+      "renderer/sampler.js",
+      "renderer/settings-ui.js",
+      "renderer/splits.js",
+      "renderer/stems.js",
+      "renderer/update-ui.js",
+      "renderer/views.js",
+      "renderer/viz.js"
+    ],
+    "usadoPor": [
+      "renderer/index.html"
+    ],
+    "persiste": [
+      "localStorage:alyssdj:history"
+    ],
+    "debeVivir": "renderer/app.js",
+    "notas": "Cableado de todo: decks, mezclador, librería, AutoMix, ajustes y atajos en 1232 líneas; las vistas deberían tener un archivo cada una.",
+    "lineas": 1232,
+    "qa": {
+      "logica": null,
+      "estatica": "test-fxcues.js",
+      "arranque": "automix-claro-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/automix-add.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Buscar y agregar desde la vista de AutoMix: resultados (YouTube Music + librería), sugeridas para continuar y su pintado.",
+    "api": [
+      "fmtPlays",
+      "AddPanel"
+    ],
+    "contrato": [
+      {
+        "nombre": "fmtPlays",
+        "hace": "856000000 → «856 M»; 135000 → «135 k»; 1200000000 → «1,2 B»"
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "predicted(t)",
+        "hace": "Posición que tendría si se agregara ahora (solo si ya está analizada)."
+      }
+    ],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/mixplan.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-add.js",
+    "lineas": 139,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "automix-view-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/automix-compat.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Compatibilidad de un elemento de la cola con el anterior: tres niveles y el motivo en palabras.",
+    "api": [
+      "LEVELS",
+      "compat"
+    ],
+    "contrato": [
+      {
+        "nombre": "compat",
+        "hace": "prev/item: análisis ({ bpm, camelot, mix: { energy } }); item.cost opcional (edgeCost ya calculado); marks: { analyzed, file }."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/mixplan.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-compat.js",
+    "lineas": 23,
+    "qa": {
+      "logica": "test-automix-claro.mjs",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix-entry.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Tarjeta «SIGUE»: punto de entrada elegido para la pista que sigue (tiempo, compás y motivo) sobre una tira con la energía por frase. Arrastrar la línea (o ← → con el foco) elige otro compás y lo guarda como entrada editada de esa pista; «Auto» vuelve al cálculo automático.",
+    "api": [
+      "EntryStrip"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "render(e, color)",
+        "hace": "`e` es `state().entry` y `color` el del deck que entra."
+      },
+      {
+        "nombre": "snap(t)",
+        "hace": "Compás más cercano a `t` (rejilla de la pista), dentro de la pista."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-entry.js",
+    "lineas": 93,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix-profiles.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Perfiles de AutoMix: un clic fija duración, estilo, orden y nivel de efectos. «Personalizado» no cambia nada.",
+    "api": [
+      "PROFILES",
+      "applyProfile",
+      "detect",
+      "lastProfile"
+    ],
+    "contrato": [
+      {
+        "nombre": "PROFILES",
+        "hace": "Perfiles de AutoMix: un clic fija duración, estilo, orden y nivel de efectos. «Personalizado» no cambia nada."
+      },
+      {
+        "nombre": "detect",
+        "hace": "Perfil que describe la configuración actual: el que coincide en todas las claves, o `custom`."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:automix-profile"
+    ],
+    "debeVivir": "renderer/automix-profiles.js",
+    "lineas": 28,
+    "qa": {
+      "logica": "test-automix-claro.mjs",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix-status.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Estado de AutoMix en una frase: fase, cuenta atrás y motivo. Función pura sobre `AutoMix.snapshot()`.",
+    "api": [
+      "PHASES",
+      "describe"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/recipes.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-status.js",
+    "lineas": 35,
+    "qa": {
+      "logica": "test-automix-claro.mjs",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix-timeline.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Línea de tiempo de la próxima mezcla: la pista que sale (arriba) y la que entra (abajo) alineadas en el punto de mezcla, con el solape, los gestos de la receta y el cabezal. Se arrastra la salida, la entrada y el final del solape (duración).",
+    "api": [
+      "PRE",
+      "POST",
+      "geometry",
+      "hit",
+      "Timeline"
+    ],
+    "contrato": [
+      {
+        "nombre": "geometry",
+        "hace": "Geometría pura: tiempo relativo al punto de mezcla (u) ↔ píxel."
+      },
+      {
+        "nombre": "hit",
+        "hace": "Asa bajo el puntero: 'len' (final del solape), 'exit' (arriba) o 'in' (abajo); null si ninguna."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "vals()",
+        "hace": "Valores efectivos (con el arrastre en curso aplicado)."
+      },
+      {
+        "nombre": "snap(kind, t)",
+        "hace": "Compás (de la pista que corresponda) más cercano a t, dentro de la pista."
+      }
+    ],
+    "depende": [
+      "renderer/mixpreview.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-timeline.js",
+    "lineas": 188,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "AutoMix: DJ automático. La cola sale de una lista o de la \"radio\" de YouTube Music (pistas parecidas a la actual); la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.",
+    "api": [
+      "AutoMix",
+      "videoId",
+      "title",
+      "artist",
+      "thumb",
+      "duration",
+      "local"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "exitMode()",
+        "hace": "Modo de salida de la pista que suena. Si nunca se eligió, se deriva del ajuste heredado «puntos óptimos» (apagado = final de la pista), así lo guardado antes de existir el selector sigue valiendo."
+      },
+      {
+        "nombre": "knob(deck, name, v)",
+        "hace": "Controles reales de la UI: así los knobs se mueven solos y MIDI/UI ven lo mismo."
+      },
+      {
+        "nombre": "skipNext()",
+        "hace": "«Siguiente»: quita de la cola la pista que sigue; la mezcla irá a la que venía después."
+      },
+      {
+        "nombre": "shuffle(rng = Math.random)",
+        "hace": "«Barajar»: orden al azar de lo que no está fijado. No mueve lo fijado a mano ni la pista que ya se está preparando."
+      },
+      {
+        "nombre": "useLocalSource()",
+        "hace": "Con el modo local o el ámbito «Mi equipo», las sugerencias salen de la música del equipo ya analizada (BPM y tonalidad compatibles), no de la radio de YouTube Music."
+      },
+      {
+        "nombre": "knownSongs()",
+        "hace": "Canciones (no videoId) que ya sonaron, suenan o están en la cola: otra subida de la misma canción no se sugiere."
+      },
+      {
+        "nombre": "addSmart(track, { next = false, analysis = null } = {})",
+        "hace": "Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola. { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }."
+      },
+      {
+        "nombre": "settleMoves()",
+        "hace": "Cuando llega el análisis de una agregada sin analizar: dónde quedó (y de dónde se movió)."
+      },
+      {
+        "nombre": "analyzeSuggestions(list)",
+        "hace": "Analiza en segundo plano (solo analiza, no guarda) las mejores sugeridas que aún no tienen BPM, de a una."
+      },
+      {
+        "nombre": "prepareAhead(n = Infinity, maxParallel = 2)",
+        "hace": "Analiza y guarda TODA la cola (no solo las próximas), de a 2 a la vez y en el orden de la cola. Las pistas ya guardadas quedan listas al instante y no ocupan uno de los 2 puestos."
+      },
+      {
+        "nombre": "ensureStructure(t, a)",
+        "hace": "Un análisis anterior sin estructura se recalcula con el archivo que ya está en el disco (sin volver a descargar)."
+      },
+      {
+        "nombre": "reorder({ force = false, manual = false } = {})",
+        "hace": "Ordena la cola como una cadena (BPM suave, tonalidad, energía) a partir de lo que suena, respetando lo fijado a mano y la pista que ya se está precargando. Con `manual` ignora el interruptor y la regla de «al menos 3 analizadas»."
+      },
+      {
+        "nombre": "reorganizeNow()",
+        "hace": "Botón «Reorganizar ahora»: ordena aunque el interruptor esté apagado y suelta lo que el orden manual había fijado."
+      },
+      {
+        "nombre": "failHead(t, why)",
+        "hace": "La cabeza de la cola no se pudo cargar (archivo roto, sin conexión…): se descarta y AutoMix sigue con la siguiente, explicándolo en la nota."
+      },
+      {
+        "nombre": "maxLen()",
+        "hace": "Duración máxima que se le da al plan: en Auto la receta decide (hasta 32 s); con un estilo fijo, la elegida."
+      },
+      {
+        "nombre": "previewRecipe()",
+        "hace": "Receta que se usaría con la mezcla planificada (para la vista); null si aún no hay plan o análisis de la siguiente."
+      },
+      {
+        "nombre": "fxTrack(cur)",
+        "hace": "Movimientos sobre los cues de la pista que suena (solo nivel «Marcado»): riser en las subidas y reverb en las roturas."
+      },
+      {
+        "nombre": "entryOf(curAna)",
+        "hace": "Plan de la transición con los análisis de las dos pistas (los del deck si ya están cargados). Plan de «Mezclar ahora»: la salida y la entrada más cercanas (frase de 8 beats, punto de la pista o editado). Entrada elegida para la pista que sigue (para la tarjeta «SIGUE»): el mismo `pickEntry` que usa el plan."
+      },
+      {
+        "nombre": "timelineOf(curAna)",
+        "hace": "Datos de la línea de tiempo de la próxima mezcla (o de la que está sonando, con el cabezal avanzando)."
+      },
+      {
+        "nombre": "mixNow()",
+        "hace": "\"Mezclar ahora\": pasa ya a la siguiente pista lista; si aún no hay ninguna, se mezcla en cuanto la haya."
+      },
+      {
+        "nombre": "startTransition(from, to, plan)",
+        "hace": "`plan` es el resultado de planTransition (o, por compatibilidad, una duración en segundos)."
+      },
+      {
+        "nombre": "recipeStep(t, tm)",
+        "hace": "Aplica los gestos de la receta en el instante `tm` (segundos de mezcla): EQ, filtro y crossfader directos; efectos por FxMoves."
+      },
+      {
+        "nombre": "fxStep(t, p)",
+        "hace": "Movimientos de efectos de la transición: empiezan por progreso o por posición de la saliente."
+      },
+      {
+        "nombre": "glideTempoHome(deck, ms = HOME_MS)",
+        "hace": "Tras mezclar, el tempo vuelve poco a poco al original de la pista para no acumular desvío entre pistas."
+      }
+    ],
+    "depende": [
+      "renderer/automix-compat.js",
+      "renderer/controls.js",
+      "renderer/fxcues.js",
+      "renderer/genres.js",
+      "renderer/mixplan.js",
+      "renderer/mixpreview.js",
+      "renderer/recipes.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj:automix"
+    ],
+    "debeVivir": "renderer/automix.js",
+    "lineas": 1030,
+    "qa": {
+      "logica": "local-automix-test.mjs",
+      "estatica": "test-jog.js",
+      "arranque": "automix-add-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/camelot.js": {
+    "capa": "interfaz",
+    "dominio": "library",
+    "responsabilidad": "Rueda Camelot: color por clave y compatibilidad armónica entre pistas.",
+    "api": [
+      "camelotColor",
+      "keysCompatible",
+      "bpmCompatible"
+    ],
+    "contrato": [
+      {
+        "nombre": "keysCompatible",
+        "hace": "Misma clave, ±1 en la rueda, o la relativa (mismo número, otra letra)."
+      },
+      {
+        "nombre": "bpmCompatible",
+        "hace": "BPM dentro de ±tol (también a mitad o doble de tempo)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix-add.js",
+      "renderer/automix-compat.js",
+      "renderer/deck.js",
+      "renderer/library.js",
+      "renderer/mixplan.js",
+      "renderer/recipes.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/camelot.js",
+    "lineas": 28,
+    "qa": {
+      "logica": "test-local.js",
+      "estatica": null,
+      "arranque": "local-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/controls.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Registro de controles: la UI, el teclado y MIDI actúan sobre los mismos ids. kind: 'button' → press(down) · 'range' → setNorm(0..1) · 'relative' → nudge(delta)",
+    "api": [
+      "controls",
+      "register",
+      "press"
+    ],
+    "contrato": [
+      {
+        "nombre": "controls",
+        "hace": "Registro de controles: la UI, el teclado y MIDI actúan sobre los mismos ids. kind: 'button' → press(down) · 'range' → setNorm(0..1) · 'relative' → nudge(delta)"
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix.js",
+      "renderer/deck.js",
+      "renderer/midi.js",
+      "renderer/sampler.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/controls.js",
+    "lineas": 13,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "immersive-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/deck.js": {
+    "capa": "interfaz",
+    "dominio": "audio",
+    "responsabilidad": "Un deck completo en la interfaz: carga la pista (streaming o archivo), motor de audio, ondas, cues, loops, tempo, stems, efectos y los controles de su plantilla DOM.",
+    "api": [
+      "Deck"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "activateStems({ ch, kind })",
+        "hace": "Activa los stems con la acción pedida ya aplicada ({ ch, kind: 'mute' | 'solo' }). Cambia a ARCHIVO si hace falta."
+      },
+      {
+        "nombre": "tickSaveOnPlay(dtMs)",
+        "hace": "Una pista de YouTube que lleva 30 s sonando por streaming se guarda y analiza en segundo plano (si el ajuste está activo)."
+      },
+      {
+        "nombre": "mirrorFx(i, slot)",
+        "hace": "Cambio en la cadena de efectos: al motor al instante y a disco (con retraso) si se recuerda entre sesiones. Una ranura con ruta «ambos» se copia a la misma ranura del otro deck (no hay un bus master común: ver efectos-ampliados, A1)."
+      },
+      {
+        "nombre": "applyResDefault()",
+        "hace": "El valor por defecto de la resonancia cambió en Ajustes: vale para el doble clic y, si no se movió, para el canal."
+      },
+      {
+        "nombre": "fxSet(slot, patch, owner = 'user')",
+        "hace": "Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2. `owner` 'auto' marca el cambio como de AutoMix: si el usuario toca después la ranura, vuelve a 'user' y AutoMix la suelta."
+      },
+      {
+        "nombre": "cue(down)",
+        "hace": "CUE estilo CDJ: sonando → vuelve al cue y pausa; en pausa sobre el cue → preview mientras se mantiene; en pausa en otro punto → fija el cue ahí."
+      },
+      {
+        "nombre": "phaseDiff(other)",
+        "hace": "Desfase de fase respecto de otro deck, en beats (-0.5..0.5). Positivo = este deck va atrasado."
+      },
+      {
+        "nombre": "matchTempoSmart(other, maxPct = 12)",
+        "hace": "Iguala el tempo al del otro deck; si están a doble/mitad de tempo, usa la relación más cercana."
+      },
+      {
+        "nombre": "movePlatter(deg, dt)",
+        "hace": "`deg` grados girados en `dt` s: con buffer manda la velocidad de la pista; sin él, se busca en pasos."
+      },
+      {
+        "nombre": "rollStart(beats)",
+        "hace": "Loop roll: mientras se mantiene pulsado repite un trozo; al soltar, la pista sigue donde habría estado (slip)."
+      },
+      {
+        "nombre": "setBank(bank, toggle = false)",
+        "hace": "Banco abierto ('' = ninguno): se recuerda por deck. Pulsar la pestaña abierta la cierra."
+      }
+    ],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/controls.js",
+      "renderer/fxchain.js",
+      "renderer/fxpanel.js",
+      "renderer/knob.js",
+      "renderer/source.js",
+      "renderer/waveform.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.deck.bank.",
+      "localStorage:ytdj:track:"
+    ],
+    "debeVivir": "renderer/deck.js",
+    "notas": "Mezcla el deck (audio, ondas, cues, loops, FX) con su DOM: el modelo y la vista deberían separarse.",
+    "lineas": 1149,
+    "qa": {
+      "logica": null,
+      "estatica": "test-fx.js",
+      "arranque": "automix-claro-robust-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/fxchain.js": {
+    "capa": "interfaz",
+    "dominio": "fx",
+    "responsabilidad": "Cadena de efectos de un deck: tres ranuras en serie. Modelo puro (sin DOM ni audio): el deck lo envía entero en cada mensaje `mix` y el motor (shared/fx.js) lo aplica.",
+    "api": [
+      "FX_TYPES",
+      "USES_DIV",
+      "ROUTES",
+      "SLOTS",
+      "STORE",
+      "defaultSlot",
+      "defaultChain",
+      "clampSlot",
+      "FxChain"
+    ],
+    "contrato": [
+      {
+        "nombre": "FX_TYPES",
+        "hace": "Cadena de efectos de un deck: tres ranuras en serie. Modelo puro (sin DOM ni audio): el deck lo envía entero en cada mensaje `mix` y el motor (shared/fx.js) lo aplica."
+      },
+      {
+        "nombre": "USES_DIV",
+        "hace": "Qué usa cada tipo: división de beat (`d`) y qué mueve P."
+      },
+      {
+        "nombre": "clampSlot",
+        "hace": "Devuelve una ranura válida; lo que falte o esté fuera de rango toma su valor por defecto."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "set(i, patch = {}, { fromRamp = false, owner = 'user' } = {})",
+        "hace": "Cambia una ranura; cancela su rampa si el cambio toca los mismos parámetros que ella mueve."
+      },
+      {
+        "nombre": "move(from, to)",
+        "hace": "Mueve la ranura `from` a la posición `to` (el motor aplica `slots[i]` a su i-ésima etapa en serie, así que esto reordena la cadena)."
+      },
+      {
+        "nombre": "snapshot()",
+        "hace": "Lo que viaja en el mensaje `mix`."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/deck.js",
+      "renderer/fxpanel.js",
+      "renderer/fxpresets.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.fx."
+    ],
+    "debeVivir": "renderer/fxchain.js",
+    "lineas": 113,
+    "qa": {
+      "logica": "test-fx-ampliados.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/fxcues.js": {
+    "capa": "interfaz",
+    "dominio": "fx",
+    "responsabilidad": "Cues musicales de una pista (subida, caída, rotura) derivados de la energía por frase del análisis, y los «movimientos» de efectos que AutoMix hace sobre ellos. Funciones puras (sin DOM ni audio) salvo `FxMoves`, que mueve la cadena de efectos de los decks que le pasan.",
+    "api": [
+      "LEVELS",
+      "fxCues",
+      "planTransitionMoves",
+      "planTrackMoves",
+      "FxMoves"
+    ],
+    "contrato": [
+      {
+        "nombre": "LEVELS",
+        "hace": "Cues musicales de una pista (subida, caída, rotura) derivados de la energía por frase del análisis, y los «movimientos» de efectos que AutoMix hace sobre ellos. Funciones puras (sin DOM ni audio) salvo `FxMoves`, que mueve la cadena de efectos de los decks que le pasan."
+      },
+      {
+        "nombre": "fxCues",
+        "hace": "ana: { bpm, offset, mix: { phrases: [0–100 por frase], phraseBeats } } → [{ t, kind, strength, end? }] ordenado por t."
+      },
+      {
+        "nombre": "planTransitionMoves",
+        "hace": "Movimientos de una transición: eco de salida y reverb de rotura sobre la pista saliente. level: 'off' | 'subtle' | 'full' · cur: análisis de la saliente · plan: { exitAt, seconds } · style: estilo de la mezcla Cada movimiento: { id, name, deck: 'from', type, p, targetWet, tailMs, startP | atPos/endPos, rampSeconds }."
+      },
+      {
+        "nombre": "planTrackMoves",
+        "hace": "Movimiento sobre cues de la pista que suena (solo nivel «full», fuera de transición). Se llama en cada ciclo y devuelve el movimiento que toca empezar ahora (o null). `lastEnd` es la posición donde acabó el anterior."
+      },
+      {
+        "nombre": "FxMoves",
+        "hace": "Reserva y devuelve ranuras de la cadena de efectos de los decks para los movimientos de AutoMix. Solo usa ranuras apagadas; si el usuario toca una que está usando, la suelta sin restaurar (manda el usuario)."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "claim(deck, want)",
+        "hace": "want: { name, type, p } → índice de la ranura reservada o null (sin ranura libre)"
+      },
+      {
+        "nombre": "owned(deck, slot)",
+        "hace": "¿Sigue siendo de AutoMix? Si el usuario la tocó, se olvida (sin restaurar)."
+      },
+      {
+        "nombre": "release(deck, slot, afterMs = 0)",
+        "hace": "Devuelve la ranura a como estaba, ya o tras `afterMs` (la cola del eco)."
+      },
+      {
+        "nombre": "sweep()",
+        "hace": "Quita las reservas que el usuario tomó."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/automix.js",
+      "renderer/mixplan.js",
+      "renderer/recipes.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/fxcues.js",
+    "lineas": 184,
+    "qa": {
+      "logica": "test-fx-ampliados.js",
+      "estatica": null,
+      "arranque": "fxcues-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/fxpad.js": {
+    "capa": "interfaz",
+    "dominio": "fx",
+    "responsabilidad": "Pad XY: X = cantidad (izquierda → derecha), Y = parámetro P (abajo → arriba). Ratón/táctil y teclado.",
+    "api": [
+      "PAD_STEP",
+      "PAD_STEP_BIG",
+      "makeXYPad"
+    ],
+    "contrato": [
+      {
+        "nombre": "PAD_STEP",
+        "hace": "Pad XY: X = cantidad (izquierda → derecha), Y = parámetro P (abajo → arriba). Ratón/táctil y teclado."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/fxpanel.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/fxpad.js",
+    "lineas": 64,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/fxpanel.js": {
+    "capa": "interfaz",
+    "dominio": "fx",
+    "responsabilidad": "Panel FX de un deck: tres ranuras (interruptor + tipo), cantidad y P de la ranura seleccionada y el pad XY.",
+    "api": [
+      "FX_LABEL",
+      "FX_GROUPS",
+      "mountFxPanel"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/fxchain.js",
+      "renderer/fxpad.js",
+      "renderer/fxpresets.js"
+    ],
+    "usadoPor": [
+      "renderer/deck.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/fxpanel.js",
+    "lineas": 166,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/fxpresets.js": {
+    "capa": "interfaz",
+    "dominio": "fx",
+    "responsabilidad": "Presets de ranura: de fábrica y propios (en localStorage). Un preset es { name, type, wet, p, d }; aplicarlo no enciende la ranura.",
+    "api": [
+      "STORE",
+      "MAX_USER",
+      "FACTORY",
+      "FxPresets"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "save(name, slot)",
+        "hace": "Guarda la ranura con ese nombre (si ya existe uno propio, lo sustituye). Devuelve { ok, error? }."
+      },
+      {
+        "nombre": "apply(chain, i, name)",
+        "hace": "Aplica el preset a la ranura `i` de la cadena (sin encenderla)."
+      }
+    ],
+    "depende": [
+      "renderer/fxchain.js"
+    ],
+    "usadoPor": [
+      "renderer/fxpanel.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.fxpresets"
+    ],
+    "debeVivir": "renderer/fxpresets.js",
+    "lineas": 74,
+    "qa": {
+      "logica": "test-fx-ampliados.js",
+      "estatica": null,
+      "arranque": "fx-ampliados-ui-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/genres.js": {
+    "capa": "interfaz",
+    "dominio": "genres",
+    "responsabilidad": "Géneros de las pistas en la interfaz: mapa id → etiquetas (viene del almacén de main), chips, filtro y editor.",
+    "api": [
+      "genres",
+      "openGenreEditor",
+      "closeGenreEditor"
+    ],
+    "contrato": [
+      {
+        "nombre": "openGenreEditor",
+        "hace": "Editor de etiquetas bajo una fila: Enter o coma añaden, Retroceso quita la última, Escape cierra."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "matches(id, selected)",
+        "hace": "Alguna etiqueta de la pista está entre las elegidas (sin selección, todas pasan)."
+      },
+      {
+        "nombre": "chips(id, max = 3)",
+        "hace": "Chips para una fila: hasta `max` y «+N»."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix.js",
+      "renderer/library.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/genres.js",
+    "lineas": 116,
+    "qa": {
+      "logica": null,
+      "estatica": "test-generos.js",
+      "arranque": "generos-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/index.html": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Documento HTML de la interfaz: estructura de las vistas, decks, mezclador, librería y diálogos.",
+    "api": [],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "shared/fx.js",
+      "shared/dsp-chain.js",
+      "shared/scratch.js",
+      "shared/deck-engine.js",
+      "renderer/app.js"
+    ],
+    "usadoPor": [],
+    "persiste": [],
+    "debeVivir": "renderer/index.html",
+    "lineas": 657,
+    "qa": {
+      "logica": null,
+      "estatica": "test-automix-claro.js",
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/knob.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Knob rotativo: arrastre vertical, rueda, doble clic = valor por defecto.",
+    "api": [
+      "makeKnob"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/deck.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/knob.js",
+    "lineas": 75,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/layout.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Perfiles de diseño según el tamaño de la ventana: compacto (portátiles pequeños), normal y amplio (2K/4K, proyectores).",
+    "api": [
+      "MODES",
+      "profileFor",
+      "scaleFor",
+      "resolve",
+      "applyLayout",
+      "watchLayout"
+    ],
+    "contrato": [
+      {
+        "nombre": "MODES",
+        "hace": "Perfiles de diseño según el tamaño de la ventana: compacto (portátiles pequeños), normal y amplio (2K/4K, proyectores)."
+      },
+      {
+        "nombre": "scaleFor",
+        "hace": "Escala de la interfaz en el perfil amplio: crece con la pantalla sin pasarse (1.15 – 1.6)."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/layout.js",
+    "lineas": 35,
+    "qa": {
+      "logica": "test-layouts.js",
+      "estatica": null,
+      "arranque": "layouts-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/library.js": {
+    "capa": "interfaz",
+    "dominio": "library",
+    "responsabilidad": "Librería: búsqueda, Me gusta y playlists de YouTube Music + pistas ya analizadas.",
+    "api": [
+      "Library"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "srcTags(r)",
+        "hace": "Filas locales con sus etiquetas de fuente (Mi equipo · Analizada · Importada…)."
+      },
+      {
+        "nombre": "bindFilters()",
+        "hace": "Filtros de BPM y tonalidad (los de género son los de la barra). Una pista sin análisis no pasa un filtro de BPM o tono."
+      },
+      {
+        "nombre": "passesAnalysisFilters(r)",
+        "hace": "¿Pasa la fila los filtros de BPM y tonalidad? (los de género los aplica `render`)."
+      },
+      {
+        "nombre": "onPreview(e)",
+        "hace": "Repinta solo la fila que empieza o termina; el avance mueve la barra sin tocar la tabla."
+      },
+      {
+        "nombre": "reference()",
+        "hace": "Deck de referencia para resaltar compatibles: el que suena al aire; si no, el primero con análisis."
+      },
+      {
+        "nombre": "renderEmpty(rows)",
+        "hace": "Estado vacío: qué pasa y qué hacer a continuación, según la fuente."
+      }
+    ],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/genres.js",
+      "renderer/mixpreview.js",
+      "renderer/playlists.js",
+      "renderer/preview.js",
+      "renderer/source.js",
+      "renderer/stems.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.search.scope"
+    ],
+    "debeVivir": "renderer/library.js",
+    "lineas": 758,
+    "qa": {
+      "logica": null,
+      "estatica": "test-export.js",
+      "arranque": "automix-claro-robust-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/midi.js": {
+    "capa": "interfaz",
+    "dominio": "sampler-midi",
+    "responsabilidad": "MIDI: aprendizaje (clic en control + mover el control físico) y despacho a los controles registrados.",
+    "api": [
+      "Midi"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/controls.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:ytdj:midi"
+    ],
+    "debeVivir": "renderer/midi.js",
+    "lineas": 88,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/mixeditor.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Editor de puntos de mezcla: ve y ajusta la entrada y hasta 6 salidas de una pista, y prueba la transición.",
+    "api": [
+      "MixEditor"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "view()",
+        "hace": "Lo que se muestra: la edición del usuario o, mientras no hay, los candidatos automáticos."
+      }
+    ],
+    "depende": [
+      "renderer/mixpreview.js",
+      "renderer/waveform.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/mixeditor.js",
+    "lineas": 290,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/mixplan.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Plan de mezcla (funciones puras): cuándo salir de la pista que suena, dónde entrar en la siguiente, cuánto dura la transición y qué pista conviene después. Los pesos están a la vista para ajustarlos escuchando.",
+    "api": [
+      "MAX_BPM_GAP",
+      "PITCH_LIMIT",
+      "HOME_MS",
+      "bpmGap",
+      "energyAt",
+      "scoreTransition",
+      "pickNext",
+      "edgeCost",
+      "orderChain",
+      "planNearest",
+      "entryCandidates",
+      "pickEntry",
+      "GENRE_BONUS",
+      "POP_WEIGHTS",
+      "popScore",
+      "fitsWith",
+      "rankCandidates",
+      "bestInsertion",
+      "EXIT_MODES",
+      "MIN_TRANSITION",
+      "MAX_TRANSITION",
+      "introOutroSeconds",
+      "planTransition",
+      "songKey",
+      "cost",
+      "fits"
+    ],
+    "contrato": [
+      {
+        "nombre": "bpmGap",
+        "hace": "Diferencia relativa de tempo necesaria para igualar `cand` a `cur`, mirando también doble y mitad."
+      },
+      {
+        "nombre": "energyAt",
+        "hace": "Energía (0..100) de la frase que contiene el instante t."
+      },
+      {
+        "nombre": "scoreTransition",
+        "hace": "Menor puntuación = mejor transición. `exitAt` es el instante de salida de `cur` (por defecto, su mejor candidato)."
+      },
+      {
+        "nombre": "pickNext",
+        "hace": "Ordena la cola. Lo que el usuario colocó a mano (`pinned`) es un ancla: se queda en su posición. El resto se reparte por los huecos libres: primero las listas, de mejor a peor transición, y al final lo que aún no está listo, en su orden. No muta la entrada."
+      },
+      {
+        "nombre": "orderChain",
+        "hace": "Ordena la cola como una cadena que parte de `cur` y minimiza el coste total de las transiciones. `pinned` (lo que el usuario colocó a mano) es ancla: no se mueve y la cadena se ordena alrededor. Las pistas sin análisis (`analysisOf` sin BPM) quedan al final de los huecos libres, en su orden. Exacto hasta 8 pistas libres; más allá, voraz + mejora local con presupuesto de tiempo. No muta la entrada. Devuelve { queue, cost, scores (coste de llegar a cada pista), moved }."
+      },
+      {
+        "nombre": "planNearest",
+        "hace": "«Mezclar ahora»: la salida más cercana por delante (no inmediata a mitad de un compás) y la entrada de la siguiente. Candidatos de salida: los puntos de la pista (editados por el usuario o automáticos) y los límites de frase de 8 beats de su rejilla; gana el de menor tiempo ≥ pos + minLead que no obligue a esperar más de maxWait. La duración va en compases enteros (mínimo 4 beats) y nunca pasa del final. Sin BPM en alguna de las dos: fundido corto ahora mismo. Pura: no muta nada."
+      },
+      {
+        "nombre": "entryCandidates",
+        "hace": "Candidatos de entrada de `next` para una transición de `seconds`. Todos van en límite de frase y desde el primer compás con música."
+      },
+      {
+        "nombre": "pickEntry",
+        "hace": "Elige dónde entra `next`. `cur` es el análisis de la que sale, `exitAt` su salida y `seconds` lo que dura la transición. Un punto editado por el usuario manda; sin análisis se entra por el inicio. Pura."
+      },
+      {
+        "nombre": "GENRE_BONUS",
+        "hace": "---------- candidatas: BPM, tonalidad, energía, estilo y popularidad ----------"
+      },
+      {
+        "nombre": "popScore",
+        "hace": "100 mil reproducciones → 0, 1000 millones → 1 (escala logarítmica)."
+      },
+      {
+        "nombre": "fitsWith",
+        "hace": "¿Encaja con `ref` (BPM dentro del 8% con mitad/doble y tonalidad compatible)? Sin análisis de alguna: se asume que sí."
+      },
+      {
+        "nombre": "rankCandidates",
+        "hace": "Ordena candidatas para continuar desde `ref` (análisis de la última pista de la cola o de la que suena). cands: [{ track: { videoId, artist, year, plays, fromRadio }, analysis? }] score = coste de transición − bonus de estilo − bonus de popularidad. Menor = mejor. Las que no encajan (salto de BPM > 8 % o tonalidad incompatible) van siempre DESPUÉS de las que encajan, sea cual sea su popularidad."
+      },
+      {
+        "nombre": "bestInsertion",
+        "hace": "Mejor hueco para insertar `track` en la cola: el de menor aumento del coste total de la cadena. Los primeros `lock` lugares (la pista ya precargada) y los huecos que partirían a una fijada no se tocan. No muta la entrada."
+      },
+      {
+        "nombre": "EXIT_MODES",
+        "hace": "Modos de salida de la pista que suena (como los modos de transición de un DJ automático): optimal: la mejor salida del análisis · intro-outro: al empezar el outro, con la duración del menor entre outro e intro outro-start: al empezar el outro, con la duración elegida · end: casi al final de la pista."
+      },
+      {
+        "nombre": "introOutroSeconds",
+        "hace": "Duración de la transición en «Outro y intro»: el menor entre lo que queda de outro y el intro de la entrante; si solo se conoce uno, ese; si ninguno, `fallback`. No pasa del outro de la propia entrante y se acota a [4, 48] s."
+      },
+      {
+        "nombre": "planTransition",
+        "hace": "Plan de la transición entre `cur` (suena, en `pos`) y `next`. cur/next: análisis ({ bpm, offset, mix, duration }). cfg: { len (s), exitMode, optimal (heredado), style }."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/fxcues.js"
+    ],
+    "usadoPor": [
+      "renderer/automix-add.js",
+      "renderer/automix-compat.js",
+      "renderer/automix.js",
+      "renderer/mixpreview.js",
+      "renderer/recipes.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/mixplan.js",
+    "lineas": 413,
+    "qa": {
+      "logica": "test-automix-add.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/mixpreview.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Pre-escucha de una transición: los segundos previos a la salida de A y la entrada de B, con el mismo cruce que AutoMix. Va por la salida de auriculares (cue) si está configurada; si no, por la salida por defecto. `silent` es para las pruebas.",
+    "api": [
+      "fileUrl",
+      "previewPlan",
+      "startPreview"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/mixplan.js"
+    ],
+    "usadoPor": [
+      "renderer/automix-timeline.js",
+      "renderer/automix.js",
+      "renderer/library.js",
+      "renderer/mixeditor.js",
+      "renderer/preview.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/mixpreview.js",
+    "lineas": 71,
+    "qa": {
+      "logica": "test-entrada.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/playlists.js": {
+    "capa": "interfaz",
+    "dominio": "library",
+    "responsabilidad": "Playlists locales: sección «Mis listas» en las fuentes, menú «Añadir a playlist», selección múltiple y barras de acciones. La librería monta una instancia (`library.pls`); aquí vive todo lo que antes no existía: crear, poner, sacar, ordenar y listas inteligentes.",
+    "api": [
+      "PlaylistsUI"
+    ],
+    "contrato": [],
+    "metodos": [
+      {
+        "nombre": "apply(data)",
+        "hace": "Pinta la lista (`data` de `pl.get`) y ajusta las barras."
+      },
+      {
+        "nombre": "afterRender()",
+        "hace": "Tras pintar la tabla: lo seleccionado que ya no se ve deja de estar seleccionado."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/library.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/playlists.js",
+    "lineas": 370,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "playlists-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/preview.js": {
+    "capa": "interfaz",
+    "dominio": "library",
+    "responsabilidad": "Preescucha de la Librería: una sola pista a la vez, por los auriculares, sin pasar por los decks ni por el master. Usa el archivo local de la pista (nunca descarga nada); el modelo (`startAt`) es puro y se prueba sin audio.",
+    "api": [
+      "startAt",
+      "preview"
+    ],
+    "contrato": [
+      {
+        "nombre": "startAt",
+        "hace": "Segundo donde empieza: punto de entrada de mezcla (o inicio de la rejilla) si cae dentro de la pista; si no, el 25 %."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "renderer/mixpreview.js"
+    ],
+    "usadoPor": [
+      "renderer/library.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/preview.js",
+    "lineas": 112,
+    "qa": {
+      "logica": "test-preescucha.js",
+      "estatica": null,
+      "arranque": "automix-claro-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/recipes.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Recetas de transición de AutoMix: cada estilo es una línea de tiempo de gestos sobre la rejilla de la pista que sale. Funciones puras (sin DOM ni audio): `chooseStyle` elige la receta según el análisis y `planRecipe` la convierte en gestos.",
+    "api": [
+      "STYLES",
+      "STYLE_LABEL",
+      "chooseStyle",
+      "planRecipe",
+      "gestureValue",
+      "GESTURE_LABEL"
+    ],
+    "contrato": [
+      {
+        "nombre": "chooseStyle",
+        "hace": "→ { style, why }. Con un estilo fijo se respeta; con 'auto' decide el análisis (BPM, tonalidad, estructura)."
+      },
+      {
+        "nombre": "planRecipe",
+        "hace": "Receta de `style` sobre la rejilla de la saliente. Devuelve { style, len, gestures }; `len` ≤ plan.seconds. Gesto: { id, deck: 'from'|'to'|'x', param: 'eqLow'|'filter'|'x'|'fx', from, to, at, end, curve: 'lin'|'ease'|'step', fx? } `at`/`end` en segundos de mezcla (0 = salida de la saliente), siempre múltiplos del pulso. x: 0 = deck saliente, 1 = entrante. level: 'off' | 'subtle' | 'full' (REQ-7: 'off' quita los gestos de efecto)."
+      },
+      {
+        "nombre": "gestureValue",
+        "hace": "Valor de un gesto en el instante t de la mezcla: null antes de empezar; `to` al terminar. Sirve al motor y a las pruebas."
+      },
+      {
+        "nombre": "GESTURE_LABEL",
+        "hace": "Etiqueta corta de un gesto para la vista."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/fxcues.js",
+      "renderer/mixplan.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix-status.js",
+      "renderer/automix.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/recipes.js",
+    "lineas": 132,
+    "qa": {
+      "logica": "test-recipes.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/sampler.js": {
+    "capa": "interfaz",
+    "dominio": "sampler-midi",
+    "responsabilidad": "Sampler de 8 pads: sonidos sintetizados de fábrica (sin archivos) o tus propios audios. Sale por el dispositivo master.",
+    "api": [
+      "Sampler"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [
+      "renderer/controls.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj:sampler"
+    ],
+    "debeVivir": "renderer/sampler.js",
+    "lineas": 204,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "visual-check-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/settings-ui.js": {
+    "capa": "interfaz",
+    "dominio": "settings",
+    "responsabilidad": "Búsqueda de Ajustes: funciones puras (sin DOM) para filtrar opciones por texto.",
+    "api": [
+      "norm",
+      "settingsFilter",
+      "settingPatch",
+      "sectionDefaults"
+    ],
+    "contrato": [
+      {
+        "nombre": "norm",
+        "hace": "Búsqueda de Ajustes: funciones puras (sin DOM) para filtrar opciones por texto."
+      },
+      {
+        "nombre": "settingsFilter",
+        "hace": "rows: [{ pane, text }] → { panes: Set de secciones con resultados, hits: índices de las filas que coinciden } Todas las palabras de la consulta deben aparecer (en cualquier orden) en el texto de la fila."
+      },
+      {
+        "nombre": "settingPatch",
+        "hace": "Parche de ajustes que corresponde a un control del formulario (los tres de la salida de audio van juntos)."
+      },
+      {
+        "nombre": "sectionDefaults",
+        "hace": "Parche con los valores por defecto de las opciones de una sección."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/settings-ui.js",
+    "lineas": 51,
+    "qa": {
+      "logica": "test-stems.js",
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/source.js": {
+    "capa": "interfaz",
+    "dominio": "video",
+    "responsabilidad": "Fuente de una pista: archivo (local o copia guardada) o streaming. Función pura: la usan el deck y la librería. `forced` ('file' | 'stream' | null) es la elección manual del usuario para el deck actual.",
+    "api": [
+      "ORIGINS",
+      "resolveSource",
+      "originChip"
+    ],
+    "contrato": [
+      {
+        "nombre": "ORIGINS",
+        "hace": "Fuente de una pista: archivo (local o copia guardada) o streaming. Función pura: la usan el deck y la librería. `forced` ('file' | 'stream' | null) es la elección manual del usuario para el deck actual."
+      },
+      {
+        "nombre": "originChip",
+        "hace": "Texto corto del origen en la fila de la librería."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/deck.js",
+      "renderer/library.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/source.js",
+    "lineas": 24,
+    "qa": {
+      "logica": "test-sinvideo.js",
+      "estatica": null,
+      "arranque": "automix-view-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/splits.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Divisores arrastrables entre ondas, decks y librería. Estado puro: la interfaz solo aplica los valores al <body>. Hay dos grados de libertad por vista: la altura de las ondas o la de la librería; manda el último que se movió.",
+    "api": [
+      "STORE",
+      "SPLITVIEWS",
+      "STEP",
+      "STEP_BIG",
+      "clampSplit",
+      "SplitState"
+    ],
+    "contrato": [
+      {
+        "nombre": "STORE",
+        "hace": "Divisores arrastrables entre ondas, decks y librería. Estado puro: la interfaz solo aplica los valores al <body>. Hay dos grados de libertad por vista: la altura de las ondas o la de la librería; manda el último que se movió."
+      },
+      {
+        "nombre": "clampSplit",
+        "hace": "Recorta `px` a los límites de la zona para una ventana de `inner` px de alto. `fixed` es lo que ocupan la barra superior y la consola: ondas y librería se reparten el resto, y cada una deja a la otra su mínimo."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "active(view)",
+        "hace": "Lo que se aplica: { which, px } de la zona que manda, o null si la vista usa su tamaño por defecto."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.splits"
+    ],
+    "debeVivir": "renderer/splits.js",
+    "lineas": 63,
+    "qa": {
+      "logica": "test-vistas.js",
+      "estatica": null,
+      "arranque": "ajustes-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/stems.js": {
+    "capa": "interfaz",
+    "dominio": "stems",
+    "responsabilidad": "Stems manuales en la interfaz: estado compartido de las separaciones y textos. Sin DOM: lo usan el deck y la Librería. Orden de los botones: voz, batería, bajo, resto. `ch` es el stem en el archivo de 8 canales (batería 0, bajo 1, resto 2, voz 3).",
+    "api": [
+      "STEM_UI",
+      "fmtEta",
+      "fmtSize",
+      "jobText",
+      "trackView",
+      "errorText",
+      "StemsStore"
+    ],
+    "contrato": [
+      {
+        "nombre": "STEM_UI",
+        "hace": "Stems manuales en la interfaz: estado compartido de las separaciones y textos. Sin DOM: lo usan el deck y la Librería. Orden de los botones: voz, batería, bajo, resto. `ch` es el stem en el archivo de 8 canales (batería 0, bajo 1, resto 2, voz 3)."
+      },
+      {
+        "nombre": "jobText",
+        "hace": "Texto de un trabajo en curso: «Preparando… 37 %, ≈ 1:20»."
+      },
+      {
+        "nombre": "trackView",
+        "hace": "Qué mostrar para una pista: 'off' (no disponible), 'none', 'work', 'ready', 'active', 'error'."
+      },
+      {
+        "nombre": "StemsStore",
+        "hace": "Estado compartido: lista de stems hechos, trabajos y errores por pista."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "spaceLine(quotaGB = 5)",
+        "hace": "«Espacio: 1,2 GB de 5 GB» para Ajustes."
+      },
+      {
+        "nombre": "deviceLine()",
+        "hace": "«Dispositivo: WebGPU · 14× tiempo real» para Ajustes."
+      },
+      {
+        "nombre": "autoOn(mode = 'auto')",
+        "hace": "¿Preparar solos los stems? on/off lo decide el ajuste; auto, solo si ya hay una GPU comprobada."
+      },
+      {
+        "nombre": "auto(id, priority, mode)",
+        "hace": "Petición automática (sin avisos si falla: la pista puede no tener archivo local todavía). priority 0 = deck, 1 = siguiente."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/library.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/stems.js",
+    "lineas": 167,
+    "qa": {
+      "logica": "test-stems.js",
+      "estatica": null,
+      "arranque": "playlists-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/update-ui.js": {
+    "capa": "interfaz",
+    "dominio": "updater",
+    "responsabilidad": "Pinta el aviso de actualización según el estado que manda el proceso principal.",
+    "api": [
+      "describe",
+      "renderUpdate"
+    ],
+    "contrato": [],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/update-ui.js",
+    "lineas": 35,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "updater-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/views.js": {
+    "capa": "interfaz",
+    "dominio": "ui",
+    "responsabilidad": "Vistas de trabajo (como los modos de Mixxx o de djay): mezcla, librería, automix (inmersiva) y ondas. Máquina de estados pura: la interfaz solo aplica `view` y `waves` al <body>.",
+    "api": [
+      "VIEWS",
+      "WAVES",
+      "STORE",
+      "ViewState"
+    ],
+    "contrato": [
+      {
+        "nombre": "VIEWS",
+        "hace": "Vistas de trabajo (como los modos de Mixxx o de djay): mezcla, librería, automix (inmersiva) y ondas. Máquina de estados pura: la interfaz solo aplica `view` y `waves` al <body>."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "set(view)",
+        "hace": "Elección del usuario (selector, atajo o ajuste)."
+      },
+      {
+        "nombre": "enterAutomixTab()",
+        "hace": "Abrir la fuente AutoMix de la librería pasa a la vista Librería; al salir vuelve a la anterior si nadie la cambió."
+      },
+      {
+        "nombre": "effectiveWaves()",
+        "hace": "Las ondas «en el deck» solo valen en Mezcla y Librería; Ondas y Automix usan su propia disposición."
+      },
+      {
+        "nombre": "compact()",
+        "hace": "Compacta los decks (plato pequeño, pads en una fila, mezclador reducido)."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [
+      "localStorage:alyssdj.view"
+    ],
+    "debeVivir": "renderer/views.js",
+    "lineas": 60,
+    "qa": {
+      "logica": "test-sinvideo.js",
+      "estatica": null,
+      "arranque": "ajustes-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/viz.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Visualizador de la vista Automix: anillos que laten con el beat. La parte pura (qué anillos y con qué intensidad) no toca el DOM; `Visualizer` los dibuja en un lienzo detrás de la portada.",
+    "api": [
+      "beatPhase",
+      "beatInBar",
+      "deckRings",
+      "vizScene",
+      "pulseOf",
+      "Visualizer",
+      "level"
+    ],
+    "contrato": [
+      {
+        "nombre": "beatPhase",
+        "hace": "Fase (0–1) dentro del beat y beat (0–3) dentro del compás de 4."
+      },
+      {
+        "nombre": "deckRings",
+        "hace": "r en 0–1 (0 = borde de la portada, 1 = radio máximo), a = opacidad, w = factor de grosor."
+      },
+      {
+        "nombre": "vizScene",
+        "hace": "decks: [{ id, level, gain, bpm, pos, offset, playing }] → un resultado por deck, con su color."
+      },
+      {
+        "nombre": "Visualizer",
+        "hace": "Dibuja los anillos en el lienzo detrás de la portada. Solo corre (a ≤ 30 fps) mientras la vista Automix, la ventana y el visualizador están activos; con movimiento reducido dibuja un cuadro estático cuando algo cambia."
+      }
+    ],
+    "metodos": [
+      {
+        "nombre": "refresh()",
+        "hace": "Pone el bucle en el estado que toca: parado, un cuadro estático o animando."
+      }
+    ],
+    "depende": [],
+    "usadoPor": [
+      "renderer/app.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/viz.js",
+    "lineas": 175,
+    "qa": {
+      "logica": "test-visual.js",
+      "estatica": null,
+      "arranque": "visual-check-selftest.js",
+      "visual": null
+    }
+  },
+  "renderer/waveform.js": {
+    "capa": "interfaz",
+    "dominio": "audio",
+    "responsabilidad": "Formas de onda: 3 bandas desde el análisis (yt-dlp) o mono \"en vivo\" construida mientras suena el stream.",
+    "api": [
+      "HOTCUE_COLORS",
+      "analysisWave",
+      "liveWave",
+      "recordLive",
+      "fitCanvas",
+      "drawScroll",
+      "drawOverview"
+    ],
+    "contrato": [
+      {
+        "nombre": "drawScroll",
+        "hace": "Vista desplazable centrada en la posición actual, con beatgrid, cues y loop."
+      },
+      {
+        "nombre": "drawOverview",
+        "hace": "Vista general de la pista completa. La parte estática se cachea en un canvas fuera de pantalla."
+      }
+    ],
+    "metodos": [],
+    "depende": [],
+    "usadoPor": [
+      "renderer/deck.js",
+      "renderer/mixeditor.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/waveform.js",
+    "lineas": 199,
+    "qa": {
+      "logica": null,
+      "estatica": null,
+      "arranque": "packaged-selftest.js",
+      "visual": null
+    }
+  }
+}

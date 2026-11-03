@@ -15,6 +15,7 @@
 | [6. Sampler, grabación y MIDI](06-sampler-grabacion-midi.md) | Pads, grabar la mezcla, controladoras y atajos |
 | [7. Problemas frecuentes](07-problemas-frecuentes.md) | Qué hacer cuando algo no funciona |
 | [8. Modo local y buscador](08-modo-local.md) | Buscar solo en tu equipo, filtrar por BPM y tonalidad, trabajar sin internet y AutoMix local |
+| [Arquitectura](arquitectura/README.md) | Cómo está hecha la app: módulos, vistas y componentes, canales IPC, persistencia, pruebas y deuda |
 | [Comparativa](COMPARATIVA.md) | Qué tienen Rekordbox, djay y Mixxx, qué añadimos y qué falta |
 
 Las capturas se generan con audio de demostración (`docs/demo-audio`) y todo en silencio. Para regenerarlas:
