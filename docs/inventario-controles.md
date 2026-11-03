@@ -70,3 +70,11 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 | `#sel-bar` | Barra de selección | `#sel-add`, `#sel-remove`, `#sel-queue`, `#sel-analyze`, `#sel-clear`; visible con 2 o más pistas |
 | `#pl-menu` | Añadir a playlist | Menú de la fila y de la barra de selección |
 | `#btn-crate-pl` | Guardar como lista local | Solo dentro de una playlist importada |
+
+## Entrada inteligente de AutoMix (cambio `automix-entrada-inteligente`)
+
+| Control | Nombre | Notas |
+|---|---|---|
+| `#amv-entry` | Entrada | Tarjeta «SIGUE»: `#amv-entry-time` (tiempo y compás), `#amv-entry-why` (motivo) |
+| `#amv-entry-strip` | Tira de energía | Línea arrastrable; ← → mueven un compás; guarda el punto de entrada editado |
+| `#amv-entry-auto` | Auto | Solo con entrada editada; quita solo la entrada |

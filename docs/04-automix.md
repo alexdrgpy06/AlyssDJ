@@ -65,10 +65,26 @@ Al analizar una pista (o al cargarla desde tu disco), AlyssDJ también calcula s
 Con el selector **Salir** en **Mejor punto** (el valor por defecto):
 
 - La pista que suena **sale en su mejor punto**: el comienzo del outro, o una rotura, siempre en un límite de frase. Si una pista tiene un outro largo, no esperas a que acabe.
-- La siguiente **entra en su punto de entrada** (el primer beat con música), no en un segundo cualquiera.
+- La siguiente **entra en un punto elegido** (ver «Dónde entra la que sigue»), no en un segundo cualquiera.
 - La mezcla dura **compases enteros** (múltiplos de 4 beats) cercanos a la **Duración** que elegiste, y se recorta si queda poco tramo.
 - En la vista, la tarjeta **SUENA** muestra cuándo toca (`mezcla en 1:12 (outro, 1:40)`), y en la vista general de cada deck se marcan la **entrada** (verde), la **región de outro** (ámbar) y las **salidas candidatas**.
 - Sin estructura (pista sin analizar o con un análisis antiguo) vuelve a mezclar al final; los análisis antiguos se **recalculan solos con el archivo que ya está en tu disco**, sin descargar nada. Con **Final de la pista** mezcla siempre al final.
+
+### Dónde entra la que sigue
+
+AutoMix ya no entra siempre por el primer compás con música: evalúa varios **puntos de entrada**, todos en límite de frase, y elige el que mejor encaja con la salida de la pista que suena.
+
+| Punto | Cuándo gana |
+|---|---|
+| **Inicio de la intro** | La intro es corta: la energía llega mientras dura la transición |
+| **Salta la intro larga** | La intro es larga: entra unas frases antes de la primera frase fuerte, para que la energía llegue justo al terminar la transición |
+| **Primera frase con energía** | Cuando sale con mucha energía y quiere entrar ya en el cuerpo |
+| **Primer drop** | Cuando la salida es fuerte y la pista tiene un drop claro |
+| **El tuyo** | Si marcaste la entrada, **manda siempre**, tal cual |
+
+Se puntúa por la energía de salida frente a la de entrada, por que no se quede en una intro vacía al acabar la transición y por que la transición quepa antes del final de la pista; nunca entra en silencio ni a mitad de una frase. «Mezclar ahora» y «Siguiente» usan el mismo criterio con una duración corta. Si la pista que sigue aún no está analizada, entra por el inicio y la tarjeta lo avisa («sin análisis: entra por el inicio de la pista»).
+
+En la tarjeta **SIGUE** ves la **Entrada** (tiempo y compás), el motivo en una frase y una tira con la energía por frase de la pista con una línea en el punto elegido. **Arrastra la línea** (o usa ← → con el foco en la tira: un compás cada vez) para elegir otro compás: se guarda como el punto de entrada editado de esa pista y la tarjeta pasa a decir «marcada por ti». **Auto** quita solo esa entrada y vuelve al cálculo automático (las salidas que editaste se conservan).
 
 ### Elegir cuándo sale la pista que suena
 

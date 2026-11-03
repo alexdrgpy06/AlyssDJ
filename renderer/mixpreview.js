@@ -1,5 +1,7 @@
 // Pre-escucha de una transición: los segundos previos a la salida de A y la entrada de B, con el mismo cruce que AutoMix.
 // Va por la salida de auriculares (cue) si está configurada; si no, por la salida por defecto. `silent` es para las pruebas.
+import { pickEntry } from './mixplan.js';
+
 export function fileUrl(track, analysis) {
   const id = track.local ? track.videoId : analysis?.saved?.localId;
   return id ? `/localfile/${encodeURIComponent(id)}` : null;
@@ -8,7 +10,7 @@ export function fileUrl(track, analysis) {
 export function previewPlan({ a, b, exitAt, len = 16 }) {
   const ratio = a.bpm && b.bpm ? a.bpm / b.bpm : 1;
   const rate = Math.abs(ratio - 1) <= 0.08 ? ratio : 1;
-  return { lead: Math.min(12, exitAt), len, rate, enterAt: Math.max(0, b.mixEdit?.in ?? b.mix?.mixIn ?? b.offset ?? 0) };
+  return { lead: Math.min(12, exitAt), len, rate, enterAt: pickEntry(a, b, { exitAt, seconds: len }).t };
 }
 
 export async function startPreview({ aUrl, bUrl, a, b, exitAt, len = 16, cueLabel = '', silent = false, onEnd = () => {} }) {

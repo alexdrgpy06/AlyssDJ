@@ -1,6 +1,7 @@
 // Plan de mezcla (funciones puras): cuándo salir de la pista que suena, dónde entrar en la siguiente, cuánto dura
 // la transición y qué pista conviene después. Los pesos están a la vista para ajustarlos escuchando.
 import { keysCompatible } from './camelot.js';
+import { fxCues } from './fxcues.js';
 
 export const MAX_BPM_GAP = 0.08; // por encima, el salto de tempo se considera brusco
 export const PITCH_LIMIT = 0.08; // máximo ajuste de pitch al igualar tempos
@@ -25,7 +26,7 @@ const keyPenalty = (a, b) => (!a || !b ? W.keyUnknown : a === b || keysCompatibl
 export function energyAt(ana, t) {
   const m = ana?.mix;
   if (!m?.phrases?.length || !ana.bpm) return null;
-  const k = Math.floor((t - (ana.offset || 0)) / ((m.phraseBeats * 60) / ana.bpm));
+  const k = Math.floor((t - (ana.offset || 0) + 0.01) / ((m.phraseBeats * 60) / ana.bpm)); // 10 ms de margen: los tiempos del análisis van redondeados a 1 ms
   return m.phrases[Math.max(0, Math.min(m.phrases.length - 1, k))];
 }
 
@@ -176,6 +177,13 @@ export function orderChain({ cur, queue, analysisOf, pinned = new Set(), budgetM
   return { queue: out, cost: Math.round(bestCost * 100) / 100, scores, moved: out.some((t, k) => t.videoId !== queue[k].videoId) };
 }
 
+// Pone en un plan la entrada elegida por `pickEntry` (la sustituye al punto «base» con que se calculó).
+function withEntry(plan, cur, next) {
+  const entry = pickEntry(cur, next, { exitAt: plan.exitAt, seconds: plan.seconds });
+  const warnings = entry.kind === 'start' && next?.mix === undefined && !plan.warnings.some((w) => w.startsWith('sin análisis')) ? [...plan.warnings, 'sin análisis: entra por el inicio'] : plan.warnings;
+  return { ...plan, enterAt: entry.t, entry, warnings };
+}
+
 // «Mezclar ahora»: la salida más cercana por delante (no inmediata a mitad de un compás) y la entrada de la siguiente.
 // Candidatos de salida: los puntos de la pista (editados por el usuario o automáticos) y los límites de frase de 8 beats de su
 // rejilla; gana el de menor tiempo ≥ pos + minLead que no obligue a esperar más de maxWait. La duración va en compases enteros
@@ -183,7 +191,7 @@ export function orderChain({ cur, queue, analysisOf, pinned = new Set(), budgetM
 export function planNearest(cur, next, { pos = 0, len = 16, minLead = 1, maxWait = 12 } = {}) {
   const enterAt = Math.max(0, next?.mixEdit?.in ?? next?.mix?.mixIn ?? next?.offset ?? 0);
   const dur = cur?.duration || 0;
-  const now = (why) => ({ exitAt: pos, enterAt, beats: 0, seconds: Math.min(len, 4), style: null, tempo: false, warnings: [why], kind: 'now', waitS: 0 });
+  const now = (why) => withEntry({ exitAt: pos, enterAt, beats: 0, seconds: Math.min(len, 4), style: null, tempo: false, warnings: [why], kind: 'now', waitS: 0 }, cur, next);
   if (!cur?.bpm || !next?.bpm) return now('sin BPM: fundido corto');
   const beat = 60 / cur.bpm;
   const off = (cur.offset || 0) + (cur.gridShift || 0);
@@ -209,7 +217,61 @@ export function planNearest(cur, next, { pos = 0, len = 16, minLead = 1, maxWait
   const c = cands[0];
   const beats = Math.min(wantBeats, Math.floor((dur - c.t - 1) / beat / 4) * 4);
   const warnings = jump ? [`salto de BPM ${gap.ratio > 1 ? '−' : '+'}${Math.round(gap.gap * 100)} %`] : [];
-  return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style: jump ? 'filter' : null, tempo: !!gap && !jump, warnings, kind: c.kind, waitS: c.t - pos };
+  return withEntry({ exitAt: c.t, enterAt, beats, seconds: beats * beat, style: jump ? 'filter' : null, tempo: !!gap && !jump, warnings, kind: c.kind, waitS: c.t - pos }, cur, next);
+}
+
+// ---------- punto de entrada de la pista que sigue ----------
+const ENTRY_DEAD = 0.1; // peso por cada punto de energía que falta cuando acaba la transición (entrar en una intro vacía)
+const ENTRY_BIAS = { intro: 0, build: 0.2, strong: 0.4, drop: 0.6 }; // desempate: lo aventurado necesita ganar con motivo
+const round3 = (v) => Math.round(v * 1000) / 1000;
+
+// Candidatos de entrada de `next` para una transición de `seconds`. Todos van en límite de frase y desde el primer compás con música.
+export function entryCandidates(next, seconds = 16) {
+  const m = next?.mix;
+  if (!m || !next?.bpm || !m.phrases?.length) return [];
+  const beat = 60 / next.bpm;
+  const phraseSec = (m.phraseBeats || 16) * beat;
+  const off = next.offset || 0;
+  const mixIn = Math.max(0, m.mixIn ?? off);
+  const bars = Math.max(1, Math.round(seconds / beat / 4));
+  const out = [{ t: mixIn, kind: 'intro', why: `entra por el inicio de la intro, ${bars} compases de transición` }];
+  const strong = m.introEnd;
+  if (strong != null && strong > mixIn + 1) {
+    out.push({ t: strong, kind: 'strong', why: 'entra con la primera frase con energía' });
+    // intro larga: la transición debe terminar justo cuando llega la frase fuerte
+    const k = Math.floor((strong - seconds - off) / phraseSec + 1e-6);
+    const tb = off + k * phraseSec;
+    if (tb > mixIn + 1 && tb < strong - 1) out.push({ t: round3(tb), kind: 'build', why: `salta la intro larga: la energía llega al terminar la transición (${bars} compases)` });
+  }
+  const drop = fxCues(next).find((c) => c.kind === 'drop' && c.t >= mixIn + 1);
+  if (drop) out.push({ t: drop.t, kind: 'drop', why: 'entra en el primer drop' });
+  return out;
+}
+
+// Elige dónde entra `next`. `cur` es el análisis de la que sale, `exitAt` su salida y `seconds` lo que dura la transición.
+// Un punto editado por el usuario manda; sin análisis se entra por el inicio. Pura.
+export function pickEntry(cur, next, { exitAt, seconds = 16 } = {}) {
+  const off = next?.offset || 0;
+  const beat = next?.bpm ? 60 / next.bpm : null;
+  const mk = (t, kind, why, extra = {}) => ({ t: Math.max(0, t), kind, why, bar: beat ? Math.round((t - off) / (4 * beat)) + 1 : null, cost: 0, cands: [], ...extra });
+  const edit = next?.mixEdit?.in;
+  if (Number.isFinite(edit)) return mk(edit, 'edit', 'punto de entrada que marcaste');
+  const cands = entryCandidates(next, seconds);
+  if (!cands.length) return mk(next?.mix?.mixIn ?? next?.offset ?? 0, 'start', 'sin análisis: entra por el inicio de la pista');
+  const dur = next.duration || Infinity;
+  const eo = cur ? energyAt(cur, exitAt ?? cur?.mix?.mixOut?.[0]?.t ?? 0) : null;
+  const body = next.mix.energy ?? 60;
+  const scored = cands.map((c) => {
+    const ei = energyAt(next, c.t);
+    const tail = energyAt(next, c.t + seconds);
+    let cost = ENTRY_BIAS[c.kind] || 0;
+    if (eo != null && ei != null) cost += W.energy * Math.abs(eo - ei);
+    if (tail != null) cost += ENTRY_DEAD * Math.max(0, 0.6 * body - tail);
+    return { ...c, cost: round3(cost), fits: c.t + seconds + 2 <= dur };
+  });
+  const pool = scored.filter((c) => c.fits);
+  const best = (pool.length ? pool : scored.slice(0, 1)).reduce((a, b) => (b.cost < a.cost ? b : a));
+  return mk(best.t, best.kind, best.why, { cost: best.cost, cands: scored.map(({ t, kind, cost }) => ({ t, kind, cost })) });
 }
 
 // ---------- candidatas: BPM, tonalidad, energía, estilo y popularidad ----------
@@ -318,7 +380,7 @@ export function planTransition(cur, next, { len: chosenLen = 16, exitMode, optim
 
   const endPlan = () => {
     const sec = Math.min(seconds, Math.max(2, dur - pos - 1));
-    return { exitAt: Math.max(pos, dur - sec - 1.2), enterAt, beats: Math.round(sec / beat), seconds: sec, style, tempo, warnings, kind: 'final', mode };
+    return withEntry({ exitAt: Math.max(pos, dur - sec - 1.2), enterAt, beats: Math.round(sec / beat), seconds: sec, style, tempo, warnings, kind: 'final', mode }, cur, next);
   };
   // Con puntos de salida editados se usan solo esos, en el orden de preferencia del usuario (la primera que aún esté por delante).
   const edited = cur.mixEdit?.outs?.length ? cur.mixEdit.outs.map((o) => ({ t: o.t, kind: 'edit' })) : null;
@@ -333,7 +395,7 @@ export function planTransition(cur, next, { len: chosenLen = 16, exitMode, optim
     const avail = dur - c.t;
     const beats = Math.min(wantBeats, Math.floor(avail / beat / 4) * 4);
     if (beats < MIN_BEATS) continue;
-    return { exitAt: c.t, enterAt, beats, seconds: beats * beat, style, tempo, warnings, kind: c.kind, mode };
+    return withEntry({ exitAt: c.t, enterAt, beats, seconds: beats * beat, style, tempo, warnings, kind: c.kind, mode }, cur, next);
   }
   if ((mode === 'outro-start' || mode === 'intro-outro') && !edited && !warnings.some((w) => w.startsWith('sin outro'))) warnings.push('sin outro marcado: sale al final');
   return endPlan();

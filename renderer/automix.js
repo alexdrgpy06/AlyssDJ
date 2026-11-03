@@ -4,7 +4,7 @@ import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
 import { genres } from './genres.js';
 import { chooseStyle, planRecipe, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
-import { EXIT_MODES, planTransition, planNearest, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
+import { EXIT_MODES, planTransition, planNearest, pickEntry, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
 const side = (id) => (id === 'A' ? -1 : 1);
@@ -727,6 +727,17 @@ export class AutoMix {
 
   // Plan de la transición con los análisis de las dos pistas (los del deck si ya están cargados).
   // Plan de «Mezclar ahora»: la salida y la entrada más cercanas (frase de 8 beats, punto de la pista o editado).
+  // Entrada elegida para la pista que sigue (para la tarjeta «SIGUE»): el mismo `pickEntry` que usa el plan.
+  entryOf(curAna) {
+    const head = this.queue[0];
+    if (!head) return null;
+    const a = this.ana.get(head.videoId);
+    const e = pickEntry(curAna, a || {}, { exitAt: this.plan?.exitAt, seconds: this.plan?.seconds ?? this.maxLen() });
+    const m = a?.mix;
+    const strip = a?.bpm && m?.phrases?.length ? { phrases: m.phrases, offset: a.offset || 0, beat: 60 / a.bpm, phraseSec: ((m.phraseBeats || 16) * 60) / a.bpm } : null;
+    return { t: e.t, kind: e.kind, why: e.why, bar: e.bar, user: e.kind === 'edit', id: head.videoId, duration: a?.duration || head.duration || 0, strip, outs: a?.mixEdit?.outs || [], free: !!a?.mixEdit?.free };
+  }
+
   makeNearestPlan(cur, next, head) {
     const curAna = { ...(cur.analysis || this.ana.get(cur.track?.videoId) || {}) };
     curAna.duration = curAna.duration || cur.st.dur || cur.track?.duration || 0;
@@ -945,6 +956,7 @@ export class AutoMix {
       };
     });
     return {
+      entry: this.entryOf(curAna),
       on: this.on,
       cur: this.cur?.track || null,
       curDeck: this.cur?.id || null,

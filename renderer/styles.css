@@ -947,3 +947,13 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .pl-menu button { display: flex; gap: var(--s-2); align-items: center; }
 .pl-sources button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pl-sources button { min-width: 0; }
+
+/* tarjeta SIGUE: punto de entrada */
+.am-entry { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 0; }
+.am-entry[hidden] { display: none; }
+.am-entry-row { display: flex; align-items: baseline; gap: var(--s-2); min-width: 0; }
+.am-entry-row .am-sub { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.am-entry-row .btn { margin-left: auto; flex: none; }
+.am-strip { width: 100%; height: 28px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); cursor: ew-resize; touch-action: none; }
+.am-strip[hidden] { display: none; }
+.am-strip:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }

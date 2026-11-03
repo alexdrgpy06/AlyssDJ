@@ -10,6 +10,7 @@ import { watchLayout } from './layout.js';
 import { MixEditor } from './mixeditor.js';
 import { renderUpdate } from './update-ui.js';
 import { AddPanel } from './automix-add.js';
+import { EntryStrip } from './automix-entry.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
@@ -737,6 +738,7 @@ class App {
       : 'Carga una pista y pulsa Iniciar, o usa “Radio” en la librería';
     $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
+    (this.entryStrip ||= new EntryStrip()).render(st.entry, getComputedStyle(document.documentElement).getPropertyValue(st.curDeck === 'A' ? '--b' : '--a').trim());
     $('#amv-status').textContent = st.trans
       ? `Mezclando ${st.trans.from} → ${st.trans.to} · ${STYLE_LABEL[st.trans.style] || st.trans.style}${st.trans.why ? ` (${st.trans.why})` : ''}${st.trans.tempo ? ' · tempo igualado' : ''}${st.fx.level !== 'off' ? ` · efectos ${{ subtle: 'sutiles', full: 'marcados' }[st.fx.level]}` : ''}${st.trans.warnings?.length ? ` · ${st.trans.warnings.join(', ')}` : ''}`
       : st.on ? (st.pendingMix ? (st.pendingMix.ready ? `Mezclando en ${st.pendingMix.waitS.toFixed(1)} s · salida en ${{ phrase: 'frase', bar: 'compás', edit: 'tu punto', now: 'este instante', outro: 'el final', break: 'una rotura', auto: 'un punto de la pista' }[st.pendingMix.kind] || 'un punto de la pista'}${Number.isFinite(st.pendingMix.seconds) ? ` · dura ${Math.round(st.pendingMix.seconds)} s` : ''}` : 'Mezclará en cuanto la siguiente esté lista') : `AutoMix activo${planNote(st)}`) : 'Detenido';

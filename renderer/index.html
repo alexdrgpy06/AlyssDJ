@@ -376,7 +376,12 @@
           <div class="am-recipe" id="amv-recipe" role="img" aria-label="Gestos de la mezcla" hidden></div>
           <div class="am-sub" id="amv-note"></div>
         </div>
-        <div class="am-card am-next"><span class="lbl">SIGUE</span><div class="am-title" id="amv-next">—</div><div class="am-sub" id="amv-next-sub"></div></div>
+        <div class="am-card am-next"><span class="lbl">SIGUE</span><div class="am-title" id="amv-next">—</div><div class="am-sub" id="amv-next-sub"></div>
+          <div class="am-entry" id="amv-entry" hidden>
+            <div class="am-entry-row"><span class="lbl">Entrada</span><b class="mono" id="amv-entry-time"></b><span class="am-sub" id="amv-entry-why"></span><button type="button" class="btn sm ghost" id="amv-entry-auto" hidden title="Vuelve al punto de entrada automático">Auto</button></div>
+            <canvas class="am-strip" id="amv-entry-strip" height="28" tabindex="0" role="slider" aria-label="Punto de entrada de la pista que sigue (← → mueven un compás)"></canvas>
+          </div>
+        </div>
       </div>
       <div class="am-controls am-groups">
         <fieldset class="am-group" aria-labelledby="amg-play">
@@ -632,7 +637,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Mis listas</dt><dd>＋ en la fila o arrastrar para poner; Ctrl/Mayús+clic selecciona; Ctrl+Z deshace</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
+        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Tarjeta SIGUE</dt><dd>Arrastra la línea de entrada o usa ← → (un compás); «Auto» la quita</dd><dt>Mis listas</dt><dd>＋ en la fila o arrastrar para poner; Ctrl/Mayús+clic selecciona; Ctrl+Z deshace</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>
