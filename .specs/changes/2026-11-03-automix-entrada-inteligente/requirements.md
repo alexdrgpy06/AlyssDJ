@@ -4,11 +4,12 @@ type: feature
 domains: [automix]
 paths: [renderer/mixplan.js, renderer/automix.js, renderer/recipes.js, renderer/mixeditor.js, shared/structure.js, shared/analysis.js, scripts/test-mix-*.js, docs/**]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: e2256c88a007002e13bc43ad68569586fd1a3f8542bafb2fb563f1b493f2c368
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-03
 ---
 # Requirements · 2026-11-03-automix-entrada-inteligente
 

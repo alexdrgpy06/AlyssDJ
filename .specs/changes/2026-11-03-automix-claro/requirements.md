@@ -4,11 +4,12 @@ type: feature
 domains: [automix, ui]
 paths: [renderer/automix.js, renderer/automix-add.js, renderer/mixpreview.js, renderer/mixeditor.js, renderer/index.html, renderer/styles.css, docs/04-automix.md, scripts/test-automix*.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 2c861cdcf957c8accdf66ccd165d406b9f07b3a2d3f97ba477212a39855d462a
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-03
 ---
 # Requirements · 2026-11-03-automix-claro
 

@@ -4,11 +4,12 @@ type: feature
 domains: [audio, ui]
 paths: [shared/fx.js, shared/dsp-chain.js, renderer/fxchain.js, renderer/fxpad.js, renderer/fxpanel.js, renderer/fxcues.js, renderer/deck.js, docs/**, scripts/test-fx*.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 0cbc54a3d130ed3646b06e45394bfefac5782c237c50753f1093c9e73b7b2de1
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-03
 ---
 # Requirements · 2026-11-03-efectos-ampliados
 

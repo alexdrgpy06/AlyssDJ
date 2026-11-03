@@ -4,11 +4,12 @@ type: feature
 domains: [library, ui]
 paths: [main/main.js, main/playlists.js, main/export.js, preload/app.js, renderer/library.js, renderer/automix.js, renderer/index.html, renderer/styles.css, docs/**, scripts/test-*.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 4d9e2f9736f87bf2f1b341ffce0c2e1c90d172a5ebc58ffe4adcc7df34b43ec6
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-03
 ---
 # Requirements · 2026-11-03-playlists-locales
 
