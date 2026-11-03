@@ -12,7 +12,7 @@ module.exports = (win) => {
       return { open: document.getElementById('settings').open, tabs: [...document.querySelectorAll('#settings .set-nav button[data-pane]')].map((b) => b.dataset.pane + (b.classList.contains('on') ? '*' : '') + (b.classList.contains('dim') ? '~' : '')),
         panes: vis('#settings .set-pane').map((p) => p.dataset.pane), shown: vis('#settings .set-pane > :not(h3)').map((e) => e.textContent.trim().slice(0, 40)),
         empty: !document.getElementById('set-empty').hidden, q: document.getElementById('set-search').value, sw: document.getElementById('settings').scrollWidth, cw: document.getElementById('settings').clientWidth, h: Math.round(document.querySelector('#settings .settings').getBoundingClientRect().height), ih: innerHeight }`;
-    const type = (q) => js(`const i = document.getElementById('set-search'); i.value = ${JSON.stringify(q)}; i.dispatchEvent(new Event('input', { bubbles: true })); await new Promise((r) => setTimeout(r, 150)); return 1`);
+    const type = (q) => js(`const i = document.getElementById('set-search'); i.value = ${JSON.stringify(q)}; for (let k = 0; k < 2; k++) { i.dispatchEvent(new Event("input", { bubbles: true })); await new Promise((r) => setTimeout(r, 350)); } return 1`);
     await js(`await __app.openSettings(); return 1`); await wait(400);
     res.first = await js(state);
     // buscar por etiqueta, por ayuda, sin tildes y sin resultados
