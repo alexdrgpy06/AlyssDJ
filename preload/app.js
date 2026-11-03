@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('ytdj', {
   },
   lib: {
     search: (q) => ipcRenderer.invoke('lib:search', q),
+    searchLocal: (opts) => ipcRenderer.invoke('lib:search-local', opts),
     liked: () => ipcRenderer.invoke('lib:liked'),
     playlists: () => ipcRenderer.invoke('lib:playlists'),
     playlist: (id) => ipcRenderer.invoke('lib:playlist', id),
@@ -54,6 +55,7 @@ contextBridge.exposeInMainWorld('ytdj', {
   crate: (id) => ipcRenderer.invoke('crates:get', id),
   genres: { all: () => ipcRenderer.invoke('genres:all'), set: (id, list) => ipcRenderer.invoke('genres:set', id, list), onEvent: (cb) => ipcRenderer.on('genres:event', (_e, ev) => cb(ev)) },
   export: { run: (source, format) => ipcRenderer.invoke('export:run', source, format) },
+  net: { state: () => ipcRenderer.invoke('net:state'), onEvent: on('net:event') },
   stems: {
     status: () => ipcRenderer.invoke('stems:status'),
     device: () => ipcRenderer.invoke('stems:device'),
@@ -112,6 +114,7 @@ contextBridge.exposeInMainWorld('ytdj', {
   },
   local: {
     list: () => ipcRenderer.invoke('local:list'),
+    similar: (videoId, limit) => ipcRenderer.invoke('local:similar', videoId, limit),
     addFolder: () => ipcRenderer.invoke('local:add-folder'),
     removeFolder: (dir) => ipcRenderer.invoke('local:remove-folder', dir),
     register: (p) => ipcRenderer.invoke('local:register', p),

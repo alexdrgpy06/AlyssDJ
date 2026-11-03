@@ -32,6 +32,7 @@ export class Library {
     this.onlyCompat = false;
     this.genreSel = new Set();
     this.bindGenres();
+    this.bindFilters();
     app.preview = preview;
     preview.on((e) => this.onPreview(e));
     document.querySelectorAll('.tracks th[data-sort]').forEach((th) =>
@@ -67,6 +68,24 @@ export class Library {
     document.querySelectorAll('.sources [data-tab]').forEach((b) =>
       b.addEventListener('click', () => this.show(b.dataset.tab)),
     );
+    this.scope = 'all';
+    try { this.scope = ['all', 'local', 'online'].includes(localStorage.getItem('alyssdj.search.scope')) ? localStorage.getItem('alyssdj.search.scope') : 'all'; } catch { /* sin almacenamiento */ }
+    this.scopeBox = document.getElementById('search-scope');
+    this.scopeBox.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-scope]');
+      if (!b || b.getAttribute('aria-disabled') === 'true') return;
+      this.setScope(b.dataset.scope);
+    });
+    this.scopeBox.addEventListener('keydown', (e) => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      const bs = [...this.scopeBox.querySelectorAll('button[data-scope]')].filter((b) => b.getAttribute('aria-disabled') !== 'true');
+      const i = bs.findIndex((b) => b.dataset.scope === this.scope);
+      const n = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length];
+      if (n) { this.setScope(n.dataset.scope); n.focus(); }
+    });
+    window.addEventListener('online', () => this.onScopeChange());
+    window.addEventListener('offline', () => this.onScopeChange());
+    this.onScopeChange();
     document.getElementById('search-form').addEventListener('submit', (e) => {
       e.preventDefault();
       this.show('search', this.search.value.trim());
@@ -81,6 +100,129 @@ export class Library {
       if (tr) e.dataTransfer.setData('application/x-ytdj-track', JSON.stringify(this.rows[tr.dataset.i]));
     });
     this.refreshAnalyzed();
+  }
+
+  // ---------- ámbito del buscador: Todo · Mi equipo · YouTube Music ----------
+  // Sin red o en modo local solo se busca en el equipo, sea cual sea la elección guardada.
+  offline() { return !!this.app.localMode || navigator.onLine === false; }
+
+  effectiveScope() { return this.offline() ? 'local' : this.scope; }
+
+  setScope(scope) {
+    this.scope = scope;
+    try { localStorage.setItem('alyssdj.search.scope', scope); } catch { /* sin almacenamiento */ }
+    this.onScopeChange();
+    if (this.tab === 'search' && this.search.value.trim()) this.show('search', this.search.value.trim());
+  }
+
+  onScopeChange() {
+    if (!this.scopeBox) return;
+    const eff = this.effectiveScope();
+    const off = this.offline();
+    this.scopeBox.querySelectorAll('button[data-scope]').forEach((b) => {
+      b.setAttribute('aria-checked', String(b.dataset.scope === eff));
+      b.tabIndex = b.dataset.scope === eff ? 0 : -1;
+      const blocked = off && b.dataset.scope !== 'local';
+      if (blocked) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+      b.title = blocked ? (this.app.localMode ? 'Modo local: la app no usa la red' : 'Sin conexión') : '';
+    });
+    const ph = { all: 'Buscar en tu equipo y en YouTube Music…', local: 'Buscar en tu equipo…', online: 'Buscar en YouTube Music…' }[eff];
+    this.search.placeholder = ph;
+    this.search.setAttribute('aria-label', ph.replace('…', ''));
+  }
+
+  // Filas locales con sus etiquetas de fuente (Mi equipo · Analizada · Importada…).
+  srcTags(r) {
+    return (r.sources || []).map((x) => `<span class="src-tag">${esc(x)}</span>`).join('');
+  }
+
+  isNetError(msg) {
+    return navigator.onLine === false || /net::|ENOTFOUND|ECONN|ETIMEDOUT|fetch failed|network|offline|timed out|Modo local/i.test(String(msg || ''));
+  }
+
+  async runSearch(query) {
+    const scope = this.effectiveScope();
+    const offNote = this.app.localMode ? 'Modo local: solo tu equipo' : this.offline() ? 'Sin conexión: mostrando tu equipo' : '';
+    let local = [];
+    let total = 0;
+    if (scope !== 'online') {
+      this.setMsg('Buscando…');
+      const r = await window.ytdj.lib.searchLocal({ q: query, ...this.filterOpts() });
+      if (r?.ok) { local = r.data.rows; total = r.data.total; }
+      if (scope === 'local') {
+        this.setMsg(local.length ? `${total} en tu equipo${total > local.length ? ` (se muestran ${local.length})` : ''}${offNote ? ` · ${offNote}` : ''}` : offNote || 'Nada coincide en tu equipo');
+        return this.render(local);
+      }
+      if (local.length) this.render(local); // lo local aparece al instante; lo online se añade cuando llega
+      this.setMsg('Buscando en YouTube Music…');
+    } else this.setMsg('Cargando…');
+    const on = await this.onlineSearch(query);
+    if (!on.ok) {
+      if (scope === 'all' && this.isNetError(on.error)) {
+        this.setMsg(`Sin conexión: mostrando tu equipo${local.length ? '' : ' (nada coincide)'}`);
+        return local.length ? undefined : this.render([]);
+      }
+      this.setMsg(on.error.includes('aún no cargó') ? 'YouTube Music todavía está cargando, reintenta en unos segundos.' : `Error: ${on.error}`);
+      return undefined;
+    }
+    const seen = new Set(local.map((r) => r.videoId));
+    const merged = [...local, ...on.data.filter((r) => !seen.has(r.videoId))];
+    this.setMsg(merged.length ? `${merged.length} resultados${local.length ? ` · ${local.length} en tu equipo` : ''}` : 'Sin resultados');
+    return this.render(merged);
+  }
+
+  // Búsqueda en YouTube Music (punto único: las pruebas lo sustituyen porque `window.ytdj` es de solo lectura).
+  onlineSearch(query) { return window.ytdj.lib.search(query); }
+
+  // Filtros de BPM y tonalidad (los de género son los de la barra). Una pista sin análisis no pasa un filtro de BPM o tono.
+  bindFilters() {
+    this.fBpm = [0, 0];
+    this.fKey = '';
+    this.fCompat = false;
+    const box = document.getElementById('lib-filters');
+    const sel = document.getElementById('f-key');
+    for (let n = 1; n <= 12; n++) for (const l of ['A', 'B']) sel.insertAdjacentHTML('beforeend', `<option value="${n}${l}">${n}${l}</option>`);
+    const apply = () => {
+      const num = (id) => Math.max(0, Math.round(Number(document.getElementById(id).value) || 0));
+      this.fBpm = [num('f-bpm-min'), num('f-bpm-max')];
+      this.fKey = sel.value;
+      this.fCompat = document.getElementById('f-compat').checked;
+      box.classList.toggle('active', this.filtersOn());
+      sel.toggleAttribute('data-empty', !sel.value);
+      document.getElementById('f-clear').hidden = !this.filtersOn();
+      if (this.tab === 'search' && this.search.value.trim()) this.show('search', this.search.value.trim());
+      else this.render();
+    };
+    box.addEventListener('input', apply);
+    box.addEventListener('change', apply);
+    document.getElementById('f-clear').addEventListener('click', () => {
+      for (const id of ['f-bpm-min', 'f-bpm-max']) document.getElementById(id).value = '';
+      sel.value = '';
+      document.getElementById('f-compat').checked = false;
+      this.genreSel.clear();
+      this.genreLabel();
+      apply();
+    });
+    sel.toggleAttribute('data-empty', true);
+  }
+
+  filtersOn() { return !!(this.fBpm?.[0] || this.fBpm?.[1] || this.fKey || this.genreSel.size); }
+
+  // ¿Pasa la fila los filtros de BPM y tonalidad? (los de género los aplica `render`).
+  passesAnalysisFilters(r) {
+    if (!(this.fBpm?.[0] || this.fBpm?.[1] || this.fKey)) return true;
+    const a = this.analyzed.get(r.videoId);
+    if (this.fBpm[0] || this.fBpm[1]) {
+      if (!a?.bpm) return false;
+      if (this.fBpm[0] && a.bpm < this.fBpm[0]) return false;
+      if (this.fBpm[1] && a.bpm > this.fBpm[1]) return false;
+    }
+    if (this.fKey) return this.fCompat ? keysCompatible(a?.camelot, this.fKey) : a?.camelot === this.fKey;
+    return true;
+  }
+
+  filterOpts() {
+    return { bpm: this.fBpm?.[0] || this.fBpm?.[1] ? this.fBpm : undefined, key: this.fKey || undefined, compatKey: this.fCompat, genres: this.genreSel.size ? [...this.genreSel] : undefined };
   }
 
   async refreshAnalyzed() {
@@ -132,8 +274,7 @@ export class Library {
     };
     if (tab === 'search') {
       if (!query) return this.render(this.rows.filter((r) => r.videoId));
-      const data = await call(window.ytdj.lib.search(query), 'Sin resultados');
-      if (data) this.render(data);
+      await this.runSearch(query);
     } else if (tab === 'liked') {
       const data = await call(window.ytdj.lib.liked(), 'No hay canciones con Me gusta (¿iniciaste sesión?)');
       if (data) this.render(data);
@@ -268,7 +409,7 @@ export class Library {
     return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
       <td>${art}</td>
       <td title="${esc(r.title)}">${esc(r.title)}${preview.state?.id === r.videoId ? `<div class="pv-bar" style="--p:${preview.state.dur ? Math.min(1, preview.state.t / preview.state.dur) : 0}"><i></i></div>` : ''}</td>
-      <td title="${esc(r.artist)}">${esc(r.artist)}${chip}${genres.chips(r.videoId)}${this.stemsChip(r)}</td>
+      <td title="${esc(r.artist)}">${esc(r.artist)}${this.srcTags(r)}${chip}${genres.chips(r.videoId)}${this.stemsChip(r)}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>
@@ -339,6 +480,7 @@ export class Library {
     this.base = rows;
     if (this.onlyCompat) rows = rows.filter((r) => r.playlist || this.isCompat(r));
     if (this.genreSel.size) rows = rows.filter((r) => r.playlist || genres.matches(r.videoId, this.genreSel));
+    if (this.fBpm) rows = rows.filter((r) => r.playlist || this.passesAnalysisFilters(r));
     closeGenreEditor();
     rows = this.sorted(rows);
     this.rows = rows;

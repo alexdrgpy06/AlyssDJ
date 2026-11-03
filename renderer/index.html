@@ -70,6 +70,7 @@
     </div>
     <div class="spacer"></div>
     <div class="tb-group tb-sys" role="group" aria-label="Sistema">
+      <span class="local-badge" id="local-badge" role="status" hidden title="Modo local: la app no usa la red">LOCAL</span>
       <div class="status" id="tools-status"></div>
       <div class="session" id="session">
         <span class="dot" id="session-dot"></span>
@@ -268,12 +269,23 @@
     <div class="lib-main">
     <div class="lib-toolbar" role="toolbar" aria-label="Herramientas de la fuente">
       <form id="search-form" role="search">
+        <div class="seg scope" id="search-scope" role="radiogroup" aria-label="Dónde buscar">
+          <button type="button" role="radio" data-scope="all" aria-checked="true">Todo</button>
+          <button type="button" role="radio" data-scope="local" aria-checked="false">Mi equipo</button>
+          <button type="button" role="radio" data-scope="online" aria-checked="false">YouTube Music</button>
+        </div>
         <svg class="ic"><use href="#i-search"/></svg>
-        <input id="search" type="search" placeholder="Buscar en YouTube Music…" autocomplete="off" aria-label="Buscar en YouTube Music" />
+        <input id="search" type="search" placeholder="Buscar en tu equipo y en YouTube Music…" autocomplete="off" aria-label="Buscar música" />
       </form>
       <button class="btn sm" id="btn-import-pl" hidden title="Copia tus playlists y Me gusta de YouTube Music a este equipo"><svg class="ic"><use href="#i-plus"/></svg>Importar mis playlists</button>
       <button class="btn sm" id="btn-automix-list" hidden title="Mezclar esta lista seguida con AutoMix"><svg class="ic"><use href="#i-radio"/></svg>AutoMix de esta lista</button>
       <button class="btn sm" id="btn-analyze-list" hidden title="Analiza en segundo plano todas las pistas de esta lista que aún no estén analizadas"><svg class="ic"><use href="#i-queue"/></svg>Analizar lista</button>
+      <div class="lib-filters" id="lib-filters" role="group" aria-label="Filtrar por BPM y tonalidad">
+        <label class="f-bpm">BPM <input id="f-bpm-min" type="number" inputmode="numeric" min="40" max="240" placeholder="mín" aria-label="BPM mínimo" /><span aria-hidden="true">–</span><input id="f-bpm-max" type="number" inputmode="numeric" min="40" max="240" placeholder="máx" aria-label="BPM máximo" /></label>
+        <select id="f-key" aria-label="Tonalidad (Camelot)" title="Tonalidad Camelot; las compatibles incluyen ±1 y la relativa"><option value="">Tono</option></select>
+        <label class="check compact" title="Incluye las tonalidades compatibles (misma, ±1 y relativa)"><input type="checkbox" id="f-compat" /> Compatibles</label>
+        <button type="button" class="btn sm ghost" id="f-clear" hidden>Limpiar</button>
+      </div>
       <div class="export-wrap genre-wrap">
         <button class="btn sm" id="btn-genres" hidden aria-haspopup="true" aria-expanded="false" aria-controls="genre-menu" title="Filtrar la lista por género"><svg class="ic"><use href="#i-list"/></svg><span id="btn-genres-label">Géneros</span></button>
         <div class="export-menu genre-menu" id="genre-menu" role="group" aria-label="Filtrar por género" hidden></div>
@@ -441,6 +453,7 @@
         <section class="set-pane" data-pane="tools" id="sp-tools" role="tabpanel" aria-labelledby="sn-tools" hidden>
           <h3>Sistema: herramientas, cuenta y actualizaciones</h3>
         <p class="hint" id="tools-detail"></p>
+        <label class="check"><input type="checkbox" name="localMode" /><span>Modo local <small>La app no hace ninguna petición de red: ni búsqueda online, ni sesión de YouTube Music, ni actualizaciones, ni descarga de herramientas o modelos. Decks, AutoMix y stems siguen con tus archivos.</small></span></label>
         <label>Ruta de yt-dlp <input name="ytdlpPath" placeholder="yt-dlp (en PATH)" /></label>
         <label>Cookies (avanzado)
           <select name="cookieSource" title="yt-dlp va sin sesión. Solo cambia esto si una pista exige iniciar sesión.">
@@ -576,7 +589,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
+        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>

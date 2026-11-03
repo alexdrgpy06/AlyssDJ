@@ -126,6 +126,7 @@ class Analyzer {
     const reuse = opts.reuse || null; // recalcular el análisis de un archivo ya guardado, sin descargar
     let file = local ? opts.file : reuse ? reuse : save ? L.findSaved(libDir, id) : this.audioFile(id);
     if (!file) {
+      if (s.localMode) throw new Error('Modo local: sin red (esta pista no está guardada en el equipo)');
       const tool = await ytdlp.findYtdlp(s.ytdlpPath);
       if (!tool) throw new Error('yt-dlp no está instalado todavía. AlyssDJ lo descarga solo al abrirse; reintenta en unos segundos o usa Ajustes → Instalar herramientas.');
       this.emit({ id, stage: 'download', progress: 0 });

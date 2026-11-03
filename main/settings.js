@@ -31,6 +31,8 @@ const DEFAULTS = {
   fxHold: true,
   fxRemember: true,
   filterRes: 0.07,
+  // Modo local: la app no hace ninguna petición de red (búsqueda online, sesión, actualizaciones, herramientas, modelos).
+  localMode: false,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
   // Stems: preparar solos los de la pista de un deck y la siguiente de AutoMix. auto = solo con un dispositivo de GPU ya comprobado.
   stemsAuto: 'auto', // auto | on | off

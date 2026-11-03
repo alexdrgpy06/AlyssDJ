@@ -4,11 +4,12 @@ type: feature
 domains: [library, sources, ui]
 paths: [main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/library.js, renderer/app.js, renderer/index.html, renderer/source.js, docs/**, scripts/test-*.js]
 commits: []
-status: draft
+status: approved
 rev: 1
-approved_rev: null
-approved_hash: null
-approved_by: null
+approved_rev: 1
+approved_hash: 554c061aa82259cabc813878ca24fc843179f40a16c06c616038394ff6552196
+approved_by: Alejandro Ramirez
+approved_at: 2026-11-03
 ---
 # Requirements · 2026-11-03-modo-local-y-buscador
 

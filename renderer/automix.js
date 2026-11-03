@@ -269,21 +269,41 @@ export class AutoMix {
     return t && !t.genres ? { ...t, genres: genres.of(t.videoId) } : t;
   }
 
+  // Con el modo local o el ámbito «Mi equipo», las sugerencias salen de la música del equipo ya analizada (BPM y tonalidad
+  // compatibles), no de la radio de YouTube Music.
+  useLocalSource() {
+    return !!this.app.localMode || this.app.library?.effectiveScope?.() === 'local';
+  }
+
+  async localSuggestions(seedTrack) {
+    const r = await window.ytdj.local.similar(seedTrack.videoId, 30);
+    if (!r?.ok) throw new Error(r?.error || 'sin sugerencias locales');
+    const list = r.data.filter((t) => t.local || (t.sources || []).includes('Guardada')).map((t) => ({ videoId: t.videoId, title: t.title, artist: t.artist, thumb: t.thumb, duration: t.duration, local: !!t.local, fromLocal: true }));
+    if (!list.length) throw new Error('Analiza más música de tu equipo para sugerir pistas');
+    return list;
+  }
+
   async radioCandidates(seedTrack) {
+    const onlyLocal = this.useLocalSource();
     let vid = seedTrack.videoId;
-    if (seedTrack.local) {
-      // Pista local: se busca su equivalente en YouTube Music para sacar la radio.
-      const q = await window.ytdj.lib.search(`${seedTrack.artist || ''} ${seedTrack.title || ''}`.trim());
-      if (!q.ok || !q.data[0]) throw new Error(q.error || 'sin equivalente en YouTube Music');
-      vid = q.data[0].videoId;
+    let data;
+    if (onlyLocal) data = await this.localSuggestions(seedTrack);
+    else {
+      if (seedTrack.local) {
+        // Pista local: se busca su equivalente en YouTube Music para sacar la radio.
+        const q = await window.ytdj.lib.search(`${seedTrack.artist || ''} ${seedTrack.title || ''}`.trim());
+        if (!q.ok || !q.data[0]) throw new Error(q.error || 'sin equivalente en YouTube Music');
+        vid = q.data[0].videoId;
+      }
+      const r = await window.ytdj.lib.radio(vid);
+      if (!r.ok) throw new Error(r.error);
+      data = r.data;
     }
-    const r = await window.ytdj.lib.radio(vid);
-    if (!r.ok) throw new Error(r.error);
     const known = new Set([...this.history, ...this.queue.map((t) => t.videoId), this.app.decks.A.track?.videoId, this.app.decks.B.track?.videoId]);
     const knownSongs = this.knownSongs();
-    const fresh = r.data.filter((t) => !known.has(t.videoId) && !knownSongs.has(songKey(t)) && knownSongs.add(songKey(t)) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR))).map((t) => ({ ...t, fromRadio: true }));
+    const fresh = data.filter((t) => !known.has(t.videoId) && !knownSongs.has(songKey(t)) && knownSongs.add(songKey(t)) && (!t.duration || (t.duration >= MIN_DUR && t.duration <= MAX_DUR))).map((t) => ({ ...t, fromRadio: !onlyLocal }));
     const noPlays = fresh.filter((t) => !t.plays); // algunas ya traen las vistas en sus créditos
-    if (this.cfg.popularity && noPlays.length && window.ytdj.lib.popularity) {
+    if (!onlyLocal && this.cfg.popularity && noPlays.length && window.ytdj.lib.popularity) {
       // Las reproducciones llegan en segundos; si tardan, la candidata entra sin ellas y la cola se reordena con el análisis.
       const pop = await Promise.race([window.ytdj.lib.popularity(noPlays.map((t) => t.videoId)), new Promise((res) => setTimeout(() => res(null), 4000))]).catch(() => null);
       if (pop?.ok) for (const t of noPlays) t.plays = pop.data[t.videoId] || 0;
@@ -307,7 +327,7 @@ export class AutoMix {
       if (!cands.length) throw new Error('la radio no devolvió pistas nuevas');
       this.note = '';
     } catch (e) {
-      this.note = `Radio: ${String(e.message).includes('aún no cargó') ? 'YouTube Music todavía está cargando…' : e.message}`;
+      this.note = `${this.useLocalSource() ? 'Mi equipo' : 'Radio'}: ${String(e.message).includes('aún no cargó') ? 'YouTube Music todavía está cargando…' : e.message}`;
       this.failUntil = performance.now() + 6000;
     } finally {
       this.filling = false;

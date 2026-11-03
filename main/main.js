@@ -18,6 +18,8 @@ const { createUpdater } = require('./updater');
 const libSave = require('./library-save');
 const stemsLib = require('./stems');
 const stemsDevice = require('./stems-device');
+const { LocalSearch, collect: collectLocal } = require('./local-search');
+const { createGate } = require('./net-gate');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
@@ -105,6 +107,7 @@ function registerAppProtocol() {
 // ---------- sesiones y permisos ----------
 function setupSession(ses) {
   ses.setUserAgent(CHROME_UA);
+  ses.webRequest.onBeforeRequest((details, cb) => cb({ cancel: !gate.allowUrl(details.url) })); // modo local: nada sale del equipo
   const allowed = new Set(['media', 'midi', 'midiSysex', 'speaker-selection', 'fullscreen']);
   ses.setPermissionRequestHandler((_wc, perm, cb) => cb(allowed.has(perm)));
   ses.setPermissionCheckHandler((_wc, perm) => allowed.has(perm));
@@ -280,6 +283,7 @@ ipcMain.handle('auth:verify', async () => {
 
 // ---------- biblioteca ----------
 const library = new YtmLibrary(() => libraryView?.webContents, { cacheFile: () => path.join(app.getPath('userData'), 'popularity.json') });
+const gate = createGate(settings);
 const wrap = (fn) => async (_e, ...args) => {
   try {
     return { ok: true, data: await fn(...args) };
@@ -287,12 +291,12 @@ const wrap = (fn) => async (_e, ...args) => {
     return { ok: false, error: e.message };
   }
 };
-ipcMain.handle('lib:search', wrap((q) => library.search(q)));
-ipcMain.handle('lib:liked', wrap(() => library.liked()));
-ipcMain.handle('lib:playlists', wrap(() => library.playlists()));
-ipcMain.handle('lib:playlist', wrap((id) => library.playlist(id)));
-ipcMain.handle('lib:radio', wrap((videoId) => library.radio(videoId)));
-ipcMain.handle('lib:popularity', wrap((ids) => library.popularityMany(Array.isArray(ids) ? ids.filter((x) => /^[\w-]{6,20}$/.test(x)) : [])));
+ipcMain.handle('lib:search', wrap(gate.wrap((q) => library.search(q))));
+ipcMain.handle('lib:liked', wrap(gate.wrap(() => library.liked())));
+ipcMain.handle('lib:playlists', wrap(gate.wrap(() => library.playlists())));
+ipcMain.handle('lib:playlist', wrap(gate.wrap((id) => library.playlist(id))));
+ipcMain.handle('lib:radio', wrap(gate.wrap((videoId) => library.radio(videoId))));
+ipcMain.handle('lib:popularity', wrap(gate.wrap((ids) => library.popularityMany(Array.isArray(ids) ? ids.filter((x) => /^[\w-]{6,20}$/.test(x)) : []))));
 
 // Importar playlists: copia título y pistas de cada lista (y Me gusta) a disco para usarlas sin conexión y en AutoMix.
 const cratesFile = () => path.join(app.getPath('userData'), 'playlists.json');
@@ -300,6 +304,7 @@ const readCrates = () => {
   try { return JSON.parse(fs.readFileSync(cratesFile(), 'utf8')); } catch { return []; }
 };
 ipcMain.handle('lib:import-playlists', wrap(async () => {
+  gate.assert();
   const lists = [{ browseId: 'VLLM', title: 'Canciones que me gustan', thumb: '' }, ...(await library.playlists())];
   const out = [];
   for (let i = 0; i < lists.length; i++) {
@@ -313,11 +318,30 @@ ipcMain.handle('lib:import-playlists', wrap(async () => {
     }
   }
   fs.writeFileSync(cratesFile(), JSON.stringify(out));
+  markLocalDirty();
   send('lib:import-progress', { done: lists.length, total: lists.length, finished: true });
   return out.map(({ tracks, ...l }) => ({ ...l, count: tracks.length }));
 }));
 ipcMain.handle('crates:list', () => readCrates().map(({ tracks, ...l }) => ({ ...l, count: tracks.length })));
 ipcMain.handle('crates:get', (_e, id) => readCrates().find((c) => c.id === id)?.tracks || []);
+
+// ---------- búsqueda local (sin red, sin rutas) ----------
+const localSearch = new LocalSearch();
+let localSearchDirty = true;
+const markLocalDirty = () => { localSearchDirty = true; };
+const localIndex = () => {
+  if (localSearchDirty) {
+    localSearch.build(collectLocal({ localRows: localLib.list(musicDirs()), analyses: analyzer.list(), crates: readCrates(), genreMap: genres.all().map }));
+    localSearchDirty = false;
+  }
+  return localSearch;
+};
+ipcMain.handle('lib:search-local', wrap((opts = {}) => {
+  const o = opts && typeof opts === 'object' ? opts : { q: String(opts) };
+  const r = localIndex().search(String(o.q || ''), { bpm: Array.isArray(o.bpm) ? o.bpm.map(Number) : undefined, key: o.key ? String(o.key) : undefined, compatKey: !!o.compatKey, genres: Array.isArray(o.genres) ? o.genres.map(String) : undefined, limit: Math.min(500, Number(o.limit) || 200) });
+  return { rows: r.rows, total: r.total, ms: r.ms };
+}));
+ipcMain.handle('local:similar', wrap((videoId, limit) => localIndex().similar(String(videoId || ''), Math.min(50, Number(limit) || 10))));
 
 // ---------- géneros ----------
 ipcMain.handle('genres:all', () => genres.all());
@@ -430,8 +454,11 @@ function syncMusicDirs() {
   const dirs = libSave.withLibraryDir(st.musicDirs, libraryDir());
   if (dirs.length !== (st.musicDirs || []).length) settings.set({ musicDirs: dirs });
 }
+ipcMain.handle('net:state', () => ({ localMode: gate.offline() }));
 ipcMain.handle('settings:set', (_e, patch) => {
+  const wasLocal = gate.offline();
   settings.set(patch);
+  if (gate.offline() !== wasLocal) send('net:event', { localMode: gate.offline() });
   syncMusicDirs();
   if ('stemsQuotaGB' in patch) stems?.trim(stemSettings().quotaGB * 1e9);
   return settings.get();
@@ -462,6 +489,7 @@ function ensureTools() {
     } catch (e) {
       send('tools:progress', { stage: 'error', error: e.message });
     }
+    if (gate.offline()) { send('tools:progress', { stage: 'done' }); return; } // modo local: no se descarga nada
     try {
       const r = await tools.ensureYtdlp({
         dirs: toolDirs,
@@ -550,13 +578,13 @@ app.whenReady().then(() => {
   // Instalada, la carpeta de la app puede ser de solo lectura: yt-dlp y ffmpeg van a la carpeta de datos del usuario.
   toolDirs = app.isPackaged ? [path.join(app.getPath('userData'), 'bin')] : [path.join(ROOT, 'bin'), path.join(app.getPath('userData'), 'bin')];
   ytdlp.setManagedDirs(toolDirs);
-  genres = new GenreStore({ file: path.join(app.getPath('userData'), 'genres.json'), emit: (ev) => send('genres:event', ev) });
+  genres = new GenreStore({ file: path.join(app.getPath('userData'), 'genres.json'), emit: (ev) => { markLocalDirty(); send('genres:event', ev); } });
   localLib = new LocalLibrary({
     onGenre: (id, text) => genres.setAuto(id, text, 'archivo'),
     file: path.join(app.getPath('userData'), 'local-index.json'),
     coversDir,
     ffmpeg: () => ffmpegBin,
-    emit: (ev) => send('local:event', ev),
+    emit: (ev) => { markLocalDirty(); send('local:event', ev); },
   });
   analyzer = new Analyzer({
     genres,
@@ -567,6 +595,7 @@ app.whenReady().then(() => {
     settings,
     session: ytm,
     emit: (ev) => {
+      markLocalDirty();
       send('analysis:event', ev);
       backlog?.onAnalyzerEvent(ev);
     },
@@ -574,7 +603,9 @@ app.whenReady().then(() => {
   stemModel = new stemsLib.ModelSet({
     dir: path.join(app.getPath('userData'), 'models'),
     onEvent: (ev) => send('stems:event', ev),
+    fetch: (...a) => { gate.assert(); return fetch(...a); },
     confirm: async (info) => {
+      if (gate.offline()) return false;
       if (process.env.YTDJ_SELFTEST) return process.env.YTDJ_STEMS_ALLOW === '1';
       const r = await dialog.showMessageBox(win, {
         type: 'question', buttons: ['Descargar', 'Cancelar'], defaultId: 0, cancelId: 1, title: 'Modelo de separación',

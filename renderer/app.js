@@ -72,6 +72,9 @@ class App {
     this.midi.init();
 
     this.stems.init();
+    this.localMode = false;
+    window.ytdj.net.state().then((st) => this.applyLocalMode(!!st?.localMode));
+    window.ytdj.net.onEvent((st) => this.applyLocalMode(!!st?.localMode));
     window.ytdj.deck.onState((id, s) => this.decks[id]?.onStreamState(s));
     window.ytdj.analysis.onEvent((ev) => {
       this.library.onAnalysisEvent(ev);
@@ -119,6 +122,14 @@ class App {
     if (!A.track) return A;
     if (!B.track) return B;
     return A.st.playing ? B : A;
+  }
+
+  // Modo local: marca visible en la barra y el buscador pasa a «Mi equipo» (la red no se usa).
+  applyLocalMode(on) {
+    this.localMode = on;
+    const b = $('#local-badge');
+    if (b) b.hidden = !on;
+    this.library?.onScopeChange?.();
   }
 
   onDeckLoaded() {

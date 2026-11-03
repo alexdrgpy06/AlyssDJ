@@ -37,6 +37,7 @@ function createUpdater({ autoUpdater, settings, send, isPlaying = () => false, p
 
   async function check({ manual = false } = {}) {
     if (!isPackaged || !autoUpdater) return emit({ stage: 'none', manual }) && state;
+    if (settings.get().localMode) return emit({ stage: 'idle', manual, offline: true }) && state; // modo local: sin red
     if (!manual && settings.get().autoUpdate === false) return state;
     if (['downloading', 'downloaded'].includes(state.stage)) return state;
     state.manual = manual;

@@ -13,6 +13,7 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 | Herramientas | `#btn-rec` | REC | |
 | Sistema | `#session` | Sesión de YouTube Music | Solo con texto cuando hay que actuar; si no, un punto |
 | Sistema | `#tools-status` | Herramientas | Solo visible si falta algo |
+| Sistema | `#local-badge` | Modo local | Solo visible con el modo local activo; se cambia en Ajustes → Sistema |
 | Sistema | `#btn-midi-learn` | MIDI | |
 | Sistema | `#btn-help` | Ayuda | `?` |
 | Sistema | `#btn-settings` | Ajustes | |
@@ -51,3 +52,10 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 - «Mezclar ahora» (no «Mezclar ya»).
 - «Siguiente» para quitar la pista que sigue (antes «Saltar siguiente» y «Saltar»).
 - «Analizar», «Puntos de mezcla», «Ondas».
+
+## Buscador y filtros (cambio `modo-local-y-buscador`)
+
+| Control | Nombre | Notas |
+|---|---|---|
+| `#search-scope` | Ámbito | Todo · Mi equipo · YouTube Music; se recuerda |
+| `#lib-filters` | Filtros | BPM mínimo y máximo, tonalidad, compatibles con la pista cargada y «Limpiar»; la insignia «Modo local» está en la barra superior |
