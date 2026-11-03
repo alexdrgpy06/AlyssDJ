@@ -6,13 +6,13 @@
 
 | Zona | Qué hace |
 |---|---|
-| **Cabecera** | Título y artista; la etiqueta de **origen** (ARCHIVO LOCAL, GUARDADA o STREAM) y el selector **STREAM / ARCHIVO**; **Analizar**; BPM actual, tonalidad (con el color de la rueda Camelot) y desvío de pitch |
+| **Cabecera** | Título y artista; BPM actual, tonalidad (con el color de la rueda Camelot) y desvío de pitch. El botón **⋯** abre el menú del deck con lo que aplica a esa pista: **STREAM / ARCHIVO** (si hay dos fuentes), **Analizar** (si falta), **Puntos de mezcla** (con análisis) y **YouTube Music** (pista de stream). Un punto ámbar en **⋯** avisa de una pista sin analizar |
 | **Vista general** | Toda la pista. Clic para saltar |
 | **Plato** | La portada gira con la pista y el anillo marca el progreso. Arrastra en círculo: sonando = *bend*, en pausa = búsqueda fina. |
 | **CUE / ▶ / SYNC** | Transporte (ver abajo) |
 | **Pitch** | Fader vertical, **+ / −** de nudge y el rango (±6, 8, 16, 50) |
 | **Hot cues 1–4** | Clic para fijar; clic de nuevo para saltar. **Shift** + clic (o clic derecho) los borra. Se guardan por pista |
-| **Banco** | Pestañas **LOOP · JUMP/ROLL · FX · GRID** |
+| **Banco** | Pestañas **LOOP · JUMP/ROLL · FX · GRID**: pulsa una para abrirla y pulsa la abierta para cerrarla. Cada deck recuerda la suya |
 
 ### Transporte
 
@@ -131,7 +131,7 @@ Arriba, junto a las herramientas, el selector de vista (también **Alt+1 … Alt
 
 ![Vista Ondas](img/39-vista-ondas.png)
 
-El botón junto al selector (o **Ajustes → General → Ondas grandes**) elige dónde van las ondas con desplazamiento en las vistas Mezcla y Librería: **arriba**, a todo el ancho, o **dentro de cada deck**, encima de su vista general; así la franja superior libera su altura.
+El botón junto al selector (o **Ajustes → Aspecto y vistas → Ondas grandes**) elige dónde van las ondas con desplazamiento en las vistas Mezcla y Librería: **arriba**, a todo el ancho, o **dentro de cada deck**, encima de su vista general; así la franja superior libera su altura.
 
 ![Ondas en el deck](img/40-ondas-en-el-deck.png)
 

@@ -271,7 +271,7 @@ tests.views = async () => {
 
 tests.immersive = async () => {
   const html = read('renderer/index.html'); const css = read('renderer/styles.css'); const app = read('renderer/app.js');
-  for (const k of ['id="immersive"', 'id="imm-cover"', 'id="imm-title"', 'id="imm-next"', 'id="imm-toggle"', 'id="imm-mix"', 'id="imm-style"', 'id="imm-len"', 'id="imm-queue"', 'data-view="automix"']) assert.ok(html.includes(k), k);
+  for (const k of ['id="immersive"', 'id="imm-cover"', 'id="imm-title"', 'id="imm-next"',  'id="imm-open"', 'data-view="automix"']) assert.ok(html.includes(k), k);
   assert.ok(/body\[data-view='automix'\] \.immersive/.test(css) && /bindImmersive/.test(app) && /renderImmersive/.test(app));
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-imm-')); const music = path.join(tmp, 'music');
@@ -286,10 +286,10 @@ tests.immersive = async () => {
   assert.deepStrictEqual([r.on.view, r.on.imm, r.on.console, r.on.library, r.on.waves], ['automix', true, false, false, false], 'Alt+3 muestra solo la vista inmersiva');
   assert.ok(r.on.title && r.on.title !== 'Nada cargado' && /Deck [AB]/.test(r.on.artist), `pista que suena: ${r.on.title} / ${r.on.artist}`);
   assert.ok(/BPM/.test(r.on.bpm) && r.on.origin === 'ARCHIVO' && r.on.cover);
-  assert.deepStrictEqual([r.cfg.style, r.cfg.len, r.cfg.styleUi, r.cfg.lenOut], ['filter', 24, 'filter', '24 s'], 'estilo y duración conectados');
-  assert.deepStrictEqual([r.started.on, r.started.label], [true, 'Detener AutoMix']);
-  assert.deepStrictEqual([r.stopped.on, r.stopped.label], [false, 'Iniciar AutoMix']);
-  assert.deepStrictEqual([r.queue.view, r.queue.tab, r.queue.amView], ['library', 'automix', true], '«Ver cola» abre la cola');
+  assert.deepStrictEqual([r.on.removed, r.on.open], [[], true], 'la vista Automix ya no repite los controles');
+  assert.deepStrictEqual([r.queue.view, r.queue.tab, r.queue.amView], ['library', 'automix', true], '«Abrir panel de AutoMix» abre la fuente AutoMix');
+  assert.deepStrictEqual([r.started.on, r.started.label, r.started.bar], [true, 'Detener AutoMix', 'AutoMix · activo']);
+  assert.deepStrictEqual([r.stopped.on, r.stopped.label, r.stopped.bar], [false, 'Iniciar AutoMix', 'AutoMix']);
   assert.ok(r.small.sw <= r.small.w + 1 && r.small.controls.b <= r.small.h, `1366x768 cabe: ${JSON.stringify(r.small)}`);
   console.log('immersive: OK');
 };

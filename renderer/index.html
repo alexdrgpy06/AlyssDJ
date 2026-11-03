@@ -22,6 +22,7 @@
       <symbol id="i-midi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="7.6" cy="11" r=".9" fill="currentColor"/><circle cx="9.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="14.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="16.4" cy="11" r=".9" fill="currentColor"/><circle cx="12" cy="15.5" r=".9" fill="currentColor"/></symbol>
       <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6.5" rx="1.6"/><rect x="17" y="14" width="4" height="6.5" rx="1.6"/></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
       <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
       <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
@@ -51,14 +52,7 @@
   <header class="topbar">
     <div class="tb-group tb-id">
       <div class="brand"><span class="brand-mark" aria-hidden="true"></span>AlyssDJ<small class="brand-by">by AlystechPY</small></div>
-      <div class="session" id="session">
-        <span class="dot" id="session-dot"></span>
-        <span id="session-label">YouTube Music…</span>
-        <button class="btn ghost sm" id="btn-login">Iniciar sesión</button>
-      </div>
     </div>
-    <div class="spacer"></div>
-    <div class="status" id="tools-status"></div>
     <div class="tb-group tb-views" role="group" aria-label="Vista de trabajo">
       <div class="seg view-switch" id="view-switch">
         <button type="button" data-view="mix" title="Mezcla: consola completa y librería (Alt+1)"><svg class="ic"><use href="#i-v-mix"/></svg><span>Mezcla</span></button>
@@ -68,14 +62,20 @@
       </div>
       <button type="button" class="icon-btn" id="waves-toggle" aria-pressed="false" title="Ondas arriba o dentro de cada deck"><svg class="ic"><use href="#i-v-scroll"/></svg></button>
     </div>
-    <span class="tb-sep" aria-hidden="true"></span>
+    <div class="spacer"></div>
     <div class="tb-group tb-mix" role="group" aria-label="Herramientas de la mezcla">
-      <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Mezcla automática de la cola (A)"><svg class="ic"><use href="#i-radio"/></svg>AutoMix</button>
+      <button class="btn ghost" id="btn-automix" aria-haspopup="true" aria-expanded="false" title="Panel de AutoMix: estado y controles"><svg class="ic"><use href="#i-radio"/></svg><span>AutoMix</span></button>
       <button class="btn ghost" id="btn-sampler" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-pads"/></svg>Sampler</button>
       <button class="btn ghost" id="btn-rec" title="Grabar la mezcla (lo que sale por tu salida de audio)"><svg class="ic"><use href="#i-rec"/></svg><span>REC</span></button>
     </div>
-    <span class="tb-sep" aria-hidden="true"></span>
+    <div class="spacer"></div>
     <div class="tb-group tb-sys" role="group" aria-label="Sistema">
+      <div class="status" id="tools-status"></div>
+      <div class="session" id="session">
+        <span class="dot" id="session-dot"></span>
+        <span id="session-label">YouTube Music…</span>
+        <button class="btn ghost sm" id="btn-login">Iniciar sesión</button>
+      </div>
       <button class="btn ghost" id="btn-midi-learn" title="MIDI learn: clic aquí, luego en un control, luego mueve el control MIDI"><svg class="ic"><use href="#i-midi"/></svg>MIDI</button>
       <button class="icon-btn" id="btn-help" aria-label="Ayuda y atajos" title="Ayuda y atajos (?)"><svg class="ic"><use href="#i-help"/></svg></button>
       <button class="btn ghost" id="btn-settings"><svg class="ic"><use href="#i-sliders"/></svg>Ajustes</button>
@@ -120,16 +120,9 @@
       </div>
     </div>
     <div class="imm-controls">
-      <button class="btn primary imm-go" id="imm-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
-      <button class="btn" id="imm-mix" type="button"><svg class="ic"><use href="#i-skip"/></svg><span id="imm-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
-      <div class="seg" id="imm-style" role="group" aria-label="Estilo de transición">
-        <button data-v="auto" type="button" title="Elige la receta por pista a pista según BPM, tonalidad y estructura">Auto</button><button data-v="crossfade" type="button">Fundido</button><button data-v="bass" type="button">Bass swap</button><button data-v="filter" type="button">Filtro</button><button data-v="echo-cut" type="button">Bass + eco</button><button data-v="drop-cut" type="button">En la caída</button>
-      </div>
-      <label class="am-len"><span class="lbl">Duración</span><input type="range" id="imm-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="imm-len-out">16 s</output></label>
-      <button class="btn" id="imm-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Saltar siguiente</button>
+      <button class="btn primary" id="imm-open" type="button" title="Los controles de AutoMix están en su panel"><svg class="ic"><use href="#i-radio"/></svg><span>Abrir panel de AutoMix</span></button>
       <span class="spacer"></span>
       <button class="btn ghost" id="imm-viz-toggle" type="button" aria-pressed="true" title="Visualizador: anillos que laten con el beat"><svg class="ic"><use href="#i-radio"/></svg><span>Visual</span></button>
-      <button class="btn ghost" id="imm-queue" type="button" title="Abre la cola de AutoMix en la vista Librería"><svg class="ic"><use href="#i-list"/></svg>Ver cola</button>
     </div>
   </section>
 
@@ -142,13 +135,16 @@
             <div class="title">Arrastra o carga una pista</div>
             <div class="artist">—</div>
             <div class="badges">
-              <div class="seg source" role="group" aria-label="Fuente de audio">
-                <button data-src="stream" class="on" title="Reproducir por streaming desde YouTube Music">STREAM</button>
-                <button data-src="local" title="Reproducir el archivo">ARCHIVO</button>
+              <button type="button" class="icon-btn deck-more" aria-haspopup="menu" aria-expanded="false" aria-label="Más acciones del deck" data-tip="Más: fuente, analizar, puntos de mezcla, YouTube Music"><svg class="ic"><use href="#i-more"/></svg></button>
+              <div class="deck-menu" role="menu" hidden>
+                <div class="seg source" role="group" aria-label="Fuente de audio">
+                  <button data-src="stream" class="on" title="Reproducir por streaming desde YouTube Music">STREAM</button>
+                  <button data-src="local" title="Reproducir el archivo">ARCHIVO</button>
+                </div>
+                <button class="btn sm analyze" role="menuitem" data-tip="Descargar con yt-dlp y analizar BPM, beatgrid, tonalidad y forma de onda"><svg class="ic"><use href="#i-bars"/></svg><span>Analizar</span></button>
+                <button class="btn ghost sm mix-points" role="menuitem" data-tip="Ver y editar los puntos de entrada y salida de mezcla de esta pista">Puntos de mezcla</button>
+                <button class="btn ghost sm view-ytm" role="menuitem" data-tip="Mostrar la página de YouTube Music de este deck (para iniciar sesión o depurar)">YouTube Music</button>
               </div>
-              <button class="btn sm analyze" data-tip="Descargar con yt-dlp y analizar BPM, beatgrid, tonalidad y forma de onda"><svg class="ic"><use href="#i-bars"/></svg><span>Analizar</span></button>
-              <button class="btn ghost sm mix-points" data-tip="Ver y editar los puntos de entrada y salida de mezcla de esta pista">Puntos</button>
-              <button class="btn ghost sm view-ytm" data-tip="Mostrar la página de YouTube Music de este deck (para iniciar sesión o depurar)">YTM</button>
             </div>
           </div>
           <div class="readout">
@@ -369,7 +365,7 @@
             <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar</button>
             <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
             <button class="btn sm" id="amv-shuffle" type="button" title="Ordena al azar lo que no está fijado; apaga «Orden automático»">Barajar</button>
-            <button class="btn sm" id="amv-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Saltar siguiente</button>
+            <button class="btn sm" id="amv-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Siguiente</button>
             <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
             <button class="btn ghost sm" id="amv-clear" type="button">Vaciar</button>
           </div>
@@ -421,18 +417,18 @@
       <div class="set-layout">
         <nav class="set-nav" role="tablist" aria-label="Secciones de ajustes" aria-orientation="vertical">
           <label class="set-search"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="set-search" placeholder="Buscar un ajuste…" aria-label="Buscar un ajuste" autocomplete="off" /></label>
-          <button type="button" role="tab" id="sn-general" data-pane="general" aria-controls="sp-general" class="on" aria-selected="true">General</button>
+          <button type="button" role="tab" id="sn-general" data-pane="general" aria-controls="sp-general" class="on" aria-selected="true">Aspecto y vistas</button>
           <button type="button" role="tab" id="sn-audio" data-pane="audio" aria-controls="sp-audio" aria-selected="false">Audio</button>
           <button type="button" role="tab" id="sn-decks" data-pane="decks" aria-controls="sp-decks" aria-selected="false">Decks</button>
           <button type="button" role="tab" id="sn-fx" data-pane="fx" aria-controls="sp-fx" aria-selected="false">Efectos y filtros</button>
-          <button type="button" role="tab" id="sn-library" data-pane="library" aria-controls="sp-library" aria-selected="false">Librería y música</button>
-          <button type="button" role="tab" id="sn-midi" data-pane="midi" aria-controls="sp-midi" aria-selected="false">MIDI</button>
-          <button type="button" role="tab" id="sn-tools" data-pane="tools" aria-controls="sp-tools" aria-selected="false">Herramientas y cuenta</button>
+          <button type="button" role="tab" id="sn-library" data-pane="library" aria-controls="sp-library" aria-selected="false">Librería</button>
+          <button type="button" role="tab" id="sn-midi" data-pane="midi" aria-controls="sp-midi" aria-selected="false">Entrada y MIDI</button>
+          <button type="button" role="tab" id="sn-tools" data-pane="tools" aria-controls="sp-tools" aria-selected="false">Sistema</button>
         </nav>
         <div class="set-panes">
         <div class="empty" id="set-empty" hidden><p>Sin resultados para este texto.</p><button type="button" class="btn" id="set-clear">Limpiar búsqueda</button></div>
         <section class="set-pane" data-pane="general" id="sp-general" role="tabpanel" aria-labelledby="sn-general">
-          <h3>General</h3>
+          <h3>Aspecto y vistas</h3>
         <label>Ondas grandes
           <select name="wavesMode" title="Dónde se muestran las ondas con desplazamiento en las vistas Mezcla y Librería"><option value="top">Arriba, a todo el ancho</option><option value="deck">Dentro de cada deck</option></select>
         </label>
@@ -442,12 +438,9 @@
           <h4>Vistas</h4>
         <p class="hint">Los divisores entre ondas, decks y librería se arrastran y cada vista recuerda su tamaño.</p>
         <div class="row-btns"><button type="button" class="btn" id="btn-reset-views">Restablecer vistas</button></div>
-          <h4>Actualizaciones</h4>
-        <label class="check"><input type="checkbox" name="autoUpdate" /><span>Buscar actualizaciones automáticamente <small>Solo en la app instalada: al abrirla y cada 6 horas, consulta los releases públicos de GitHub. Nunca descarga sin preguntarte.</small></span></label>
-        <div class="row-btns"><button type="button" class="btn" id="btn-check-update">Comprobar ahora</button><span class="hint" id="upd-status"></span></div>
         </section>
         <section class="set-pane" data-pane="tools" id="sp-tools" role="tabpanel" aria-labelledby="sn-tools" hidden>
-          <h3>Herramientas y cuenta</h3>
+          <h3>Sistema: herramientas, cuenta y actualizaciones</h3>
         <p class="hint" id="tools-detail"></p>
         <label>Ruta de yt-dlp <input name="ytdlpPath" placeholder="yt-dlp (en PATH)" /></label>
         <label>Cookies (avanzado)
@@ -465,6 +458,9 @@
           <button type="button" class="btn" id="btn-install-tools">Instalar / actualizar herramientas</button>
           <button type="button" class="btn ghost" id="btn-open-cache">Abrir carpeta de caché</button>
         </div>
+          <h4>Actualizaciones</h4>
+        <label class="check"><input type="checkbox" name="autoUpdate" /><span>Buscar actualizaciones automáticamente <small>Solo en la app instalada: al abrirla y cada 6 horas, consulta los releases públicos de GitHub. Nunca descarga sin preguntarte.</small></span></label>
+        <div class="row-btns"><button type="button" class="btn" id="btn-check-update">Comprobar ahora</button><span class="hint" id="upd-status"></span></div>
                   <h4>Cuenta</h4>
         <button type="button" class="btn ghost" id="btn-logout">Cerrar sesión de YouTube Music</button>
         </section>
@@ -476,7 +472,7 @@
         <p class="hint">El knob RES de cada canal ajusta la resonancia del filtro (FILTER). Con el valor por defecto el filtro suena como siempre.</p>
         </section>
         <section class="set-pane" data-pane="library" id="sp-library" role="tabpanel" aria-labelledby="sn-library" hidden>
-          <h3>Librería y música local</h3>
+          <h3>Librería</h3>
         <label class="check"><input type="checkbox" name="saveOnAnalyze" /><span>Guardar en la librería local lo que analice <small>El audio ya se descarga para analizar: se conserva en la mejor calidad que ofrece YouTube.</small></span></label>
         <label class="check"><input type="checkbox" name="preferSaved" /><span>Preferir la copia guardada cuando exista <small>Las pistas de YouTube que ya guardaste suenan desde el archivo (sin anuncios). Apagado, cargan por streaming aunque estén guardadas; en el deck puedes cambiar a mano.</small></span></label>
         <label class="check"><input type="checkbox" name="saveOnPlay" /><span>Guardar y analizar lo que reproduzca más de 30 s <small>Descarga en segundo plano, de a una pista, sin cortar la reproducción.</small></span></label>
@@ -514,7 +510,7 @@
         </label>
         </section>
         <section class="set-pane" data-pane="midi" id="sp-midi" role="tabpanel" aria-labelledby="sn-midi" hidden>
-          <h3>MIDI</h3>
+          <h3>Entrada y MIDI</h3>
         <p class="hint" id="midi-devices">—</p>
         <div class="row-btns">
           <button type="button" class="btn ghost" id="btn-midi-export">Exportar mapeo</button>
@@ -568,7 +564,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>General</h3><dl><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
+        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>

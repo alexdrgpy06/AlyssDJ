@@ -144,7 +144,7 @@ tests.ui = async () => {
   const html = read('renderer/index.html'); const app = read('renderer/app.js');
   assert.ok(/id="amv-exit"/.test(html) && !/id="amv-points"/.test(html), 'el selector sustituye al interruptor');
   for (const v of ['optimal', 'intro-outro', 'outro-start', 'end']) assert.ok(html.includes(`<option value="${v}"`), v);
-  for (const id of ['amv-skip', 'amv-shuffle', 'imm-skip']) assert.ok(html.includes(`id="${id}"`), id);
+  for (const id of ['amv-skip', 'amv-shuffle']) assert.ok(html.includes(`id="${id}"`), id);
   assert.ok(/amv-exit/.test(app) && /skipNext/.test(app) && /shuffle\(\)/.test(app));
   const { spawnSync } = require('child_process'); const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-salida-')); const music = path.join(tmp, 'music');
@@ -171,15 +171,13 @@ tests.ui = async () => {
   assert.strictEqual(r.shuffled.smart, false, 'barajar apaga «Orden automático»');
   assert.deepStrictEqual([...r.shuffled.queue].sort(), [...r.order0].sort(), 'misma cola, otro orden');
   assert.deepStrictEqual(r.undone, r.order0, 'Deshacer devuelve el orden');
-  // vista Automix
-  assert.strictEqual(r.imm.skip, true); assert.strictEqual(r.immAfter, r.order0.length - 2, 'saltar desde la vista Automix (ya se había saltado una)');
   console.log('ui: OK');
 };
 
 tests.docs = async () => {
   const d = read('docs/04-automix.md');
   assert.ok(/Elegir cuándo sale la pista que suena/.test(d) && /Outro y intro/.test(d) && /Inicio del outro/.test(d) && /Final de la pista/.test(d), 'modos de salida documentados');
-  assert.ok(/Saltar siguiente/.test(d) && /Barajar/.test(d), 'saltar y barajar documentados');
+  assert.ok(/\*\*Siguiente\*\*/.test(d) && /Barajar/.test(d), 'saltar y barajar documentados');
   assert.ok(!/Mezclar en puntos óptimos\*\* \(activado/.test(d) && !/mezclar en puntos óptimos\./.test(d), 'sin el interruptor antiguo');
   assert.ok(/cuándo sale la pista que suena/.test(read('README.md')));
   const ci = read('.github/workflows/ci.yml');

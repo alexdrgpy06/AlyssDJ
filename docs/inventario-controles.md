@@ -1,0 +1,53 @@
+# Inventario de controles
+
+Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-ordenada`). La ayuda («?») y las capturas se alinean con esta tabla.
+
+## Barra superior
+
+| Zona | Control | Nombre | Notas |
+|---|---|---|---|
+| Vistas | Selector de vistas | Mezcla · Librería · Automix · Ondas | Alt+1…4; solo iconos por debajo de 1100 px |
+| Vistas | Interruptor de ondas | Ondas arriba / en el deck | |
+| Herramientas | `#btn-automix` | AutoMix | Indicador de estado: abre el panel, no inicia ni detiene |
+| Herramientas | `#btn-sampler` | Sampler | |
+| Herramientas | `#btn-rec` | REC | |
+| Sistema | `#session` | Sesión de YouTube Music | Solo con texto cuando hay que actuar; si no, un punto |
+| Sistema | `#tools-status` | Herramientas | Solo visible si falta algo |
+| Sistema | `#btn-midi-learn` | MIDI | |
+| Sistema | `#btn-help` | Ayuda | `?` |
+| Sistema | `#btn-settings` | Ajustes | |
+
+## Deck (A y B)
+
+| Zona | Control | Nombre | Siempre visible |
+|---|---|---|---|
+| Cabecera | Título, artista, BPM, tonalidad | — | Sí |
+| Cabecera | Menú «⋯» (`deck-more`) | Más | Sí; sus entradas solo si aplican |
+| Menú «⋯» | STREAM / ARCHIVO | Fuente | Solo si hay versión local y de stream |
+| Menú «⋯» | Analizar | Analizar | Solo si no está analizada |
+| Menú «⋯» | Puntos | Puntos de mezcla | Solo con análisis |
+| Menú «⋯» | YTM | YouTube Music | Solo con pista de stream |
+| Transporte | CUE · ▶ · SYNC | — | Sí (SYNC atenuado sin BPM) |
+| Plato | Jog | — | Sí |
+| Pitch | Fader, nudge ±, rango | — | Sí |
+| Hot cues | 1–4 | — | Sí |
+| Stems | Voz · Batería · Bajo · Resto · Completa | Stems | Sí |
+| Bancos | LOOP · JUMP/ROLL · FX · GRID | — | Pestañas siempre; panel solo el último abierto (se recuerda por deck) |
+
+## AutoMix
+
+| Acción | Dónde vive | Retirado de |
+|---|---|---|
+| Iniciar / Detener | Panel de la fuente AutoMix (`amv-toggle`) | Vista Automix (`imm-toggle`), botón de la barra |
+| Mezclar ahora | Panel (`amv-mix`), `Mayús + →` | Vista Automix (`imm-mix`) |
+| Estilo, Duración | Panel (`amv-style`, `amv-len`) | Vista Automix (`imm-style`, `imm-len`) |
+| Siguiente (quitar la que sigue) | Panel (`amv-skip`) | Vista Automix (`imm-skip`) |
+| Ver cola | Panel | Vista Automix (`imm-queue`) → «Abrir panel de AutoMix» (`imm-open`) |
+| Visual | Vista Automix (`imm-viz-toggle`) | — |
+| Salir, Efectos, Orden, Popularidad, Fuente | Panel | — |
+
+## Nombres unificados
+
+- «Mezclar ahora» (no «Mezclar ya»).
+- «Siguiente» para quitar la pista que sigue (antes «Saltar siguiente» y «Saltar»).
+- «Analizar», «Puntos de mezcla», «Ondas».

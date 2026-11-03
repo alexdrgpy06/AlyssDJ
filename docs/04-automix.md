@@ -13,7 +13,7 @@ AutoMix es un DJ automático: elige la siguiente pista y la **mezcla solo**, con
 
 ## La vista
 
-Al abrir la fuente **AutoMix** de la librería la app pasa a la vista **Librería** (decks compactos) y al salir vuelve a la anterior. Si prefieres solo mirar y controlar, la vista **Automix** (Alt+3) muestra la portada grande, la siguiente pista, la barra de la transición, Iniciar / Mezclar ahora, el estilo y la duración; **Ver cola** abre la cola completa.
+Al abrir la fuente **AutoMix** de la librería la app pasa a la vista **Librería** (decks compactos) y al salir vuelve a la anterior. Si prefieres solo mirar, la vista **Automix** (Alt+3) muestra la portada grande, la siguiente pista y la barra de la transición. Los controles viven en un único sitio, el panel de la fuente **AutoMix**: **Abrir panel de AutoMix** (y el botón **AutoMix** de la barra, que además muestra si está activo o mezclando) te lleva allí. **Mayús + →** sigue mezclando ahora desde cualquier vista.
 
 ![Vista Automix](img/41-vista-automix.png)
 
@@ -155,9 +155,9 @@ Los controles de AutoMix están agrupados por función, con título:
 
 - **Reproducción:** iniciar o detener AutoMix y **Mezclar ahora** (**⇧→**).
 - **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, **Salir** (cuándo sale la pista que suena) y **Efectos** (apagado, sutil o marcado).
-- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Saltar siguiente**, **Rellenar con radio** y **Vaciar**.
+- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Siguiente**, **Rellenar con radio** y **Vaciar**.
   - **Barajar** ordena al azar lo que no está fijado (no mueve lo fijado a mano ni la pista que ya se está preparando), apaga «Orden automático» para que no rehaga el orden y se puede **Deshacer**.
-  - **Saltar siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.
+  - **Siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.
 - **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.
 
 ## Buscar y agregar desde la propia vista

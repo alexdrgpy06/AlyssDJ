@@ -194,7 +194,7 @@ export class AutoMix {
     this.pinned.add(track.videoId);
     this.emit();
   }
-  // «Saltar siguiente»: quita de la cola la pista que sigue; la mezcla irá a la que venía después.
+  // «Siguiente»: quita de la cola la pista que sigue; la mezcla irá a la que venía después.
   skipNext() {
     if (!this.on || this.trans || this.queue.length < 2) return false;
     const [t] = this.queue.splice(0, 1);

@@ -162,6 +162,11 @@ class App {
     $('#session-dot').classList.toggle('ok', st.loggedIn);
     $('#session-label').textContent = st.loggedIn ? 'YouTube Music: sesión iniciada' : 'YouTube Music: sin sesión (habrá anuncios)';
     $('#btn-login').hidden = st.loggedIn;
+    // con sesión iniciada la pastilla se reduce a un punto: el texto queda en la ayuda y para lectores de pantalla
+    const s = $('#session');
+    s.classList.toggle('quiet', st.loggedIn);
+    s.title = st.loggedIn ? 'YouTube Music: sesión iniciada' : '';
+    s.setAttribute('aria-label', $('#session-label').textContent);
   }
 
   async checkTools() {
@@ -419,12 +424,7 @@ class App {
   // ---------- vista Automix inmersiva ----------
   bindImmersive() {
     const am = this.automix;
-    $('#imm-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
-    $('#imm-mix').addEventListener('click', () => am.mixNow());
-    $('#imm-style').addEventListener('click', (e) => e.target.dataset.v && am.setCfg({ style: e.target.dataset.v }));
-    $('#imm-len').addEventListener('input', (e) => am.setCfg({ len: Number(e.target.value) }));
-    $('#imm-skip').addEventListener('click', () => am.skipNext());
-    $('#imm-queue').addEventListener('click', () => {
+    $('#imm-open').addEventListener('click', () => {
       this.setView('library');
       this.library.show('automix');
     });
@@ -486,13 +486,6 @@ class App {
     $('#imm-bar').style.width = st.trans ? `${Math.round(st.trans.progress * 100)}%` : '0%';
     $('#imm-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#imm-next-sub').textContent = st.next ? [st.next.artist, st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : ''].filter(Boolean).join(' · ') : '';
-    $('#imm-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
-    $('#imm-mix').disabled = !st.on || !!st.trans;
-    $('#imm-skip').disabled = !st.canSkip;
-    $('#imm-mix-label').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
-    document.querySelectorAll('#imm-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
-    $('#imm-len').value = st.cfg.len;
-    $('#imm-len-out').textContent = `${st.cfg.len} s`;
   }
 
   setView(view) {
@@ -699,6 +692,7 @@ class App {
       return ['Pendiente', ''];
     };
     $('#btn-automix').classList.toggle('active', st.on);
+    $('#btn-automix span').textContent = st.trans ? 'AutoMix · mezclando' : st.on ? 'AutoMix · activo' : 'AutoMix';
     $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#amv-mix').disabled = !st.on || !!st.trans;
     $('#amv-mix').classList.toggle('on', !!st.pendingMix);

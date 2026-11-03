@@ -18,23 +18,19 @@ module.exports = (win) => {
       return { view: document.body.dataset.view, imm: vis('#immersive'), console: vis('.console'), library: vis('.library'), waves: vis('.waves'),
         title: document.getElementById('imm-title').textContent, artist: document.getElementById('imm-artist').textContent, bpm: document.getElementById('imm-bpm').textContent,
         origin: document.getElementById('imm-origin').textContent, cover: !!document.getElementById('imm-cover').getAttribute('src'),
-        toggle: document.querySelector('#imm-toggle span').textContent, status: document.getElementById('imm-status').textContent, sw: document.documentElement.scrollWidth, w: innerWidth, h: innerHeight,
+        removed: ['imm-toggle', 'imm-mix', 'imm-style', 'imm-len', 'imm-skip', 'imm-queue'].filter((i) => document.getElementById(i)), open: vis('#imm-open'), status: document.getElementById('imm-status').textContent, sw: document.documentElement.scrollWidth, w: innerWidth, h: innerHeight,
         controls: (() => { const b = document.querySelector('.imm-controls').getBoundingClientRect(); return { b: Math.round(b.bottom) }; })() }`;
     // Alt+3
     await js(`window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit3', key: '3', altKey: true, bubbles: true })); return 1`); await wait(700);
     res.on = await js(probe);
-    // estilo y duración conectados a AutoMix
-    await js(`document.querySelector('#imm-style [data-v="filter"]').click(); const l = document.getElementById('imm-len'); l.value = 24; l.dispatchEvent(new Event('input', { bubbles: true })); return 1`); await wait(700);
-    res.cfg = await js(`const c = __app.automix.snapshot().cfg; return { style: c.style, len: c.len, styleUi: document.querySelector('#imm-style .on').dataset.v, lenOut: document.getElementById('imm-len-out').textContent }`);
-    // iniciar AutoMix con las pistas cargadas: el botón cambia
-    await js(`document.getElementById('imm-toggle').click(); return 1`); await wait(900);
-    res.started = await js(`return { on: __app.automix.on, label: document.querySelector('#imm-toggle span').textContent }`);
-    await js(`document.getElementById('imm-toggle').click(); return 1`); await wait(600);
-    res.stopped = await js(`return { on: __app.automix.on, label: document.querySelector('#imm-toggle span').textContent }`);
     fs.writeFileSync(path.join(out, 'immersive.png'), (await win.webContents.capturePage()).toPNG());
-    // «Ver cola» abre la vista Librería con la fuente AutoMix
-    await js(`document.getElementById('imm-queue').click(); return 1`); await wait(800);
+    // «Abrir panel de AutoMix» lleva a la librería con la fuente AutoMix; ahí se inicia y detiene
+    await js(`document.getElementById('imm-open').click(); return 1`); await wait(800);
     res.queue = await js(`return { view: document.body.dataset.view, tab: __app.library.tab, amView: !document.getElementById('am-view').hidden }`);
+    await js(`document.getElementById('amv-toggle').click(); return 1`); await wait(900);
+    res.started = await js(`return { on: __app.automix.on, label: document.querySelector('#amv-toggle span').textContent, bar: document.querySelector('#btn-automix span').textContent }`);
+    await js(`document.getElementById('amv-toggle').click(); return 1`); await wait(600);
+    res.stopped = await js(`return { on: __app.automix.on, label: document.querySelector('#amv-toggle span').textContent, bar: document.querySelector('#btn-automix span').textContent }`);
     // 1366x768: cabe
     win.setContentSize(1366, 768); await wait(500);
     await js(`__app.setView('automix'); return 1`); await wait(700);

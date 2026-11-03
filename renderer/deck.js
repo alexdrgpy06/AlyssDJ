@@ -712,9 +712,26 @@ export class Deck {
     this.app.toast(`Rejilla fijada en ${fmt(this.pos())}`);
   }
 
-  setBank(bank) {
-    this.el.root.querySelectorAll('.bank-tabs [data-b]').forEach((b) => b.classList.toggle('on', b.dataset.b === bank));
+  // Banco abierto ('' = ninguno): se recuerda por deck. Pulsar la pestaña abierta la cierra.
+  setBank(bank, toggle = false) {
+    if (toggle && bank === this.bank) bank = '';
+    this.bank = bank;
+    this.el.root.querySelectorAll('.bank-tabs [data-b]').forEach((b) => {
+      b.classList.toggle('on', b.dataset.b === bank);
+      b.setAttribute('aria-selected', String(b.dataset.b === bank));
+    });
     this.el.root.querySelectorAll('.pane').forEach((p) => (p.hidden = p.dataset.pane !== bank));
+    this.el.root.classList.toggle('bank-closed', !bank);
+    try { localStorage.setItem(`alyssdj.deck.bank.${this.id}`, bank); } catch { /* sin almacenamiento: no se recuerda */ }
+  }
+
+  savedBank() {
+    try {
+      const v = localStorage.getItem(`alyssdj.deck.bank.${this.id}`);
+      return v === null ? 'loop' : ['loop', 'jump', 'fx', 'grid'].includes(v) ? v : '';
+    } catch {
+      return 'loop';
+    }
   }
 
   tapTempo() {
@@ -766,7 +783,10 @@ export class Deck {
       analyze: q('.analyze'),
       srcBtns: [...root.querySelectorAll('.source button')],
       viewYtm: q('.view-ytm'),
+      more: q('.deck-more'),
+      menu: q('.deck-menu'),
       mixPoints: q('.mix-points'),
+      srcSeg: q('.seg.source'),
       scroll: document.getElementById(`scroll-${this.id}`),
       spin: q('.platter .spin'),
       platter: q('.platter'),
@@ -810,7 +830,8 @@ export class Deck {
     click(el.range, `${P}.pitchRange`, () => this.setRange(PITCH_RANGES[(PITCH_RANGES.indexOf(this.range) + 1) % PITCH_RANGES.length]));
     click(el.analyze, `${P}.analyze`, () => this.analyze());
     el.srcBtns.forEach((b) => b.addEventListener('click', () => this.setSource(b.dataset.src)));
-    root.querySelectorAll('.bank-tabs [data-b]').forEach((b) => b.addEventListener('click', () => this.setBank(b.dataset.b)));
+    root.querySelectorAll('.bank-tabs [data-b]').forEach((b) => b.addEventListener('click', () => this.setBank(b.dataset.b, true)));
+    this.setBank(this.savedBank());
     root.querySelectorAll('[data-jump]').forEach((b) => click(b, `${P}.jump${b.dataset.jump}`, () => this.jump(Number(b.dataset.jump))));
     root.querySelectorAll('[data-roll]').forEach((b) => hold(b, `${P}.roll${b.dataset.roll}`, (d) => (d ? this.rollStart(Number(b.dataset.roll)) : this.rollEnd())));
     click(q('.loop-half'), `${P}.loopHalf`, () => this.loopScale(0.5));
@@ -820,6 +841,23 @@ export class Deck {
     this.fxPanel = mountFxPanel({ pane: q('.fxpane'), chain: this.fxc, id: this.id, register, learning: () => this.app.learning, holdMode: () => this.app.settings.fxHold !== false });
     this.setBank('loop');
     el.viewYtm.addEventListener('click', () => this.app.toggleYtmView(this.id));
+    // menú «⋯»: fuente, Analizar, Puntos y YouTube Music; Esc o clic fuera lo cierran
+    const closeMenu = (focus) => {
+      el.menu.hidden = true;
+      el.more.setAttribute('aria-expanded', 'false');
+      if (focus) el.more.focus();
+    };
+    el.more.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = el.menu.hidden;
+      document.querySelectorAll('.deck-menu').forEach((m) => { m.hidden = true; m.parentElement.querySelector('.deck-more')?.setAttribute('aria-expanded', 'false'); });
+      el.menu.hidden = !open;
+      el.more.setAttribute('aria-expanded', String(open));
+      if (open) (el.menu.querySelector('button:not([hidden]):not(.na)') || el.menu).focus?.();
+    });
+    el.menu.addEventListener('click', (e) => { if (e.target.closest('.analyze, .mix-points, .view-ytm')) closeMenu(false); });
+    el.menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(true); } });
+    document.addEventListener('click', (e) => { if (!el.menu.hidden && !e.target.closest('.badges')) closeMenu(false); });
     el.mixPoints.addEventListener('click', () => this.app.editDeckPoints(this));
 
     el.pitchFader.addEventListener('input', () => {
@@ -1030,6 +1068,13 @@ export class Deck {
           : 'Analizar',
     );
     el.analyze.disabled = !t;
+    // solo lo que aplica: la fuente si hay dos, Analizar si falta, Puntos con análisis, YouTube Music con pista de stream
+    el.analyze.hidden = !t || (!!this.analysis && !a);
+    el.mixPoints.hidden = !this.analysis;
+    el.viewYtm.hidden = !t || !!t.local || this.source !== 'stream';
+    el.srcSeg.hidden = !t || !this.srcInfo?.canSwitch;
+    el.more.classList.toggle('attn', !!t && !this.analysis);
+    el.more.hidden = !t;
 
     const angle = `rotate(${(pos * 200) % 360}deg)`;
     el.spin.style.transform = angle;

@@ -126,7 +126,7 @@ tests.save = async () => {
 tests.docs = async () => {
   const d2 = read('docs/02-decks-y-mezclador.md'); const d6 = read('docs/06-sampler-grabacion-midi.md'); const rd = read('README.md');
   for (const k of ['Cambiar el tamaño de las zonas', 'doble clic', 'Restablecer vistas', 'img/43-divisores.png', 'Ajustes → Decks**']) assert.ok(d2.includes(k), `02: ${k}`);
-  for (const k of ['Buscador', 'Se guardan al cambiar', 'Restablecer sección', 'img/44-ajustes-busqueda.png', 'Herramientas y cuenta']) assert.ok(d6.includes(k), `06: ${k}`);
+  for (const k of ['Buscador', 'Se guardan al cambiar', 'Restablecer sección', 'img/44-ajustes-busqueda.png', 'Sistema']) assert.ok(d6.includes(k), `06: ${k}`);
   assert.ok(/divisores/.test(rd) && /con buscador/.test(rd));
   assert.ok(!/Decks y diseño/.test(d2 + d6 + rd), 'sin la sección antigua');
   for (const f of ['43-divisores.png', '44-ajustes-busqueda.png', '17-ajustes-1.png']) assert.ok(fs.existsSync(path.join(root, 'docs/img', f)), f);
@@ -163,7 +163,7 @@ tests.search = async () => {
   assert.deepStrictEqual(r.pitch.panes, ['decks']); assert.strictEqual(r.pitch.shown.length, 1); assert.ok(/pitch/i.test(r.pitch.shown[0]));
   assert.ok(r.pitch.tabs.some((t) => t.startsWith('general') && t.endsWith('~')), 'las secciones sin resultados se atenúan');
   assert.deepStrictEqual(r.curve.panes, ['decks']);
-  assert.deepStrictEqual(r.upd.panes, ['general'], 'sin tildes ni mayúsculas');
+  assert.deepStrictEqual(r.upd.panes, ['tools'], 'sin tildes ni mayúsculas');
   assert.deepStrictEqual(r.help.panes, ['library'], 'busca también en la ayuda');
   assert.ok(r.none.empty && r.none.panes.length === 0, 'sin resultados');
   assert.ok(!r.cleared.empty && r.cleared.q === '' && r.cleared.panes.join() === 'general', 'limpiar vuelve a la sección');

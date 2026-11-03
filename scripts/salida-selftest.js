@@ -14,7 +14,7 @@ module.exports = (win) => {
     for (let i = 0; i < 120; i++) { await wait(500); if (await js(`const a = await Promise.all(${JSON.stringify(rows.map((r) => r.videoId))}.map((id) => window.ytdj.analysis.get(id))); return a.every(Boolean)`)) break; }
     await js(`const am = __app.automix; am.setCfg({ smartOrder: false, endless: false, exitMode: 'optimal' }); await am.start({ tracks: ${JSON.stringify(rows)} }); __app.library.show('automix'); return 1`); await wait(2500);
     const probe = `const am = __app.automix; const st = am.snapshot(); const q = (s) => document.querySelector(s);
-      return { exit: q('#amv-exit').value, options: [...q('#amv-exit').options].map((o) => o.value), skipDis: q('#amv-skip').disabled, shuffleDis: q('#amv-shuffle').disabled, immSkipDis: q('#imm-skip').disabled,
+      return { exit: q('#amv-exit').value, options: [...q('#amv-exit').options].map((o) => o.value), skipDis: q('#amv-skip').disabled, shuffleDis: q('#amv-shuffle').disabled,
         queue: st.queue.map((t) => t.videoId.slice(-4)), cfgExit: st.exitMode, status: q('#amv-status').textContent, smart: q('#amv-order').checked, note: q('#amv-note').textContent, plan: st.plan && { mode: st.plan.mode, seconds: st.plan.seconds, kind: st.plan.kind } }`;
     res.start = await js(probe);
     // elegir modo desde el selector
@@ -35,11 +35,6 @@ module.exports = (win) => {
     const before = await js(`return __app.automix.queue.length`);
     await js(`document.getElementById('amv-skip').click(); return 1`); await wait(500);
     res.skipped = await js(probe); res.skippedBefore = before;
-    // vista Automix: botón de saltar
-    await js(`__app.setView('automix'); return 1`); await wait(700);
-    res.imm = await js(`return { skip: !!document.getElementById('imm-skip').offsetParent, dis: document.getElementById('imm-skip').disabled, status: document.getElementById('imm-status').textContent }`);
-    await js(`document.getElementById('imm-skip').click(); return 1`); await wait(400);
-    res.immAfter = await js(`return __app.automix.queue.length`);
     fs.writeFileSync(path.join(out, 'automix-exit.png'), (await win.webContents.capturePage()).toPNG());
     await js(`__app.setView('library'); __app.library.show('automix'); return 1`); await wait(600);
     fs.writeFileSync(path.join(out, 'automix-exit-lib.png'), (await win.webContents.capturePage()).toPNG());
