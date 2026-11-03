@@ -26,7 +26,7 @@ module.exports = (win) => {
       // separar desde el deck: se ve el trabajo en curso en el deck y en la fila, y termina con los stems listos
       await js(`document.querySelector('#deck-A .stems-go').click(); return 1`);
       R.work = null; R.rowWork = null;
-      for (let i = 0; i < 400; i++) { const s = await js(strip); if (s.mode === 'work' && s.msg.includes('%') && !R.work) { R.work = s; R.rowWork = await js(rowSnap(id)); } if (s.mode === 'ready' || s.mode === 'error') break; await wait(50); }
+      for (let i = 0; i < 1500; i++) { const s = await js(strip); if (s.mode === 'work' && s.msg.includes('%') && !R.work) { R.work = s; R.rowWork = await js(rowSnap(id)); } if (s.mode === 'ready' || s.mode === 'error') break; await wait(50); }
       R.ready = await js(strip); R.rowReady = await js(rowSnap(id)); R.sumReady = await js(sum); R.list = await js(`return await window.ytdj.stems.list()`);
       // activar, silenciar, aislar, volver
       await js(`document.querySelector('#deck-A .stems-go').click(); return 1`); await wait(1000); R.active = await js(strip);

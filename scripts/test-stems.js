@@ -264,7 +264,7 @@ tests.ui = async () => {
   const S = await import('../renderer/stems.js');
   assert.strictEqual(S.jobText({ stage: 'progress', progress: 0.37, etaS: 80 }), 'Separando… 37 %, ≈ 1:20'); assert.match(S.jobText({ stage: 'model', progress: 0.5 }), /modelo.*50 %/); assert.strictEqual(S.fmtSize(310e6), '310 MB');
   assert.deepStrictEqual(S.STEM_UI.map((s) => s.ch), [3, 0, 1, 2]); assert.strictEqual(S.trackView({ available: false, why: 'x' }).mode, 'off'); assert.strictEqual(S.trackView({ hasFile: false }).mode, 'off');
-  const r = await runApp('stems-ui-selftest.js', 'stems-ui.json', null, { YTDJ_STEMS_FAKE: '1', YTDJ_STEMS_SLOW_MS: '250' });
+  const r = await runApp('stems-ui-selftest.js', 'stems-ui.json', null, { YTDJ_STEMS_FAKE: '1', YTDJ_STEMS_SLOW_MS: '120' });
   // sin stems: ofrece separar; la pista solo de streaming no se puede (REQ-5, REQ-7)
   assert.strictEqual(r.status.available, true); assert.ok(r.s0.mode === 'none' && r.s0.go === 'Separar' && !r.s0.goOff, `inicio ${JSON.stringify(r.s0)}`);
   assert.ok(r.rowStream.disabled && /guarda|archivo/i.test(r.rowStream.title), `streaming sin archivo (${r.rowStream.title})`); assert.strictEqual(r.reqStream.ok, false); assert.match(r.reqStream.error, /archivo local/);
