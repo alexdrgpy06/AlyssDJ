@@ -56,8 +56,12 @@ contextBridge.exposeInMainWorld('ytdj', {
   export: { run: (source, format) => ipcRenderer.invoke('export:run', source, format) },
   stems: {
     status: () => ipcRenderer.invoke('stems:status'),
+    device: () => ipcRenderer.invoke('stems:device'),
     list: () => ipcRenderer.invoke('stems:list'),
-    request: (id) => ipcRenderer.invoke('stems:request', id),
+    request: (id, priority) => ipcRenderer.invoke('stems:request', priority == null ? id : { id, priority }),
+    settings: () => ipcRenderer.invoke('stems:settings'),
+    set: (patch) => ipcRenderer.invoke('stems:set', patch),
+    keep: (ids) => ipcRenderer.invoke('stems:keep', ids),
     cancel: (id) => ipcRenderer.invoke('stems:cancel', id),
     remove: (id) => ipcRenderer.invoke('stems:remove', id),
     removeAll: () => ipcRenderer.invoke('stems:remove-all'),

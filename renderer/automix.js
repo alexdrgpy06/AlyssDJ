@@ -445,6 +445,8 @@ export class AutoMix {
   // Las pistas ya guardadas quedan listas al instante y no ocupan uno de los 2 puestos.
   prepareAhead(n = Infinity, maxParallel = 2) {
     for (const t of this.queue) this.loadAna(t);
+    // la pista que sigue lleva sus stems listos antes de la mezcla (prioridad 1: detrás de los decks)
+    if (this.queue[0]) this.app.stems?.auto(this.queue[0].videoId, 1, this.app.settings?.stemsAuto);
     if (!this.cfg.preferLocal) return;
     for (const t of this.queue) {
       if (t.local || this.prep.has(t.videoId)) continue;

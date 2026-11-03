@@ -144,9 +144,9 @@
   const windowsFor = (length) => (length <= W ? 1 : Math.ceil((length - W) / HOP) + 1);
 
   // Separa `mix` ([L, R] Float32Array, SIN normalizar). `infer({ input: Float32Array(2·W), x: Float32Array(4·FQ·T) })` →
-  // { time: Float32Array(4·2·W), freq: Float32Array(4·4·FQ·T) }. `onChunk(Float32Array)` recibe audio final intercalado de
+  // { time: Float32Array(4·2·W), freq: Float32Array(4·4·FQ·T) } (con `direct`: solo `time`, y `x` llega null). `onChunk(Float32Array)` recibe audio final intercalado de
   // 8 canales (batería L R, bajo L R, resto L R, voz L R), en orden y sin huecos. `shouldStop()` cancela entre ventanas.
-  async function separate(mix, { infer, onChunk, onProgress = () => {}, shouldStop = () => false }) {
+  async function separate(mix, { infer, onChunk, onProgress = () => {}, shouldStop = () => false, direct = false }) {
     const length = mix[0].length;
     const { std } = normalizeStats(mix[0], mix[1]);
     const nSeg = windowsFor(length);
@@ -189,14 +189,14 @@
       const input = new Float32Array(2 * W);
       input.set(seg[0], 0);
       input.set(seg[1], W);
-      const x = spec(seg);
+      const x = direct ? null : spec(seg); // `direct`: el modelo lleva la STFT dentro y devuelve solo `time` (stems [4,2,W])
       const r = await infer({ input, x });
       for (let s = 0; s < 4; s++) {
-        const xf = ispec(r.freq.subarray(s * 4 * FQ * T, (s + 1) * 4 * FQ * T));
+        const xf = direct ? null : ispec(r.freq.subarray(s * 4 * FQ * T, (s + 1) * 4 * FQ * T));
         for (let c = 0; c < 2; c++) {
           const dst = acc[s][c];
           const off = s0 - base;
-          for (let i = 0; i < W && s0 + i < length; i++) dst[off + i] += (r.time[(s * 2 + c) * W + i] + xf[c][i]) * weight[i];
+          for (let i = 0; i < W && s0 + i < length; i++) dst[off + i] += (r.time[(s * 2 + c) * W + i] + (xf ? xf[c][i] : 0)) * weight[i];
         }
       }
       for (let i = 0; i < W && s0 + i < length; i++) wsum[s0 - base + i] += weight[i];

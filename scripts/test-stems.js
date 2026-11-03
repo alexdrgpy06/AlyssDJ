@@ -74,6 +74,24 @@ tests.model = async () => {
   assert.ok(prog.length === 3 && prog.every((v, i) => i === 0 || v > prog[i - 1]) && prog[2] === 1, JSON.stringify(prog));
   let calls = 0; const stopped = await runSeparate(D, mix, quarter, { shouldStop: () => ++calls > 1 });
   assert.strictEqual(stopped.ok, false, 'cancelar entre ventanas');
+  // variantes de modelo (REQ-8): cada una con su archivo, tamaño y SHA-256; mismo permiso y verificación
+  {
+    const crypto = require('node:crypto'); const { ModelSet, MODELS } = require('../main/stems.js');
+    assert.ok(MODELS.cpu.file === 'htdemucs.ort' && MODELS.gpu.file === 'htdemucs.onnx' && MODELS.gpu.license === 'MIT' && MODELS.gpu.bytes === 316446953);
+    assert.ok(/^https:\/\/huggingface\.co\/StemSplitio\/htdemucs-onnx\//.test(MODELS.gpu.url) && /^[0-9a-f]{64}$/.test(MODELS.gpu.sha256) && MODELS.gpu.sha256 !== MODELS.cpu.sha256);
+    const mkBody = (n) => crypto.randomBytes(n); const bodies = { cpu: mkBody(70000), gpu: mkBody(90000) };
+    const specs = Object.fromEntries(Object.entries(bodies).map(([v, b]) => [v, { ...MODELS[v], url: `http://x/${v}`, bytes: b.length, sha256: crypto.createHash('sha256').update(b).digest('hex') }]));
+    const asked = []; const urls = []; const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-set-'));
+    const set = new ModelSet({ dir, specs, confirm: async (i) => (asked.push(i), true), fetch: async (u) => (urls.push(u), new Response(bodies[u.endsWith('gpu') ? 'gpu' : 'cpu'])) });
+    assert.ok(!set.present('cpu') && !set.present('gpu')); assert.strictEqual(path.basename(set.path('gpu')), 'htdemucs.onnx'); assert.strictEqual(path.basename(set.path()), 'htdemucs.ort');
+    await set.ensure('gpu'); assert.ok(set.present('gpu') && !set.present('cpu'), 'solo se baja la variante pedida'); assert.deepStrictEqual(urls, ['http://x/gpu']);
+    assert.strictEqual(asked.length, 1); assert.strictEqual(asked[0].variant, 'gpu'); assert.strictEqual(asked[0].license, 'MIT');
+    const st = set.status(); assert.ok(st.variants.gpu.present && !st.variants.cpu.present && st.present === false && st.variants.gpu.bytes === bodies.gpu.length);
+    await set.ensure('gpu'); assert.strictEqual(urls.length, 1, 'ya presente: no vuelve a pedir ni a bajar');
+    // una variante corrupta se descarta y no deja archivo
+    const bad = new ModelSet({ dir: fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-set-')), specs, confirm: async () => true, fetch: async () => new Response(Buffer.concat([bodies.gpu.subarray(0, 89999), Buffer.from([bodies.gpu.at(-1) ^ 1])])) });
+    await assert.rejects(bad.ensure('gpu'), /SHA-256/); assert.ok(!bad.present('gpu'));
+  }
   console.log('stems model: OK');
 };
 
@@ -147,6 +165,19 @@ tests.store = async () => {
     const d = makeStore({ workerEnv: {} }); d.store.request('M1', track);
     await d.until(() => d.events.some((e) => e.stage === 'error')); assert.strictEqual(d.events.find((e) => e.stage === 'error').code, 'modelo');
   }
+  {
+    // REQ-4: prioridades 0 = deck, 1 = siguiente de AutoMix, 2 = resto; las de menor número adelantan, a igual prioridad por llegada
+    const { store, events, until } = makeStore({ workerEnv: { YTDJ_STEMS_FAKE: '1', YTDJ_STEMS_SLOW_MS: '60' } });
+    store.request('Q-run', track, 2); await until(() => events.some((e) => e.id === 'Q-run' && e.stage === 'progress'));
+    store.request('Q-b', track); store.request('Q-c', track, 2); store.request('Q-next', track, 1); store.request('Q-deck', track, 0); store.request('Q-d', track, 2);
+    assert.deepStrictEqual(store.queue.map((q) => q.id), ['Q-deck', 'Q-next', 'Q-b', 'Q-c', 'Q-d'], 'cola ordenada por prioridad y llegada');
+    assert.strictEqual(store.request('Q-c', track, 2), false, 'misma prioridad: sin cambios'); assert.strictEqual(store.request('Q-c', track, 3), false, 'prioridad inválida cuenta como 2');
+    assert.strictEqual(store.request('Q-run', track, 0), false, 'la que ya se separa no se repite');
+    assert.ok(store.request('Q-d', track, 1), 'subir de prioridad una que espera'); assert.deepStrictEqual(store.queue.map((q) => q.id), ['Q-deck', 'Q-next', 'Q-d', 'Q-b', 'Q-c']);
+    assert.strictEqual(events.filter((e) => e.id === 'Q-d' && e.stage === 'queued').at(-1).priority, 1);
+    await until(() => store.has('Q-c'), 120000);
+    assert.deepStrictEqual(events.filter((e) => e.stage === 'done').map((e) => e.id), ['Q-run', 'Q-deck', 'Q-next', 'Q-d', 'Q-b', 'Q-c'], 'terminan en el orden de prioridad');
+  }
   console.log('stems store: OK');
 };
 
@@ -197,8 +228,41 @@ tests.ipc = async () => {
   assert.strictEqual(available().available, true, 'esta instalación trae onnxruntime-node');
   // IPC, preload y empaquetado
   const main = fs.readFileSync(path.join(root, 'main/main.js'), 'utf8'); const pre = fs.readFileSync(path.join(root, 'preload/app.js'), 'utf8'); const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  for (const c of ['status', 'list', 'request', 'cancel', 'remove', 'remove-all']) { assert.ok(main.includes(`'stems:${c}'`) && pre.includes(`'stems:${c}'`), `canal stems:${c}`); }
+  for (const c of ['status', 'device', 'list', 'request', 'cancel', 'remove', 'remove-all']) { assert.ok(main.includes(`'stems:${c}'`) && pre.includes(`'stems:${c}'`), `canal stems:${c}`); }
   assert.ok(pre.includes("on('stems:event')") && /stemfile\//.test(main) && /showMessageBox/.test(main), 'evento, ruta del archivo y diálogo de permiso');
+  // REQ-1/2: el evento done trae la velocidad medida (rt), el selector la recuerda y Ajustes la muestra
+  {
+    const dev = require('../main/stems-device.js'); const rts = [];
+    const { store, events, until } = makeStore({ plan: () => ({ provider: 'webgpu', variant: 'gpu' }), onRt: (p, rt) => rts.push([p, rt]) });
+    store.request('R9', demoTrack()); await until(() => store.has('R9') || events.some((e) => e.stage === 'error'));
+    const dn = events.find((e) => e.stage === 'done'); assert.ok(dn && dn.rt > 0 && dn.device === 'webgpu', JSON.stringify(dn)); assert.deepStrictEqual(rts.map((r) => r[0]), ['webgpu']); assert.ok(rts[0][1] === dn.rt);
+    const sel = new dev.DeviceSelector({ dir: fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-rt-')), appVersion: '1', modelSha: 'a', candidates: ['webgpu'], probe: async () => ({ ok: true, rt: 14, cpuRt: 3, snr: 90 }) });
+    await sel.select(); sel.noteRt('cpu', 99); assert.strictEqual(sel.info().rt, 14, 'otro dispositivo no la cambia'); sel.noteRt('webgpu', 12.5); assert.strictEqual(new dev.DeviceSelector(sel.o).info().rt, 12.5, 'se guarda en device.json');
+    const { StemsStore } = await import('../renderer/stems.js'); const st = new StemsStore({ list: async () => ({}), status: async () => ({ available: true, usedBytes: 0, count: 0 }), device: async () => ({ device: 'webgpu', label: 'WebGPU', rt: 14.2, probe: 'ok' }), onEvent: () => {} });
+    assert.strictEqual(st.deviceLine(), 'Dispositivo: CPU · se elige al separar la primera pista'); await st.init(); assert.strictEqual(st.deviceLine(), 'Dispositivo: WebGPU · 14× tiempo real');
+    st.device = { device: 'cpu', label: 'CPU', rt: 3.14, probe: 'fallo' }; assert.strictEqual(st.deviceLine(), 'Dispositivo: CPU · 3.1× tiempo real · la GPU no funcionó y se usa la CPU');
+    st.onEvent({ id: 'x', stage: 'fallback', error: 'El proceso de separación terminó (139)' }); assert.match(st.notice, /Se usó la CPU: .*139/);
+    const html = fs.readFileSync(path.join(root, 'renderer/index.html'), 'utf8'); assert.ok(/<h4>Stems<\/h4>/.test(html) && /id="stems-device"/.test(html) && /id="stems-notice"/.test(html), 'sección Stems en Ajustes');
+    assert.ok(/stems-device/.test(fs.readFileSync(path.join(root, 'renderer/library.js'), 'utf8')), 'se pinta desde el estado compartido');
+  }
+  // REQ-4: stemsAuto (auto | on | off), IPC con prioridad y petición automática al cargar en un deck y al fijar la siguiente
+  {
+    for (const c of ['settings', 'set']) assert.ok(main.includes(`'stems:${c}'`) && pre.includes(`'stems:${c}'`), `canal stems:${c}`);
+    assert.ok(/stemsAuto: 'auto'/.test(read('main/settings.js')) && /stemsQuotaGB: 5/.test(read('main/settings.js')), 'valores por defecto');
+    assert.ok(/name="stemsAuto"/.test(read('renderer/index.html')) && /<option value="auto">/.test(read('renderer/index.html')), 'control en Ajustes');
+    assert.ok(/this\.stems\.auto\(d\?\.track\?\.videoId, 0,/.test(read('renderer/app.js')), 'al cargar en un deck: prioridad 0');
+    assert.ok(/stems\?\.auto\(this\.queue\[0\]\.videoId, 1,/.test(read('renderer/automix.js')), 'la siguiente de AutoMix: prioridad 1');
+    const { StemsStore } = await import('../renderer/stems.js'); const calls = [];
+    const mkSt = (device, avail = true) => { const st = new StemsStore({ request: async (id, pr) => (calls.push([id, pr]), { ok: true }), list: async () => ({}), status: async () => ({}) }); st.status = { available: avail, usedBytes: 0, count: 0 }; st.device = device; return st; };
+    const gpu = { device: 'webgpu', label: 'WebGPU', rt: 14, probe: 'ok' }; const cpu = { device: 'cpu', label: 'CPU', rt: null, probe: 'pendiente' };
+    assert.ok(mkSt(gpu).autoOn('auto') && !mkSt(cpu).autoOn('auto') && !mkSt({ ...gpu, probe: 'fallo' }).autoOn('auto'), 'auto: solo con GPU comprobada');
+    assert.ok(mkSt(cpu).autoOn('on') && !mkSt(gpu).autoOn('off') && !mkSt(gpu, false).autoOn('on'), 'on siempre (si hay motor), off nunca');
+    const st = mkSt(gpu); assert.strictEqual(await st.auto('t1', 0, 'auto'), true); assert.strictEqual(await st.auto('t1', 0, 'auto'), false, 'no insiste a cada repintado'); assert.strictEqual(await st.auto('t2', 1, 'auto'), true);
+    st.done.t3 = {}; assert.strictEqual(await st.auto('t3', 0, 'auto'), false, 'ya la tiene'); st.jobs.t4 = { stage: 'queued' }; assert.strictEqual(await st.auto('t4', 0, 'auto'), false, 'ya está en marcha');
+    assert.strictEqual(await mkSt(gpu).auto('t5', 0, 'off'), false); assert.deepStrictEqual(calls, [['t1', 0], ['t2', 1]]);
+    const failing = new StemsStore({ request: async () => { throw new Error('x'); }, list: async () => ({}), status: async () => ({}) }); failing.status = { available: true }; failing.device = gpu; assert.strictEqual(await failing.auto('z', 0, 'on'), false, 'un fallo no rompe ni se anota');
+    assert.ok(!failing.errors.z, 'sin error visible en la fila');
+  }
   assert.ok(pkg.dependencies['onnxruntime-node'], 'onnxruntime-node en dependencies');
   const filt = (k) => (pkg.build[k].files || []).join(' ');
   assert.ok(/linux/.test(filt('win')) && /darwin/.test(filt('win')) && !/win32/.test(filt('win')), 'win conserva solo win32');
@@ -253,6 +317,14 @@ tests.engine = async () => {
   assert.ok(Math.abs(r.offSnap.pos - r.pre.pos) < 2.5 && r.offSnap.pos > r.pre.pos - 0.2, `misma posición (${r.pre.pos.toFixed(2)} → ${r.offSnap.pos.toFixed(2)})`); assert.ok(r.offLevel > 0.1 && Math.abs(r.offSnap.rate - 1) < 0.01, 'suena la completa a velocidad 1');
   // cargar otra pista apaga los stems
   assert.ok(r.beforeLoad.stems.on && !r.afterLoad.stems.on && !/stemfile/.test(r.afterLoad.src) && !r.afterLoad.paused, `carga apaga stems (${JSON.stringify(r.afterLoad)})`);
+    // REQ-5/6: activar con la acción ya aplicada y fundido cruzado sin salto; «Completa» devuelve la pista entera
+  assert.ok(r.comboOn.ok && r.comboOn.st.on && r.comboOn.st.mute[3] && !r.comboOn.st.mute[0], `activa con la voz en mute (${JSON.stringify(r.comboOn)})`);
+  assert.ok(r.comboOn.ms < 4000, `una sola acción, sin esperas largas (${Math.round(r.comboOn.ms)} ms)`);
+  assert.ok(near(r.comboMuted / k, 0.35, 0.25), `sin voz suena ≈ 0,35 de 0,75 (${(r.comboMuted / k).toFixed(3)})`);
+  assert.ok(!r.comboSnap.paused && r.comboSnap.stems.on, 'sigue sonando tras el fundido');
+  assert.ok(!r.comboOffSnap.stems.on && !r.comboOffSnap.paused && r.comboOffLevel > 0.02, `vuelta a la completa sin cortes (${r.comboOffLevel.toFixed(3)})`);
+  assert.ok(r.comboSolo.on && r.comboSolo.solo[0] && !r.comboSolo.mute[0], 'activar con la batería aislada'); assert.ok(near(r.comboSoloLevel / k, tones[0].a, 0.35), `solo la batería: su amplitud (${(r.comboSoloLevel / k).toFixed(3)})`);
+  assert.ok(!r.comboOffAgain.st.on && !r.comboOffAgain.paused, 'segunda vuelta limpia: sin restos del fundido');
   console.log('stems engine: OK');
 };
 
@@ -262,27 +334,31 @@ tests.ui = async () => {
   assert.ok(/class="stems"/.test(html) && (html.match(/class="stem"/g) || []).length === 4 && /id="stems-sum"/.test(html) && /\.stems-bar/.test(css) && /prefers-reduced-motion/.test(css), 'marcado y estilos');
   assert.ok(/aria-pressed/.test(html) && /aria-label="Cancelar la separación"/.test(html), 'accesibilidad de la tira');
   const S = await import('../renderer/stems.js');
-  assert.strictEqual(S.jobText({ stage: 'progress', progress: 0.37, etaS: 80 }), 'Separando… 37 %, ≈ 1:20'); assert.match(S.jobText({ stage: 'model', progress: 0.5 }), /modelo.*50 %/); assert.strictEqual(S.fmtSize(310e6), '310 MB');
+  assert.strictEqual(S.jobText({ stage: 'progress', progress: 0.37, etaS: 80 }), 'Preparando · 37 % · 1:20'); assert.match(S.jobText({ stage: 'model', progress: 0.5 }), /modelo.*50 %/); assert.strictEqual(S.fmtSize(310e6), '310 MB');
   assert.deepStrictEqual(S.STEM_UI.map((s) => s.ch), [3, 0, 1, 2]); assert.strictEqual(S.trackView({ available: false, why: 'x' }).mode, 'off'); assert.strictEqual(S.trackView({ hasFile: false }).mode, 'off');
   const r = await runApp('stems-ui-selftest.js', 'stems-ui.json', null, { YTDJ_STEMS_FAKE: '1', YTDJ_STEMS_SLOW_MS: '120' });
-  // sin stems: ofrece separar; la pista solo de streaming no se puede (REQ-5, REQ-7)
-  assert.strictEqual(r.status.available, true); assert.ok(r.s0.mode === 'none' && r.s0.go === 'Separar' && !r.s0.goOff, `inicio ${JSON.stringify(r.s0)}`);
+  // sin stems: los cuatro botones en su sitio y nada de «Separar»/«Activar»; la pista solo de streaming no se puede (REQ-5, REQ-7)
+  assert.strictEqual(r.status.available, true); assert.ok(r.s0.mode === 'none' && !r.s0.goBtn && r.s0.group && r.s0.disabled.every((d) => !d) && /Pulsa un stem/.test(r.s0.msg), `inicio ${JSON.stringify(r.s0)}`);
+  assert.ok(r.s0.titles.every((t) => /separa la pista/.test(t)), 'la ayuda explica qué hace el clic'); assert.ok(!r.s0.off, 'sin «Completa» al inicio');
   assert.ok(r.rowStream.disabled && /guarda|archivo/i.test(r.rowStream.title), `streaming sin archivo (${r.rowStream.title})`); assert.strictEqual(r.reqStream.ok, false); assert.match(r.reqStream.error, /archivo local/);
   assert.ok(!r.row0.chip && r.sum0.hidden, 'sin chip ni resumen al inicio');
+  // un clic en Voz queda pendiente (se ve pulsado) mientras se prepara
+  assert.ok(r.pending.pressed[0] === 'true' && r.pending.mode !== 'off', `acción pendiente (${JSON.stringify(r.pending)})`);
   // REQ-2: progreso y tiempo restante en el deck y en la fila, con cancelar
-  assert.ok(r.work && r.work.x && r.work.bar && /Separando… \d+ %/.test(r.work.msg), `trabajo en el deck (${JSON.stringify(r.work)})`); assert.ok(/^\d+ %$/.test(r.rowWork.text) && /cancelar/.test(r.rowWork.title), `trabajo en la fila (${JSON.stringify(r.rowWork)})`);
-  // REQ-7: al terminar, chip con tamaño y resumen
-  assert.ok(r.ready.mode === 'ready' && r.ready.go === 'Activar stems' && !r.ready.goOff, `listos (${JSON.stringify(r.ready)})`); assert.ok(r.rowReady.chip && /MB/.test(r.rowReady.chipTitle) && /Stems/.test(r.rowReady.text), 'chip y botón en la fila');
+  assert.ok(r.work && r.work.x && r.work.bar && /Preparando · \d+ %/.test(r.work.msg), `trabajo en el deck (${JSON.stringify(r.work)})`); assert.ok(/^\d+ %$/.test(r.rowWork.text) && /cancelar/.test(r.rowWork.title), `trabajo en la fila (${JSON.stringify(r.rowWork)})`);
+  // REQ-6/7: al terminar se aplica solo, sin «Activar»: activos con la voz en mute, chip con tamaño y resumen
+  assert.ok(r.active.mode === 'active' && r.active.group && !r.active.goBtn && r.active.pressed[0] === 'true' && /Voz \(silenciada\)/.test(r.active.labels[0]), `activos con la voz en mute (${JSON.stringify(r.active)})`);
+  assert.ok(r.active.off, '«Completa» aparece con un stem silenciado'); assert.ok(r.rowReady.chip && /MB/.test(r.rowReady.chipTitle) && /Stems/.test(r.rowReady.text), 'chip y botón en la fila');
   assert.ok(!r.sumReady.hidden && /Stems: 1 pista, \d+ MB/.test(r.sumReady.text), `resumen (${r.sumReady.text})`); assert.ok(r.list[r.id].bytes > 1000);
-  // REQ-5: activar, silenciar (aria-pressed y texto), aislar, volver
-  assert.ok(r.active.mode === 'active' && r.active.group && r.active.off && !r.active.go, `activos (${JSON.stringify(r.active)})`); assert.deepStrictEqual(r.active.pressed, ['false', 'false', 'false', 'false']);
-  assert.strictEqual(r.muted.pressed[0], 'true'); assert.match(r.muted.labels[0], /Voz \(silenciada\)/);
+  // REQ-5: aislar, «Completa» (los botones siguen en su sitio), reactivar con un clic y soltar el último mute vuelve solo a la completa
   assert.ok(r.soloed.solo[1] && /Batería \(aislada\)/.test(r.soloed.labels[1]), `solo (${JSON.stringify(r.soloed)})`);
-  assert.ok(r.back.mode === 'ready' && !r.back.group, 'Completa vuelve a la pista completa');
+  assert.ok(r.back.mode === 'ready' && r.back.group && !r.back.off && r.back.pressed.every((p) => p === 'false'), `Completa vuelve a la pista completa (${JSON.stringify(r.back)})`);
+  assert.ok(r.again.mode === 'active' && r.again.pressed[2] === 'true', `un clic basta para activar (${JSON.stringify(r.again)})`);
+  assert.ok(r.unmuted.mode === 'ready' && r.unmuted.pressed.every((p) => p === 'false') && !r.unmuted.off, `sin ningún mute, vuelve a la completa (${JSON.stringify(r.unmuted)})`);
   // borrar desde la Librería
   assert.ok(r.deleted.mode === 'none' && !r.rowDeleted.chip && r.sumDeleted.hidden, `borrado (${JSON.stringify(r.rowDeleted)})`);
   // cancelar: vuelve a ofrecer separar y no quedan restos
-  assert.ok(r.beforeCancel.mode === 'work', 'trabajo en curso antes de cancelar'); assert.strictEqual(r.cancelled.mode, 'none'); assert.deepStrictEqual(r.listAfter, {});
+  assert.ok(r.beforeCancel.mode === 'work', 'trabajo en curso antes de cancelar'); assert.strictEqual(r.cancelled.mode, 'none'); assert.ok(r.cancelled.pressed.every((p) => p === 'false'), 'cancelar descarta la acción pendiente'); assert.deepStrictEqual(r.listAfter, {});
   const left = fs.readdirSync(path.join(lastData, 'stems')).filter((f) => f.endsWith('.part') || f.endsWith('.flac')); assert.deepStrictEqual(left, [], `restos: ${left}`);
   console.log('stems ui: OK');
 };
@@ -290,10 +366,12 @@ tests.ui = async () => {
 tests.docs = () => {
   const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
   const doc = read('docs/05-stems.md'); const idx = read('docs/README.md'); const rd = read('README.md'); const ci = read('.github/workflows/ci.yml');
-  assert.ok(/HTDemucs/.test(doc) && /210 MB/.test(doc) && /SHA-256/.test(doc) && /no lo incluye/.test(doc) && /Apache-2\.0/.test(doc), 'el modelo y el permiso');
+  assert.ok(/HTDemucs/.test(doc) && /210 MB/.test(doc) && /SHA-256/.test(doc) && /no los incluye/.test(doc) && /Apache-2\.0/.test(doc), 'el modelo y el permiso');
   assert.ok(/1,7 veces/.test(doc) && /1,5 GB/.test(doc) && /15 minutos/.test(doc) && /Borrar stems/.test(doc) && /Mayús o Ctrl/.test(doc) && /macOS con Intel/.test(doc), 'coste, límites y plataformas');
+  assert.ok(/316 MB/.test(doc) && /StemSplitio/.test(doc) && /MIT/.test(doc) && /DirectML/.test(doc) && /CoreML/.test(doc) && /WebGPU/.test(doc) && /device\.json/.test(doc) && /40 dB/.test(doc), 'GPU: modelo, proveedores y sondeo');
+  assert.ok(/Preparar stems solos/.test(doc) && /siguiente de AutoMix/.test(doc) && /Espacio máximo/.test(doc) && /Completa/.test(doc) && /40 ms/.test(doc) && !/Activar stems/.test(doc), 'preparación automática, cuota y sin «Activar»');
   assert.ok(/05-stems\.md/.test(idx) && /05-stems\.md/.test(rd), 'enlazada desde el índice y el README');
-  for (const m of ['model', 'store', 'ipc', 'docs']) assert.ok(new RegExp(`for m in [^;]*\\b${m}\\b[^;]*; do node --experimental-default-type=module scripts/test-stems.js`).test(ci), `CI ejecuta ${m}`);
+  for (const m of ['model', 'store', 'ipc', 'device', 'quota', 'docs']) assert.ok(new RegExp(`for m in [^;]*\\b${m}\\b[^;]*; do node --experimental-default-type=module scripts/test-stems.js`).test(ci), `CI ejecuta ${m}`);
   assert.ok(/test-stems\.js \$m/.test(ci) && /xvfb-run -a node --experimental-default-type=module scripts\/test-stems\.js \$m/.test(ci), 'CI ejecuta engine y ui con pantalla virtual');
   console.log('stems docs: OK');
 };
@@ -313,6 +391,111 @@ tests.real = async () => {
   const snr = 10 * Math.log10(den / Math.max(num, 1e-12)); assert.ok(snr > 15, `la suma de los cuatro stems reconstruye la mezcla (SNR ${snr.toFixed(1)} dB)`);
   const energy = [0, 1, 2, 3].map((k) => { let e = 0; for (let i = 0; i < n; i++) e += st[i * 8 + k * 2] ** 2; return e; }); assert.ok(energy.every((e) => e > 0), 'los cuatro stems tienen señal');
   console.log(`stems real: OK (20 s en ${secs.toFixed(1)} s, SNR ${snr.toFixed(1)} dB)`);
+};
+
+// ---------- cuota: borra los menos usados, nunca los cargados en decks ni la recién hecha ----------
+tests.quota = async () => {
+  const track = demoTrack();
+  const { store, events, until } = makeStore();
+  for (const id of ['Q1', 'Q2', 'Q3']) store.request(id, track);
+  await until(() => store.has('Q1') && store.has('Q2') && store.has('Q3'));
+  const size = store.index.Q1.bytes; assert.ok(size > 50000 && store.usage() >= 3 * size * 0.95, `tamaños (${size})`);
+  // Q2 se usó hace poco, Q1 hace mucho, Q3 a medias
+  store.index.Q1.used = 1000; store.index.Q3.used = 2000; store.index.Q2.used = Date.now(); store.save();
+  assert.deepStrictEqual(store.trim(0), [], 'sin límite válido no borra'); assert.deepStrictEqual(store.trim(store.usage() + 1), [], 'dentro de la cuota no borra');
+  // pasa de la cuota por una pista: cae la menos usada y deja de haber evento si no se borra nada
+  const lim = store.usage() - 1; const ev0 = events.length;
+  assert.deepStrictEqual(store.trim(lim), ['Q1'], 'cae la menos usada'); assert.ok(!store.has('Q1') && !fs.existsSync(store.fileOf('Q1')), 'y su archivo');
+  const tr = events.slice(ev0).find((e) => e.stage === 'trimmed'); assert.ok(tr && tr.ids[0] === 'Q1' && tr.usedBytes === store.usage(), 'evento trimmed');
+  assert.ok(JSON.parse(fs.readFileSync(store.indexFile(), 'utf8')).Q1 === undefined, 'el índice en disco también');
+  // lo cargado en decks no se toca aunque sea lo menos usado; se borra lo siguiente
+  store.setKeep(['Q3']); assert.deepStrictEqual(store.trim(store.usage() - 1), ['Q2'], 'Q3 protegida: cae Q2'); assert.ok(store.has('Q3'));
+  // si no cabe ni así, se queda lo protegido y la `except`
+  store.setKeep(['Q3']); assert.deepStrictEqual(store.trim(1, ['Q3']), [], 'nada más que borrar'); assert.ok(store.has('Q3'));
+  // touch marca el uso (se llama al servir el archivo)
+  const before = store.index.Q3.used; await sleep(5); store.touch('Q3'); assert.ok(store.index.Q3.used > before); store.touch('no-existe');
+  // tras separar una pista nueva se aplica la cuota sobre las demás y la nueva sobrevive
+  {
+    const m = makeStore({ quotaBytes: () => 1 }); for (const id of ['N1', 'N2']) m.store.request(id, track);
+    await m.until(() => m.store.has('N2') || m.events.some((e) => e.stage === 'error'));
+    assert.ok(m.store.has('N2') && !m.store.has('N1'), `solo queda la última (${Object.keys(m.store.list())})`); assert.ok(m.events.some((e) => e.stage === 'trimmed' && e.ids.includes('N1')));
+  }
+  // al reiniciar conserva el orden de uso (campo `used` en index.json)
+  const { StemStore } = require('../main/stems.js'); const again = new StemStore({ dir: store.dir, ffmpeg: () => FF, modelPath: () => '' }); assert.ok(again.has('Q3') && again.index.Q3.used === store.index.Q3.used);
+  // wiring: IPC, valor por defecto, control y botón de Ajustes, protección de los decks y evento en el renderer
+  const main = read('main/main.js'); const pre = read('preload/app.js');
+  assert.ok(/stems:keep/.test(main) && /stems:keep/.test(pre) && /stems\.touch\(/.test(main) && /stems\?\.trim\(/.test(main) && /quotaBytes: \(\) => stemSettings\(\)\.quotaGB \* 1e9/.test(main), 'cuota cableada en main');
+  assert.ok(/name="stemsQuotaGB"/.test(read('renderer/index.html')) && /id="stems-clear-all"/.test(read('renderer/index.html')) && /id="stems-space"/.test(read('renderer/index.html')), 'controles en Ajustes');
+  assert.ok(/window\.ytdj\.stems\.keep\(/.test(read('renderer/app.js')), 'los decks se protegen');
+  const { StemsStore } = await import('../renderer/stems.js'); const st = new StemsStore({ list: async () => ({}), status: async () => ({ available: true, usedBytes: 1.2e9, count: 2 }), onEvent: () => {} }); st.status = { available: true, usedBytes: 1.2e9 }; st.done = { a: {}, b: {} };
+  assert.strictEqual(st.spaceLine(5), 'Espacio: 1.2 GB de 5 GB · al pasarte se borran los menos usados'); st.status.usedBytes = 40e6; assert.match(st.spaceLine(5), /^Espacio: 40 MB de 5 GB/);
+  let changes = 0; st.onChange = () => changes++; st.onEvent({ stage: 'trimmed', ids: ['a'] }); assert.ok(!('a' in st.done) && 'b' in st.done && changes >= 1, 'trimmed quita la pista del estado');
+  const { settingPatch } = await import('../renderer/settings-ui.js'); assert.deepStrictEqual(settingPatch('stemsQuotaGB', { stemsQuotaGB: { type: 'number', value: '8' } }), { stemsQuotaGB: 8 });
+  console.log('stems quota: OK');
+};
+
+// ---------- dispositivo: selección por plataforma, sondeo con caché y caída a CPU ----------
+tests.device = async () => {
+  const dev = require('../main/stems-device.js');
+  // proveedores por plataforma (REQ-1)
+  assert.deepStrictEqual(dev.candidates('win32', 'x64'), ['dml']); assert.deepStrictEqual(dev.candidates('darwin', 'arm64'), ['coreml']); assert.deepStrictEqual(dev.candidates('darwin', 'x64'), []);
+  assert.deepStrictEqual(dev.candidates('linux', 'x64', { cuda: true }), ['cuda', 'webgpu']); assert.deepStrictEqual(dev.candidates('linux', 'x64'), ['webgpu']);
+  const mk = (probe, extra = {}) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alyss-dev-')); const calls = []; const o = { dir, appVersion: '1', modelSha: 'aa', candidates: ['cuda', 'webgpu'], probe: async (p) => { calls.push(p); return probe(p); }, ...extra }; return { dir, calls, o, sel: new dev.DeviceSelector(o) }; };
+  const good = { ok: true, rt: 14, cpuRt: 3, snr: 80 };
+  { // el primero que pasa el sondeo gana; la caché evita repetirlo
+    const t = mk((p) => (p === 'cuda' ? { ok: false, error: 'sin cuDNN' } : good));
+    assert.strictEqual(t.sel.info().probe, 'pendiente'); assert.strictEqual(t.sel.provider(), 'cpu', 'sin sondeo, CPU');
+    const r = await t.sel.select(); assert.deepStrictEqual(t.calls, ['cuda', 'webgpu']);
+    assert.strictEqual(r.device, 'webgpu'); assert.strictEqual(r.probe, 'ok'); assert.strictEqual(r.rt, 14); assert.strictEqual(t.sel.provider(), 'webgpu');
+    const saved = JSON.parse(fs.readFileSync(path.join(t.dir, 'device.json'), 'utf8')); assert.ok(saved.ok && saved.device === 'webgpu' && saved.bad.cuda === 'sin cuDNN' && saved.appVersion === '1' && saved.modelSha === 'aa');
+    const t2 = new dev.DeviceSelector({ ...t.o, probe: async () => { throw new Error('no debe sondear'); } }); assert.strictEqual((await t2.select()).device, 'webgpu', 'la caché vale');
+    const t3 = new dev.DeviceSelector({ ...t.o, appVersion: '2' }); assert.strictEqual(t3.info().probe, 'pendiente', 'otra versión de app: se vuelve a sondear'); await t3.select(); assert.strictEqual(t.calls.length, 4);
+    const t4 = new dev.DeviceSelector({ ...t.o, modelSha: 'bb' }); assert.strictEqual(t4.fresh(), false, 'otro modelo: se vuelve a sondear');
+  }
+  { // salida distinta de CPU, más lento que CPU, o sondeo que lanza o muere: CPU y se recuerda por qué
+    for (const [name, probe, why] of [['snr', () => ({ ok: true, rt: 14, cpuRt: 3, snr: 20 }), /distinta de CPU/], ['lento', () => ({ ok: true, rt: 2, cpuRt: 3, snr: 90 }), /más lento/], ['lanza', () => { throw new Error('core dump'); }, /core dump/], ['muere', () => ({ ok: false, error: 'el sondeo terminó (139)' }), /139/]]) {
+      const t = mk(probe, { candidates: ['webgpu'] }); const r = await t.sel.select();
+      assert.strictEqual(r.device, 'cpu', name); assert.strictEqual(r.probe, 'fallo', name);
+      assert.match(JSON.parse(fs.readFileSync(path.join(t.dir, 'device.json'), 'utf8')).bad.webgpu, why, name);
+    }
+    const none = mk(() => good, { candidates: [] }); const r = await none.sel.select(); assert.ok(r.device === 'cpu' && r.probe === 'ok', 'sin candidatos la CPU es lo esperado, no un fallo');
+  }
+  { // una pista real que mata a la GPU la marca mala hasta que cambie la versión
+    const t = mk(() => good); await t.sel.select(); t.sel.markBad('webgpu', 'El proceso de separación terminó (139)');
+    assert.strictEqual(t.sel.provider(), 'cpu'); const again = new dev.DeviceSelector(t.o); assert.ok(again.fresh() && again.info().probe === 'fallo' && again.state.bad.webgpu);
+    t.sel.markBad('cpu', 'x'); assert.strictEqual(t.sel.provider(), 'cpu', 'cpu no se marca');
+  }
+  // el almacén cae a CPU cuando el hijo de GPU muere (REQ-3) y avisa para marcar el dispositivo
+  const track = demoTrack();
+  {
+    const fails = [];
+    const { store, events, until } = makeStore({ plan: () => ({ provider: 'webgpu', variant: 'gpu' }), onDeviceFail: (p, e) => fails.push([p, e]), workerEnv: { YTDJ_STEMS_FAKE: '1', YTDJ_STEMS_FAIL_PROVIDER: 'webgpu' } });
+    store.request('F1', track); await until(() => store.has('F1') || events.some((e) => e.stage === 'error'));
+    assert.ok(store.has('F1'), JSON.stringify(events.slice(-3)));
+    const fb = events.find((e) => e.stage === 'fallback'); assert.ok(fb && fb.from === 'webgpu' && fb.device === 'cpu', 'evento de caída a CPU');
+    assert.strictEqual(fails.length, 1); assert.strictEqual(fails[0][0], 'webgpu'); assert.match(fails[0][1], /139/);
+    assert.strictEqual(events.find((e) => e.stage === 'done').device, 'cpu'); assert.strictEqual(store.index.F1.device, 'cpu');
+    const src = probe(track); const out = probe(store.fileOf('F1')); assert.strictEqual(out.streams[0].channels, 8); assert.ok(Math.abs(+out.format.duration - +src.format.duration) < 0.15, 'la pista sale completa tras el reintento');
+  }
+  {
+    // variante gpu en un proveedor sano: la ventana va directa (sin STFT externa) y el resultado es el mismo FLAC de 8 canales
+    const fails = [];
+    const { store, events, until } = makeStore({ plan: () => ({ provider: 'webgpu', variant: 'gpu' }), onDeviceFail: (p) => fails.push(p) });
+    store.request('G1', track); await until(() => store.has('G1') || events.some((e) => e.stage === 'error'));
+    assert.ok(store.has('G1') && !fails.length && !events.some((e) => e.stage === 'fallback'), JSON.stringify(events.slice(-3)));
+    assert.strictEqual(store.index.G1.device, 'webgpu'); assert.ok(events.filter((e) => e.stage === 'progress').every((e) => e.device === 'webgpu'), 'el progreso informa del dispositivo');
+    assert.strictEqual(probe(store.fileOf('G1')).streams[0].channels, 8);
+  }
+  { // un fallo de CPU no se reintenta y sigue siendo error de la pista
+    const { store, events, until } = makeStore({ workerEnv: { YTDJ_STEMS_FAKE: '1' } });
+    store.request('Z1', path.join(os.tmpdir(), 'no-existe.mp3')); await until(() => events.some((e) => e.stage === 'error'));
+    assert.ok(!events.some((e) => e.stage === 'fallback') && events.find((e) => e.stage === 'error').code === 'archivo');
+  }
+  // `direct` en el DSP: sin freq ni x, la suma de la rama temporal da la mezcla
+  const D = require('../shared/stems-dsp.js'); const mix = signal(400000);
+  const direct = await runSeparate(D, mix, async ({ input, x }) => { assert.strictEqual(x, null); const time = new Float32Array(4 * 2 * D.W); for (let s = 0; s < 4; s++) for (let c = 0; c < 2; c++) for (let i = 0; i < D.W; i++) time[(s * 2 + c) * D.W + i] = input[c * D.W + i] * 0.25; return { time }; }, { direct: true });
+  const sum = new Float32Array(400000); for (let s = 0; s < 4; s++) for (let i = 0; i < 400000; i++) sum[i] += direct.out[s * 2][i]; assert.ok(snr(mix[0], sum) > 60, 'modo directo reconstruye la mezcla');
+  console.log('stems device: OK');
 };
 
 tests[mode] = tests[mode] || (() => { console.error('modo no implementado todavía:', mode); process.exit(2); });

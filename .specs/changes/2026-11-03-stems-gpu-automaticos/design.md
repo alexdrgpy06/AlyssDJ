@@ -68,3 +68,21 @@ Lectura: consola de DJ para una persona que mezcla en directo, modo Operate, den
 - Movimiento: ninguno nuevo; la barra respeta `prefers-reduced-motion`.
 
 ## Amendments
+
+### A1 · 2026-11-03
+El spike (`spike-gpu.md`) halló un ONNX apto para GPU con otra interfaz: `StemSplitio/htdemucs-onnx` (MIT, 316 MB, entrada `mix`, salida `stems`, STFT/iSTFT dentro del grafo). En WebGPU corre ≈ 15× tiempo real frente a ≈ 3× en CPU, con SNR ≥ 67 dB. Por tanto la variante `gpu` no usa `shared/stems-dsp.js` y el hijo le pasa la ventana directa; la variante `cpu` sigue con el `.ort`. Afecta a REQ-1, REQ-2 y REQ-8.
+
+## Domain deltas
+### audio
+#### ADDED spec: Stems en GPU con caída a CPU
+WHEN hay un proveedor de GPU candidato en la plataforma (DirectML en Windows, CoreML en macOS arm64, CUDA o WebGPU en Linux) THE SYSTEM SHALL sondear una ventana sintética en ese proveedor y en CPU y usar la GPU solo si su salida coincide (SNR ≥ 40 dB) y es más rápida; IF el proveedor falla o su proceso muere THEN THE SYSTEM SHALL repetir la pista en CPU, marcar el dispositivo como malo hasta que cambie la versión de la app o del modelo e informar.
+#### ADDED spec: Cambio sin salto a los stems
+WHEN el usuario pulsa un stem de una pista con stems listos THE SYSTEM SHALL activarlos con el silencio o solo ya aplicado en una sola acción, con un fundido cruzado lineal de 40 ms desde la pista completa; WHEN no queda ningún stem silenciado o aislado THE SYSTEM SHALL volver a la pista completa con el mismo fundido.
+#### ADDED design: Variantes de modelo y proceso hijo
+`main/stems-device.js` (`DeviceSelector`, `candidates`, `hasCuda`) decide y recuerda el dispositivo en `userData/stems/device.json`; `main/stems.js` define `MODELS = { cpu, gpu }` y `ModelSet`; la variante `gpu` (`mix` → `stems`, STFT dentro del grafo) se separa con `separate(..., { direct: true })`; el sondeo y la separación corren en `main/stems-worker.js` (mensajes `probe` y `start` con `provider` y `variant`).
+### library
+#### ADDED spec: Preparación automática y cuota de stems
+WHEN el ajuste de preparación es automático y la GPU está comprobada, o es «Siempre» THE SYSTEM SHALL separar la pista cargada en un deck (prioridad 0) y la siguiente de AutoMix (prioridad 1) antes que las peticiones manuales (prioridad 2); WHILE los stems superen la cuota (5 GB por defecto) THE SYSTEM SHALL borrar primero los menos usados, sin tocar los cargados en un deck ni el recién hecho.
+### platform
+#### ADDED spec: Descarga del modelo de GPU con permiso
+WHEN hace falta el modelo de GPU THE SYSTEM SHALL pedir permiso mostrando nombre, origen, tamaño y licencia, descargarlo a un archivo parcial, verificar su SHA-256 y descartarlo si no coincide; IF el usuario no lo autoriza THEN THE SYSTEM SHALL seguir en CPU sin volver a preguntar en esa sesión.

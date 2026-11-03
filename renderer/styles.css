@@ -874,14 +874,15 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 /* Stems manuales: tira del deck y acciones de la Librería */
 .stems { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px 6px; min-height: 28px; position: relative; padding-bottom: 5px; }
 .stems-lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; color: var(--faint); }
-.stems-go { grid-column: 2; justify-self: start; padding: 4px 10px !important; min-height: 28px; }
 .stems-msg { grid-column: 2 / 4; font-size: 11.5px; color: var(--dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stems[data-mode='error'] .stems-msg { color: var(--warn); }
 .stems-x { grid-column: 4; min-height: 28px; min-width: 28px; }
 .stems-btns { grid-column: 2; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; }
-.stems-btns[hidden], .stems-go[hidden], .stems-x[hidden], .stems-off[hidden], .stems-bar[hidden], .stems-msg:empty { display: none; }
+.stems-btns[hidden], .stems-x[hidden], .stems-off[hidden], .stems-bar[hidden], .stems-msg:empty { display: none; }
 .stems-off { grid-column: 3 / 5; min-height: 28px; }
 .stem { min-height: 28px; font-size: 11.5px !important; }
+.stem:disabled { opacity: .4; cursor: not-allowed; box-shadow: none !important; }
+.stems[data-mode='work'] .stem:not(:disabled) { opacity: .75; }
 .stem[aria-pressed='true'] { text-decoration: line-through; opacity: .55; }
 .stem.solo { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); text-decoration: none; opacity: 1; }
 .stem:not([aria-pressed='true']):not(.solo) { box-shadow: inset 0 -2px 0 var(--accent); }

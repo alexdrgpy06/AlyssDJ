@@ -18,10 +18,13 @@ export class Library {
     this.jobs = new Map();
     this.body = document.getElementById('tracks');
     this.msg = document.getElementById('lib-msg');
-    document.getElementById('stems-clear')?.addEventListener('click', async () => {
-      const st = this.app.stems;
-      if (window.confirm(`¿Borrar los stems de ${Object.keys(st.done).length} pistas? Liberas ${fmtSize(st.status.usedBytes)}.`)) await st.removeAll();
-    });
+    for (const bid of ['stems-clear', 'stems-clear-all']) {
+      document.getElementById(bid)?.addEventListener('click', async () => {
+        const st = this.app.stems;
+        if (!Object.keys(st.done).length) return;
+        if (window.confirm(`¿Borrar los stems de ${Object.keys(st.done).length} pistas? Liberas ${fmtSize(st.status.usedBytes)}.`)) await st.removeAll();
+      });
+    }
     this.search = document.getElementById('search');
     this.addFolder = document.getElementById('btn-add-folder');
     this.addFolder.addEventListener('click', () => this.chooseFolder());
@@ -577,6 +580,12 @@ export class Library {
     else this.render();
     const st = this.app.stems;
     const n = Object.keys(st.done).length;
+    const dev = document.getElementById('stems-device');
+    if (dev) dev.textContent = st.deviceLine();
+    const space = document.getElementById('stems-space');
+    if (space) space.textContent = st.spaceLine(this.app.settings?.stemsQuotaGB || 5);
+    const note = document.getElementById('stems-notice');
+    if (note) { note.hidden = !st.notice; note.textContent = st.notice; }
     const sum = document.getElementById('stems-sum');
     if (sum) {
       sum.hidden = !n;

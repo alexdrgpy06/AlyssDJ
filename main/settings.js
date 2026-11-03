@@ -32,6 +32,9 @@ const DEFAULTS = {
   fxRemember: true,
   filterRes: 0.07,
   libraryDir: '', // vacío = Música/AlyssDJ/YouTube
+  // Stems: preparar solos los de la pista de un deck y la siguiente de AutoMix. auto = solo con un dispositivo de GPU ya comprobado.
+  stemsAuto: 'auto', // auto | on | off
+  stemsQuotaGB: 5, // espacio máximo de stems; al pasarse se borran los menos usados
 };
 
 let cache = null;

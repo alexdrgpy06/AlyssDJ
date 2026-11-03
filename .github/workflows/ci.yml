@@ -59,7 +59,7 @@ jobs:
           for m in model docs; do node --experimental-default-type=module scripts/test-recipes.js $m; done
           for m in math docs; do node --experimental-default-type=module scripts/test-jog.js $m; done
           for m in model docs; do node --experimental-default-type=module scripts/test-preescucha.js $m; done
-          for m in model store ipc docs; do node --experimental-default-type=module scripts/test-stems.js $m; done
+          for m in model store ipc device quota docs; do node --experimental-default-type=module scripts/test-stems.js $m; done
           for m in docs; do node scripts/test-orden.js $m; done
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done

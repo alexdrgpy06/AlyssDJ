@@ -111,59 +111,98 @@ export class Deck {
     const st = this.st.stems || { on: false };
     const local = this.source === 'local';
     const job = this.track && this.app.stems.jobs[this.track.videoId];
-    const key = JSON.stringify([v, local, st.mute, st.solo, job?.progress]);
+    const pend = this.stemsPending;
+    if (pend && (pend.id !== this.track?.videoId || v.mode === 'error' || v.mode === 'off')) this.stemsPending = null; // cambió la pista o la separación falló
+    if (this.stemsPending && (v.mode === 'ready' || v.mode === 'active') && !st.on) {
+      const p = this.stemsPending;
+      this.stemsPending = null;
+      this.activateStems(p); // terminó de preparar: se aplica lo que se pidió, sin otro clic
+    }
+    const any = !!(st.mute?.some(Boolean) || st.solo?.some(Boolean));
+    const key = JSON.stringify([v, local, st.on, st.mute, st.solo, job?.progress, !!this.stemsPending, this.srcInfo?.canSwitch]);
     if (key === this.stemsKey) return;
     this.stemsKey = key;
     s.root.dataset.mode = v.mode;
-    const label = { none: 'Separar', ready: 'Activar stems', error: 'Reintentar', off: 'Separar' }[v.mode];
-    s.go.hidden = !label;
-    if (label) {
-      s.go.textContent = label;
-      const blocked = v.mode === 'off' || (v.mode === 'ready' && !local);
-      s.go.disabled = blocked;
-      s.go.title = v.mode === 'off' ? v.why : v.mode === 'ready' && !local ? 'Cambia la fuente a ARCHIVO para usar los stems' : v.mode === 'ready' ? 'Reproduce la pista separada en cuatro stems' : 'Separa la pista en voz, batería, bajo y resto (en segundo plano)';
-    }
-    setText(s.msg, v.mode === 'work' || v.mode === 'error' ? v.text : v.mode === 'off' && this.track ? v.why || '' : '');
+    // los cuatro botones siempre en su sitio cuando hay pista; sin stems posibles, atenuados con el motivo en la ayuda
+    const usable = v.mode !== 'off';
+    const reason = v.mode === 'off' ? v.why || 'Stems no disponible' : '';
+    s.group.hidden = !this.track;
+    const prep = v.mode === 'none' || v.mode === 'error';
+    const text = v.mode === 'work' || v.mode === 'error' ? v.text : v.mode === 'off' && this.track ? v.why || '' : prep && !this.stemsPending ? 'Pulsa un stem para separar la pista' : '';
+    setText(s.msg, text);
     s.x.hidden = v.mode !== 'work';
     s.bar.hidden = v.mode !== 'work';
     if (v.mode === 'work') s.bar.style.setProperty('--p', String(job?.progress || 0));
-    s.group.hidden = s.off.hidden = v.mode !== 'active';
+    s.off.hidden = !(v.mode === 'active' && any); // «Completa» solo con algún stem silenciado o aislado
     s.btns.forEach((b) => {
       const ch = Number(b.dataset.s);
       const name = b.getAttribute('aria-label').replace(/ \(.*\)$/, '');
       const muted = !!st.mute?.[ch];
       const solo = !!st.solo?.[ch];
-      b.setAttribute('aria-pressed', String(muted));
-      b.classList.toggle('solo', solo);
+      const isPending = this.stemsPending?.ch === ch;
+      b.disabled = !usable;
+      b.setAttribute('aria-pressed', String(muted || (isPending && this.stemsPending.kind === 'mute')));
+      b.classList.toggle('solo', solo || (isPending && this.stemsPending.kind === 'solo'));
       b.setAttribute('aria-label', solo ? `${name} (aislada)` : muted ? `${name} (silenciada)` : name);
-      b.title = solo ? `${name} aislada: Mayús o Ctrl + clic para quitar el solo` : muted ? `${name} silenciada: clic para activarla` : `${name}: clic silencia, Mayús o Ctrl + clic la aísla`;
+      b.title = !usable ? `${name}: ${reason}`
+        : v.mode === 'work' ? `${name}: se aplicará al terminar de preparar la pista`
+        : prep ? `${name}: separa la pista y la silencia al terminar (Mayús o Ctrl + clic: la aísla)`
+        : v.mode === 'ready' && !local && !this.srcInfo?.canSwitch ? `${name}: esta pista solo tiene versión en stream; guárdala para separarla`
+        : solo ? `${name} aislada: Mayús o Ctrl + clic para quitar el solo` : muted ? `${name} silenciada: clic para activarla` : `${name}: clic la silencia, Mayús o Ctrl + clic la aísla`;
     });
+  }
+
+  // Activa los stems con la acción pedida ya aplicada ({ ch, kind: 'mute' | 'solo' }). Cambia a ARCHIVO si hace falta.
+  async activateStems({ ch, kind }) {
+    const id = this.track?.videoId;
+    if (!id) return;
+    try {
+      if (this.source !== 'local') {
+        if (!this.srcInfo?.canSwitch) return this.app.toast(this.srcInfo?.why || 'Guarda la pista para poder usar los stems', true);
+        await this.setSource('local');
+      }
+      const flags = [0, 1, 2, 3].map((i) => i === ch);
+      await this.sendLocal({ type: 'stems', op: 'on', url: `/stemfile/${encodeURIComponent(id)}`, mute: kind === 'mute' ? flags : [], solo: kind === 'solo' ? flags : [] });
+    } catch (e) {
+      this.app.toast(`Deck ${this.id}: ${e.message}`, true);
+    }
   }
 
   bindStems() {
     const s = this.el.stems;
     const id = () => this.track?.videoId;
-    s.go.addEventListener('click', async () => {
-      const v = this.stemsView();
-      if (!id()) return;
-      if (v.mode === 'ready') {
-        try {
-          await this.sendLocal({ type: 'stems', op: 'on', url: `/stemfile/${encodeURIComponent(id())}` });
-        } catch (e) {
-          this.app.toast(`Deck ${this.id}: ${e.message}`, true);
-        }
-      } else if (v.mode === 'none' || v.mode === 'error') {
-        const r = await this.app.stems.request(id());
-        if (r && r.ok === false) this.app.toast(r.error, true);
-      }
+    s.x.addEventListener('click', () => {
+      this.stemsPending = null;
+      if (id()) this.app.stems.cancel(id());
+      this.stemsKey = '';
+      this.paintStems();
     });
-    s.x.addEventListener('click', () => id() && this.app.stems.cancel(id()));
     s.off.addEventListener('click', () => this.sendLocal({ type: 'stems', op: 'off' }));
-    s.btns.forEach((b) => b.addEventListener('click', (e) => {
+    s.btns.forEach((b) => b.addEventListener('click', async (e) => {
+      if (!id()) return;
       const ch = Number(b.dataset.s);
+      const kind = e.shiftKey || e.ctrlKey || e.metaKey ? 'solo' : 'mute';
+      const v = this.stemsView();
       const st = this.st.stems || {};
-      if (e.shiftKey || e.ctrlKey || e.metaKey) this.sendLocal({ type: 'stems', op: 'solo', i: ch, v: !st.solo?.[ch] });
-      else this.sendLocal({ type: 'stems', op: 'mute', i: ch, v: !st.mute?.[ch] });
+      if (st.on) {
+        // ya activos: alterna silencio o solo; sin ninguno, vuelve a la pista completa
+        const mute = [...(st.mute || [false, false, false, false])];
+        const solo = [...(st.solo || [false, false, false, false])];
+        if (kind === 'solo') solo[ch] = !solo[ch]; else mute[ch] = !mute[ch];
+        await this.sendLocal({ type: 'stems', op: kind, i: ch, v: kind === 'solo' ? solo[ch] : mute[ch] });
+        if (!mute.some(Boolean) && !solo.some(Boolean)) this.sendLocal({ type: 'stems', op: 'off' });
+      } else if (v.mode === 'ready') this.activateStems({ ch, kind });
+      else if (v.mode === 'none' || v.mode === 'error') {
+        this.stemsPending = { id: id(), ch, kind };
+        this.stemsKey = '';
+        const r = await this.app.stems.request(id());
+        if (r && r.ok === false) { this.stemsPending = null; this.app.toast(r.error, true); }
+        this.paintStems();
+      } else if (v.mode === 'work') {
+        this.stemsPending = { id: id(), ch, kind }; // se aplica al terminar; pulsar otro stem sustituye la petición
+        this.stemsKey = '';
+        this.paintStems();
+      }
     }));
   }
 
@@ -790,7 +829,7 @@ export class Deck {
       scroll: document.getElementById(`scroll-${this.id}`),
       spin: q('.platter .spin'),
       platter: q('.platter'),
-      stems: { root: q('.stems'), go: q('.stems-go'), msg: q('.stems-msg'), x: q('.stems-x'), group: q('.stems-btns'), btns: [...root.querySelectorAll('.stem')], off: q('.stems-off'), bar: q('.stems-bar') },
+      stems: { root: q('.stems'), msg: q('.stems-msg'), x: q('.stems-x'), group: q('.stems-btns'), btns: [...root.querySelectorAll('.stem')], off: q('.stems-off'), bar: q('.stems-bar') },
     });
     q('.deck-letter').textContent = this.id;
     q('.art-letter').textContent = this.id;

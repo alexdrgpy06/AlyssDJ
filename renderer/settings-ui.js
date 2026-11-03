@@ -34,7 +34,7 @@ export function settingPatch(name, f) {
     default: {
       const el = f[name];
       if (!el) return null;
-      return { [name]: el.type === 'checkbox' ? el.checked : el.type === 'range' ? Number(el.value) : el.value };
+      return { [name]: el.type === 'checkbox' ? el.checked : el.type === 'range' || el.type === 'number' ? Number(el.value) : el.value };
     }
   }
 }

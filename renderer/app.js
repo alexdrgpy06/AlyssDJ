@@ -125,6 +125,9 @@ class App {
     this.library.render();
     // la cola de análisis atiende primero las pistas que están cargadas en un deck
     window.ytdj.backlog.setPriority([this.decks.A, this.decks.B].map((d) => d?.track?.videoId).filter(Boolean));
+    // los stems de lo que suena o está cargado se preparan solos (si el ajuste lo permite)
+    for (const d of [this.decks.A, this.decks.B]) this.stems.auto(d?.track?.videoId, 0, this.settings.stemsAuto);
+    window.ytdj.stems.keep([this.decks.A, this.decks.B].map((d) => d?.track?.videoId).filter(Boolean)); // la cuota no borra lo cargado
   }
 
   applyXf() {

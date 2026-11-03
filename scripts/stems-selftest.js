@@ -54,6 +54,14 @@ module.exports = (win) => {
       await js(`${E} await e.handle({ type: 'stems', op: 'on', url: '/stemfile/' + encodeURIComponent(${JSON.stringify(R.id)}) }); return 1`); await wait(300);
       R.beforeLoad = await js(snap);
       await js(`const d = __app.decks.A; await d.load(${JSON.stringify(row)}, { play: true, force: true }); return 1`); await wait(1500); R.afterLoad = await js(snap);
+      // activar con la acción ya aplicada (una sola acción): voz en mute desde el primer instante, aislar la batería, y volver
+      await js(`${E} await e.handle({ type: 'seek', t: 5 }); return 1`); await wait(300); R.comboFull = await js(lvl);
+      R.comboOn = await js(`${E} const t0 = performance.now(); const ok = await e.handle({ type: 'stems', op: 'on', url: '/stemfile/' + encodeURIComponent(${JSON.stringify(R.id)}), mute: [false, false, false, true], solo: [] }); return { ok, ms: performance.now() - t0, st: e.state().stems }`);
+      await wait(400); R.comboMuted = await js(lvl); R.comboSnap = await js(snap);
+      await js(`${E} await e.handle({ type: 'stems', op: 'off' }); return 1`); await wait(400); R.comboOffSnap = await js(snap); R.comboOffLevel = await js(lvl);
+      R.comboSolo = await js(`${E} await e.handle({ type: 'stems', op: 'on', url: '/stemfile/' + encodeURIComponent(${JSON.stringify(R.id)}), mute: [], solo: [true, false, false, false] }); await new Promise((r) => setTimeout(r, 500)); return e.state().stems`);
+      R.comboSoloLevel = await js(lvl);
+      R.comboOffAgain = await js(`${E} await e.handle({ type: 'stems', op: 'off' }); await new Promise((r) => setTimeout(r, 400)); return { st: e.state().stems, paused: e.media.paused }`);
       R.toast = await js(`return [...document.querySelectorAll('.toast')].map((t) => t.textContent)`);
     } catch (e) { R.__err = e.stack; }
     fs.writeFileSync(path.join(out, 'stems.json'), JSON.stringify(R));

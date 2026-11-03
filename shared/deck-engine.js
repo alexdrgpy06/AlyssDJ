@@ -24,7 +24,8 @@
     let rampTimer = null;
     let held = null; // plato sujeto: { wasPlaying, buffered }
     let scratch = null;
-    let stems = null; // stems activos: { el, orig, split, merge, gain, vol, mute, solo }
+    let stems = null; // stems activos: { el, orig, src, split, merge, gain, vol, mute, solo, fade, timer }
+    let stemsLag = 0.05; // s que tarda un <audio> en empezar a sonar tras play(); se mide en cada activación
 
     function attach(el) {
       if (!el || el === media) return;
@@ -134,43 +135,64 @@
     function applyStemGains() {
       if (!stems) return;
       const solo = stems.solo.some(Boolean);
+      const now = ctx.currentTime;
       stems.gain.forEach((g, i) => {
         const on = !stems.mute[i] && (!solo || stems.solo[i]);
-        g.gain.setTargetAtTime(on ? stems.vol[i] : 0, ctx.currentTime, 0.015); // ≈ 15 ms: sin chasquidos
+        g.gain.cancelScheduledValues(now); // si aún está el fundido de entrada, se parte del valor actual
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.setTargetAtTime(on ? stems.vol[i] : 0, now, 0.015); // ≈ 15 ms: sin chasquidos
       });
     }
 
+    const STEM_FADE = 0.04; // s: fundido cruzado entre la pista completa y los stems (sin salto audible)
+
+    // Suelta el grafo de stems. Si la pista completa seguía en un fundido, la deja conectada directo a la cadena.
     function stemsTeardown(restore = true) {
       if (!stems) return;
       const s = stems;
       stems = null;
+      clearTimeout(s.timer);
       try {
         s.el.pause();
         s.src.disconnect();
         s.split.disconnect();
         s.gain.forEach((g) => g.disconnect());
+        s.fade?.disconnect();
         s.el.removeAttribute('src');
         s.el.load();
       } catch { /* el grafo ya estaba suelto */ }
-      if (restore && media === s.el) {
-        media = s.orig;
-        sources.get(s.orig)?.connect(chain.input);
+      if (restore) {
+        const os = sources.get(s.orig);
+        try { os?.disconnect(); } catch { /* ya suelto */ }
+        os?.connect(chain.input);
+        if (media === s.el) media = s.orig;
       }
     }
 
-    async function stemsOn(url) {
+    // Ganancia objetivo de cada stem según mute/solo/volumen.
+    const stemTarget = (i) => {
+      const solo = stems.solo.some(Boolean);
+      return !stems.mute[i] && (!solo || stems.solo[i]) ? stems.vol[i] : 0;
+    };
+
+    // `cmd`: { url, mute?: [4], solo?: [4] }. Los stems entran ya con mute/solo aplicados, en una sola acción, y la pista
+    // completa se apaga con una rampa lineal de STEM_FADE mientras ellos suben: la suma de ambas es constante.
+    async function stemsOn(cmd) {
       if (!media || stems) return !!stems;
       const orig = media;
       const el = new Audio();
       el.preload = 'auto';
-      el.src = url;
+      el.src = cmd.url;
       await new Promise((res, rej) => {
-        el.addEventListener('canplay', res, { once: true });
+        el.addEventListener('canplaythrough', res, { once: true });
+        el.addEventListener('canplay', () => setTimeout(res, 1500), { once: true }); // por si canplaythrough no llega
         el.addEventListener('error', () => rej(new Error('No se pudo abrir el archivo de stems')), { once: true });
       });
-      el.currentTime = orig.currentTime;
+      if (stems || media !== orig) return !!stems; // mientras cargaba cambió la pista o se activó por otro lado
       el.playbackRate = orig.playbackRate;
       el.preservesPitch = keylock;
+      const lag = stemsLag; // arranque medido de la vez anterior: el elemento nuevo empieza ya adelantado
+      el.currentTime = orig.currentTime + (orig.paused ? 0 : lag * orig.playbackRate);
       const src = ctx.createMediaElementSource(el);
       const split = ctx.createChannelSplitter(8);
       src.connect(split);
@@ -181,37 +203,76 @@
         split.connect(m, 2 * i, 0);
         split.connect(m, 2 * i + 1, 1);
         const g = ctx.createGain();
+        g.gain.value = 0;
         m.connect(g);
         g.connect(chain.input);
         merge.push(m);
         gain.push(g);
       }
       const wasPlaying = !orig.paused;
-      stems = { el, orig, src, split, merge, gain, vol: [1, 1, 1, 1], mute: [false, false, false, false], solo: [false, false, false, false] };
+      const norm = (v) => [0, 1, 2, 3].map((i) => !!v?.[i]);
+      stems = { el, orig, src, split, merge, gain, vol: [1, 1, 1, 1], mute: norm(cmd.mute), solo: norm(cmd.solo), fade: null, timer: null };
       if (wasPlaying) {
         if (ctx.state !== 'running') await ctx.resume();
+        const t0 = performance.now();
         await el.play();
-        if (Math.abs(el.currentTime - orig.currentTime) > 0.03) el.currentTime = orig.currentTime;
+        stemsLag = Math.min(0.25, Math.max(0, (performance.now() - t0) / 1000)); // lo que tarda en sonar: la próxima vez se adelanta
+        const drift = el.currentTime - orig.currentTime;
+        if (Math.abs(drift) > 0.015) el.currentTime = orig.currentTime;
       }
-      sources.get(orig)?.disconnect();
-      orig.pause();
+      const os = sources.get(orig);
+      const fade = ctx.createGain();
+      stems.fade = fade;
+      const now = ctx.currentTime;
+      try { os?.disconnect(); } catch { /* ya suelto */ }
+      os?.connect(fade);
+      fade.connect(chain.input);
+      fade.gain.setValueAtTime(1, now);
+      fade.gain.linearRampToValueAtTime(0, now + STEM_FADE);
+      gain.forEach((g, i) => {
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(stemTarget(i), now + STEM_FADE);
+      });
       media = el;
       applyRate();
+      const st = stems;
+      st.timer = setTimeout(() => { // la completa ya no suena: se libera
+        if (stems !== st) return;
+        orig.pause();
+        try { os?.disconnect(); fade.disconnect(); } catch { /* ya suelto */ }
+        st.fade = null;
+      }, STEM_FADE * 1000 + 20);
       return true;
     }
 
     async function stemsOp(cmd) {
       switch (cmd.op) {
         case 'on':
-          return stemsOn(cmd.url);
+          return stemsOn(cmd);
         case 'off': {
           if (!stems) return false;
-          const { el, orig } = stems;
+          const s = stems;
+          const { el, orig } = s;
+          clearTimeout(s.timer);
           orig.currentTime = el.currentTime;
           const wasPlaying = !el.paused;
-          stemsTeardown(true);
+          const os = sources.get(orig);
+          const fade = s.fade || ctx.createGain();
+          if (!s.fade) {
+            try { os?.disconnect(); } catch { /* ya suelto */ }
+            os?.connect(fade);
+            fade.connect(chain.input);
+            s.fade = fade;
+          }
+          const now = ctx.currentTime;
+          fade.gain.cancelScheduledValues(now);
+          fade.gain.setValueAtTime(fade.gain.value, now);
+          fade.gain.linearRampToValueAtTime(1, now + STEM_FADE);
+          s.gain.forEach((g) => { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + STEM_FADE); });
           if (wasPlaying) await orig.play();
+          media = orig;
           applyRate();
+          s.timer = setTimeout(() => { if (stems === s) stemsTeardown(true); }, STEM_FADE * 1000 + 20);
           return true;
         }
         case 'gain': // v: volumen 0–1 del stem i

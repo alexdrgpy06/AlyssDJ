@@ -17,6 +17,7 @@ const { LocalLibrary } = require('./local-library');
 const { createUpdater } = require('./updater');
 const libSave = require('./library-save');
 const stemsLib = require('./stems');
+const stemsDevice = require('./stems-device');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
@@ -44,6 +45,8 @@ let libraryView = null;
 let analyzer = null;
 let stems = null;
 let stemModel = null;
+let stemDevice = null;
+let gpuDeclined = false; // si no autorizó el modelo de GPU, no se le vuelve a preguntar en esta sesión
 let backlog = null;
 const decks = {}; // id → { view, ready, replay: {mix, routing, rate, loop}, pendingLoad }
 
@@ -90,7 +93,7 @@ function registerAppProtocol() {
       if (rel.startsWith('cover/')) return serveFile(safeJoin(coversDir, `${decodeURIComponent(rel.slice(6))}.jpg`), request);
       if (rel === 'build/icon.png') return serveFile(path.join(ROOT, 'build/icon.png'), request);
       if (rel.startsWith('localfile/')) return serveFile(localLib.pathOf(decodeURIComponent(rel.slice(10))), request);
-      if (rel.startsWith('stemfile/') && stems?.has(decodeURIComponent(rel.slice(9)))) return serveFile(stems.fileOf(decodeURIComponent(rel.slice(9))), request);
+      if (rel.startsWith('stemfile/') && stems?.has(decodeURIComponent(rel.slice(9)))) return stems.touch(decodeURIComponent(rel.slice(9))), serveFile(stems.fileOf(decodeURIComponent(rel.slice(9))), request);
       if (rel.startsWith('cache/')) return serveFile(safeJoin(analyzer.cacheDir, rel.slice(6)), request);
       const base = rel.startsWith('shared/') ? ROOT : path.join(ROOT, 'renderer');
       return serveFile(safeJoin(base, rel || 'index.html'), request);
@@ -374,12 +377,38 @@ const stemSource = (id) => {
 };
 ipcMain.handle('stems:status', () => ({ ...stemsLib.available(ROOT), model: stemModel?.status(), usedBytes: stems?.usage() || 0, count: Object.keys(stems?.list() || {}).length }));
 ipcMain.handle('stems:list', () => stems?.list() || {});
-ipcMain.handle('stems:request', (_e, id) => {
+// Dispositivo de los stems: la primera vez, con permiso, baja el modelo de GPU y lo sondea; después usa la caché de device.json.
+async function prepareStemDevice() {
+  if (!stemDevice || stemDevice.fresh() || gpuDeclined || !stemDevice.o.candidates.length) return;
+  try {
+    await stemModel.ensure('gpu');
+    await stemDevice.select();
+  } catch (e) {
+    gpuDeclined = true; // sin permiso o sin red: CPU
+  }
+}
+ipcMain.handle('stems:device', () => stemDevice?.info() || { device: 'cpu', label: 'CPU', rt: null, probe: 'pendiente' });
+// Ajustes de stems: preparación automática y cuota de espacio.
+const stemSettings = () => ({ auto: ['auto', 'on', 'off'].includes(settings.get().stemsAuto) ? settings.get().stemsAuto : 'auto', quotaGB: Number(settings.get().stemsQuotaGB) > 0 ? Number(settings.get().stemsQuotaGB) : 5, usedBytes: stems?.usage() || 0 });
+ipcMain.handle('stems:settings', () => stemSettings());
+ipcMain.handle('stems:set', (_e, patch = {}) => {
+  const next = {};
+  if (['auto', 'on', 'off'].includes(patch.auto)) next.stemsAuto = patch.auto;
+  if (Number(patch.quotaGB) > 0) next.stemsQuotaGB = Math.min(500, Number(patch.quotaGB));
+  if (Object.keys(next).length) settings.set(next);
+  if (next.stemsQuotaGB) stems?.trim(next.stemsQuotaGB * 1e9);
+  return stemSettings();
+});
+ipcMain.handle('stems:keep', (_e, ids) => (stems?.setKeep(Array.isArray(ids) ? ids : []), true));
+ipcMain.handle('stems:request', async (_e, arg) => {
+  const id = typeof arg === 'object' && arg ? arg.id : arg;
+  const priority = typeof arg === 'object' && arg ? arg.priority : undefined;
   const av = stemsLib.available(ROOT);
   if (!av.available) return { ok: false, error: av.why };
   const file = stemSource(String(id));
   if (!file) return { ok: false, error: 'Esta pista no tiene un archivo local: guárdala o analízala primero' };
-  return { ok: stems.request(String(id), file) };
+  await prepareStemDevice();
+  return { ok: stems.request(String(id), file, priority) };
 });
 ipcMain.handle('stems:cancel', (_e, id) => stems?.cancel(String(id)) || false);
 ipcMain.handle('stems:remove', (_e, id) => stems?.remove(String(id)) || false);
@@ -404,6 +433,7 @@ function syncMusicDirs() {
 ipcMain.handle('settings:set', (_e, patch) => {
   settings.set(patch);
   syncMusicDirs();
+  if ('stemsQuotaGB' in patch) stems?.trim(stemSettings().quotaGB * 1e9);
   return settings.get();
 });
 ipcMain.handle('settings:pick-dir', async () => {
@@ -541,7 +571,7 @@ app.whenReady().then(() => {
       backlog?.onAnalyzerEvent(ev);
     },
   });
-  stemModel = new stemsLib.ModelManager({
+  stemModel = new stemsLib.ModelSet({
     dir: path.join(app.getPath('userData'), 'models'),
     onEvent: (ev) => send('stems:event', ev),
     confirm: async (info) => {
@@ -554,11 +584,23 @@ app.whenReady().then(() => {
       return r.response === 0;
     },
   });
+  const stemsDir = path.join(app.getPath('userData'), 'stems');
+  stemDevice = new stemsDevice.DeviceSelector({
+    dir: stemsDir,
+    appVersion: app.getVersion(),
+    modelSha: stemsLib.MODELS.gpu.sha256,
+    candidates: process.env.YTDJ_STEMS_FAKE === '1' ? [] : stemsDevice.candidates(process.platform, process.arch, { cuda: stemsDevice.hasCuda(ROOT) }),
+    probe: (provider) => stemsLib.probeDevice({ model: stemModel.path('gpu'), provider }),
+  });
   stems = new stemsLib.StemStore({
-    dir: path.join(app.getPath('userData'), 'stems'),
+    dir: stemsDir,
     ffmpeg: () => ffmpegBin,
-    modelPath: () => stemModel.path(),
-    ensureModel: () => stemModel.ensure(),
+    modelPath: (v) => stemModel.path(v),
+    ensureModel: (_id, v) => stemModel.ensure(v),
+    plan: () => { const provider = stemDevice.provider(); return { provider, variant: provider === 'cpu' ? 'cpu' : 'gpu' }; },
+    onDeviceFail: (provider, error) => stemDevice.markBad(provider, error),
+    onRt: (provider, rt) => stemDevice.noteRt(provider, rt),
+    quotaBytes: () => stemSettings().quotaGB * 1e9,
     onEvent: (ev) => send('stems:event', ev),
   });
   // Cola de análisis de listas: persistente y de a una pista, sin competir con lo que pide el usuario.

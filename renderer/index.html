@@ -213,10 +213,9 @@
           </div>
           <div class="stems" data-mode="off" aria-label="Stems">
             <span class="stems-lbl">STEMS</span>
-            <button class="stems-go" type="button"></button>
             <span class="stems-msg" role="status" aria-live="polite"></span>
             <button class="stems-x" type="button" hidden aria-label="Cancelar la separación" title="Cancelar la separación">✕</button>
-            <span class="stems-btns" hidden>
+            <span class="stems-btns" hidden role="group" aria-label="Aislar o silenciar partes de la pista">
               <button class="stem" type="button" data-s="3" aria-pressed="false" aria-label="Voz" title="Voz: clic silencia, Mayús o Ctrl + clic la aísla">Voz</button>
               <button class="stem" type="button" data-s="0" aria-pressed="false" aria-label="Batería" title="Batería: clic silencia, Mayús o Ctrl + clic la aísla">Batería</button>
               <button class="stem" type="button" data-s="1" aria-pressed="false" aria-label="Bajo" title="Bajo: clic silencia, Mayús o Ctrl + clic lo aísla">Bajo</button>
@@ -461,6 +460,19 @@
           <h4>Actualizaciones</h4>
         <label class="check"><input type="checkbox" name="autoUpdate" /><span>Buscar actualizaciones automáticamente <small>Solo en la app instalada: al abrirla y cada 6 horas, consulta los releases públicos de GitHub. Nunca descarga sin preguntarte.</small></span></label>
         <div class="row-btns"><button type="button" class="btn" id="btn-check-update">Comprobar ahora</button><span class="hint" id="upd-status"></span></div>
+          <h4>Stems</h4>
+        <p class="hint" id="stems-device" role="status">Dispositivo: CPU</p>
+        <p class="hint" id="stems-notice" hidden></p>
+        <p class="hint" id="stems-space" role="status"></p>
+        <label>Espacio máximo (GB) <input type="number" name="stemsQuotaGB" min="1" max="500" step="1" title="Al pasarse, se borran primero los stems que hace más que no usas; nunca los de los decks." /></label>
+        <div class="row-btns"><button type="button" class="btn ghost" id="stems-clear-all">Borrar todos los stems</button></div>
+        <label>Preparar stems solos
+          <select name="stemsAuto" title="Separa en segundo plano la pista cargada en un deck y la siguiente de AutoMix.">
+            <option value="auto">Automático: solo con GPU comprobada</option>
+            <option value="on">Siempre</option>
+            <option value="off">Nunca: solo a mano</option>
+          </select>
+        </label>
                   <h4>Cuenta</h4>
         <button type="button" class="btn ghost" id="btn-logout">Cerrar sesión de YouTube Music</button>
         </section>
