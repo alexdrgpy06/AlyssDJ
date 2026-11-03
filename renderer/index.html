@@ -37,6 +37,7 @@
       <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5v14l10-7z" fill="currentColor" stroke="none"/><path d="M19 5v14"/></symbol>
       <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
       <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".9" fill="currentColor"/><circle cx="4.5" cy="12" r=".9" fill="currentColor"/><circle cx="4.5" cy="18" r=".9" fill="currentColor"/></symbol>
+      <symbol id="i-smart" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/></symbol>
       <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/></symbol>
       <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
@@ -265,8 +266,16 @@
         <button data-tab="queue" title="Análisis en segundo plano de listas enteras"><svg class="ic"><use href="#i-queue"/></svg><span>Análisis</span><em class="cnt" id="cnt-queue"></em></button>
         <button data-tab="automix" class="am-tab"><svg class="ic"><use href="#i-radio"/></svg><span>AutoMix</span></button>
       </nav>
+      <nav class="src-list pl-sec" aria-label="Mis listas">
+        <div class="pl-head"><span>Mis listas</span>
+          <button type="button" id="pl-new" title="Nueva playlist" aria-label="Nueva playlist"><svg class="ic"><use href="#i-plus"/></svg></button>
+          <button type="button" id="pl-new-smart" title="Nueva lista inteligente (se arma sola con filtros)" aria-label="Nueva lista inteligente"><svg class="ic"><use href="#i-smart"/></svg></button>
+        </div>
+        <div id="pl-sources" class="pl-sources" role="list"></div>
+      </nav>
     </aside>
     <div class="lib-main">
+    <div class="lib-head">
     <div class="lib-toolbar" role="toolbar" aria-label="Herramientas de la fuente">
       <form id="search-form" role="search">
         <div class="seg scope" id="search-scope" role="radiogroup" aria-label="Dónde buscar">
@@ -290,6 +299,7 @@
         <button class="btn sm" id="btn-genres" hidden aria-haspopup="true" aria-expanded="false" aria-controls="genre-menu" title="Filtrar la lista por género"><svg class="ic"><use href="#i-list"/></svg><span id="btn-genres-label">Géneros</span></button>
         <div class="export-menu genre-menu" id="genre-menu" role="group" aria-label="Filtrar por género" hidden></div>
       </div>
+      <button class="btn sm" id="btn-crate-pl" hidden title="Copia esta playlist importada como una lista local que puedes editar"><svg class="ic"><use href="#i-plus"/></svg>Guardar como lista local</button>
       <div class="export-wrap">
         <button class="btn sm" id="btn-export" hidden aria-haspopup="menu" aria-expanded="false" aria-controls="export-menu" title="Guarda esta lista para otro programa de DJ"><svg class="ic"><use href="#i-list"/></svg>Exportar</button>
         <div class="export-menu" id="export-menu" role="menu" hidden>
@@ -305,6 +315,38 @@
       <span class="spacer"></span>
       <label class="check compact"><input type="checkbox" id="only-compat" /> Solo compatibles</label>
       <span class="legend" title="Resaltado: tonalidad compatible (rueda Camelot) y BPM dentro de ±6 % del deck de referencia"><i class="compat-dot"></i> compatible con el deck en juego</span>
+    </div>
+    <div class="pl-toolbar" id="pl-toolbar" hidden>
+      <div class="pl-bar" id="pl-bar" role="group" aria-label="Esta playlist" hidden>
+        <strong class="pl-name" id="pl-name"></strong>
+        <button type="button" class="btn sm" id="pl-rename">Renombrar</button>
+        <button type="button" class="btn sm" id="pl-dup">Duplicar</button>
+        <button type="button" class="btn sm" id="pl-del">Borrar</button>
+        <select id="pl-order" aria-label="Ordenar la lista por">
+          <option value="">Ordenar por…</option><option value="title">Título</option><option value="artist">Artista</option><option value="bpm">BPM</option><option value="key">Tonalidad</option><option value="genre">Género</option><option value="dur">Duración</option>
+        </select>
+        <button type="button" class="btn sm" id="pl-dir" aria-pressed="false" title="Sentido del orden: ascendente o descendente">↑</button>
+        <button type="button" class="btn sm" id="pl-filters" aria-expanded="false" hidden>Filtros</button>
+        <button type="button" class="btn sm" id="pl-undo" hidden title="Devuelve las pistas que quitaste (Ctrl+Z)">Deshacer</button>
+      </div>
+      <div class="sel-bar" id="sel-bar" role="group" aria-label="Pistas seleccionadas" hidden>
+        <span id="sel-count" role="status"></span>
+        <button type="button" class="btn sm" id="sel-add" aria-haspopup="menu" aria-expanded="false">Añadir a playlist ▾</button>
+        <button type="button" class="btn sm" id="sel-remove" hidden>Quitar de la lista</button>
+        <button type="button" class="btn sm" id="sel-queue">A la cola de AutoMix</button>
+        <button type="button" class="btn sm" id="sel-analyze">Analizar</button>
+        <button type="button" class="btn sm ghost" id="sel-clear">Cancelar</button>
+      </div>
+      <form class="pl-smart" id="pl-smart" aria-label="Filtros de la lista inteligente" hidden>
+        <label class="f-bpm">BPM <input id="ps-bmin" type="number" inputmode="numeric" min="40" max="240" placeholder="mín" aria-label="BPM mínimo" /><span aria-hidden="true">–</span><input id="ps-bmax" type="number" inputmode="numeric" min="40" max="240" placeholder="máx" aria-label="BPM máximo" /></label>
+        <select id="ps-key" aria-label="Tonalidad (Camelot)"></select>
+        <label class="check compact"><input type="checkbox" id="ps-compat" /> Compatibles</label>
+        <input id="ps-genres" type="text" placeholder="Géneros, separados por coma" aria-label="Géneros separados por comas" />
+        <label class="check compact"><input type="checkbox" id="ps-an" /> Solo analizadas</label>
+        <label class="check compact"><input type="checkbox" id="ps-st" /> Solo con stems</label>
+        <button type="submit" class="btn sm primary">Guardar filtros</button>
+      </form>
+    </div>
     </div>
     <div class="table-wrap">
       <table class="tracks">
@@ -405,6 +447,7 @@
   <div class="ytm-float" id="ytm-float-B" hidden><header>YouTube Music · Deck B <button class="icon-btn" data-close aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header><div class="ytm-body"></div></div>
 
 
+  <div class="export-menu pl-menu" id="pl-menu" role="menu" aria-label="Añadir a playlist" hidden></div>
   <dialog id="mixedit" aria-labelledby="me-title">
     <div class="mixedit">
       <header><div><h2 id="me-title">Puntos de mezcla</h2><small id="me-meta"></small></div><button class="icon-btn" id="me-close" type="button" aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></header>
@@ -589,7 +632,7 @@
         <section><h3>Deck A</h3><dl><dt>Z</dt><dd>Play / pausa</dd><dt>X</dt><dd>Cue (mantén = preview)</dd><dt>Q</dt><dd>Sync</dd><dt>A / S</dt><dd>Nudge − / +</dd><dt>1 – 4</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Deck B</h3><dl><dt>M</dt><dd>Play / pausa</dd><dt>N</dt><dd>Cue (mantén = preview)</dd><dt>P</dt><dd>Sync</dd><dt>K / L</dt><dd>Nudge − / +</dd><dt>7 – 0</dt><dd>Hot cues (Shift = borrar)</dd></dl></section>
         <section><h3>Mezcla</h3><dl><dt>← / →</dt><dd>Crossfader</dd><dt>Mayús + →</dt><dd>AutoMix: mezclar ahora</dd><dt>F1 – F8</dt><dd>Pads del sampler</dd><dt>Ctrl + rueda</dt><dd>Zoom de la onda</dd><dt>Doble clic</dt><dd>Restablece knobs, pitch y crossfader</dd></dl></section>
-        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
+        <section><h3>Vistas y general</h3><dl><dt>Alt + 1 – 4</dt><dd>Mezcla, Librería, Automix, Ondas</dd><dt>⋯ del deck</dt><dd>Fuente, Analizar, Puntos de mezcla, YouTube Music</dd><dt>Mis listas</dt><dd>＋ en la fila o arrastrar para poner; Ctrl/Mayús+clic selecciona; Ctrl+Z deshace</dd><dt>Buscador</dt><dd>Todo, Mi equipo o YouTube Music; filtros de BPM y tono en la librería</dd><dt>Ajustes → Sistema</dt><dd>Modo local: sin red</dd><dt>?</dt><dd>Esta ayuda</dd><dt>Esc</dt><dd>Cierra paneles</dd><dt>Plato</dt><dd>Arrastra en círculo: bend / búsqueda</dd></dl></section>
       </div>
       <p class="hint">Toda la guía con capturas está en la carpeta <code>docs/</code> del proyecto.</p>
       <menu><button class="btn ghost" id="btn-about" type="button">Acerca de</button><button class="btn primary" id="help-close">Cerrar</button></menu>

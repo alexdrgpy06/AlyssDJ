@@ -43,6 +43,21 @@ Sirven sin conexión y como fuente de [AutoMix](04-automix.md) (**AutoMix de est
 
 > Importar necesita tu sesión; sin ella la lista de playlists sale vacía.
 
+## Mis listas (playlists locales)
+
+Bajo las fuentes está **Mis listas**: playlists tuyas, guardadas en tu equipo (no en YouTube Music). Nunca tocan tus archivos de música.
+
+- **Crear:** el botón **＋** crea «Nueva playlist» y te deja escribir el nombre ahí mismo (Intro guarda, Esc deja el nombre por defecto). La barra de la lista permite **Renombrar**, **Duplicar** y **Borrar**.
+- **Poner pistas:** arrastra una o varias filas sobre una lista de las fuentes, o pulsa **＋** en la fila (o **Añadir a playlist ▾** con una selección) y elige la lista; «Nueva playlist…» crea una con esas pistas. Funciona desde cualquier fuente: búsqueda, Me gusta, importadas, locales, analizadas o historial. Una pista no se repite en la misma lista.
+- **Sacar pistas:** selecciónalas dentro de la lista y pulsa **Quitar de la lista**. No se borra el archivo ni se quita de otras listas, y **Deshacer** (o Ctrl+Z) las devuelve a su sitio.
+- **Selección múltiple:** clic selecciona, Ctrl/Cmd+clic suma, Mayús+clic elige un rango, Ctrl+A todo. Con dos o más aparece la barra de acciones: añadir a una lista, quitar, **A la cola de AutoMix** y **Analizar**.
+- **Ordenar:** **Ordenar por…** (título, artista, BPM, tonalidad, género o duración) con el botón ↑/↓ para el sentido; las pistas sin dato van siempre al final. También puedes **arrastrar filas** para reordenarlas a mano. El orden queda guardado.
+- **Listas inteligentes:** el botón del rayo crea una lista que se arma sola con filtros (BPM, tonalidad y compatibles, géneros, solo analizadas, solo con stems). Cambia sus filtros con **Filtros**; no se edita pista por pista.
+- **Importadas:** en «Importadas», **Guardar como lista** (o **Guardar como lista local** dentro de una) copia una playlist de YouTube Music como lista editable. La original no cambia.
+- **Salir a otros sitios:** cualquier lista se exporta con **Exportar** (M3U8, CSV, Rekordbox XML) y **AutoMix de esta lista** la manda a la cola.
+
+Las listas se guardan en `userData/playlists-local.json` de forma atómica. Si el archivo se daña, se conserva una copia `.bad-…` y la app arranca sin listas en lugar de fallar.
+
 ## Música local
 
 - **Añadir carpeta…** (en la fuente *Local* o en Ajustes) recorre la carpeta y sus subcarpetas. Formatos: mp3, flac, wav, m4a, aac, ogg, opus, aiff, wma.

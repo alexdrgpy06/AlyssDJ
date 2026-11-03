@@ -62,6 +62,7 @@ jobs:
           for m in model store ipc device quota docs; do node --experimental-default-type=module scripts/test-stems.js $m; done
           for m in docs; do node scripts/test-orden.js $m; done
           for m in search ipc mode docs automix; do node scripts/test-local.js $m; done
+          for m in store docs; do node scripts/test-playlists.js $m; done
           node scripts/test-save-library.js settings
           for m in queue prepare mixnow; do node --experimental-default-type=module scripts/test-automix-view.js $m; done
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
@@ -88,6 +89,7 @@ jobs:
           for m in engine ui; do xvfb-run -a node --experimental-default-type=module scripts/test-stems.js $m; done
           for m in automix topbar deck banks layout; do xvfb-run -a node scripts/test-orden.js $m; done
           for m in ui filters; do xvfb-run -a node scripts/test-local.js $m; done
+          xvfb-run -a node scripts/test-playlists.js ipc,ui,select,order,smart,export
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |
@@ -108,6 +110,7 @@ jobs:
           for m in engine ui; do node --experimental-default-type=module scripts/test-stems.js $m; done
           for m in automix topbar deck banks layout; do node scripts/test-orden.js $m; done
           for m in ui filters; do node scripts/test-local.js $m; done
+          node scripts/test-playlists.js ipc,ui,select,order,smart,export
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

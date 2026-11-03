@@ -20,6 +20,7 @@ const stemsLib = require('./stems');
 const stemsDevice = require('./stems-device');
 const { LocalSearch, collect: collectLocal } = require('./local-search');
 const { createGate } = require('./net-gate');
+const { PlaylistStore } = require('./playlists');
 
 const ROOT = path.join(__dirname, '..');
 const YTM = 'https://music.youtube.com/';
@@ -343,6 +344,29 @@ ipcMain.handle('lib:search-local', wrap((opts = {}) => {
 }));
 ipcMain.handle('local:similar', wrap((videoId, limit) => localIndex().similar(String(videoId || ''), Math.min(50, Number(limit) || 10))));
 
+// ---------- playlists locales (manuales e inteligentes) ----------
+let plStore = null;
+const playlists = () => (plStore ||= new PlaylistStore(path.join(app.getPath('userData'), 'playlists-local.json'), {
+  meta: (id) => ({ ...(analyzer?.get(id) ? { bpm: analyzer.get(id).bpm, camelot: analyzer.get(id).camelot } : {}), genres: genres?.get(id)?.genres || [] }),
+  smart: (f = {}) => localIndex().search('', { bpm: Array.isArray(f.bpm) ? f.bpm.map(Number) : undefined, key: f.key ? String(f.key) : undefined, compatKey: !!f.compat, genres: Array.isArray(f.genres) ? f.genres.map(String) : undefined, limit: 5000 }).rows
+    .filter((r) => (!f.analyzed || analyzer?.get(r.videoId)?.bpm) && (!f.stems || stems?.has(r.videoId))),
+}));
+const withPath = (tracks) => tracks.map((t) => (t.local ? { ...t, path: localLib?.pathOf(t.videoId) || undefined } : t));
+const plCall = (fn) => wrap((...a) => { const r = fn(...a); send('pl:event', { at: Date.now() }); return r; });
+ipcMain.handle('pl:list', wrap(() => playlists().list()));
+ipcMain.handle('pl:get', wrap((id) => { const l = playlists().get(String(id)); return { ...l, tracks: withPath(l.tracks) }; }));
+ipcMain.handle('pl:create', plCall((name, opts) => playlists().create(name, opts && typeof opts === 'object' ? { kind: opts.kind, filter: opts.filter, tracks: Array.isArray(opts.tracks) ? opts.tracks : [] } : {})));
+ipcMain.handle('pl:rename', plCall((id, name) => playlists().rename(String(id), name)));
+ipcMain.handle('pl:duplicate', plCall((id) => playlists().duplicate(String(id))));
+ipcMain.handle('pl:delete', plCall((id) => playlists().delete(String(id))));
+ipcMain.handle('pl:add', plCall((id, tracks, opts) => playlists().add(String(id), Array.isArray(tracks) ? tracks : [], { allowDup: !!opts?.allowDup })));
+ipcMain.handle('pl:remove', plCall((id, ids) => playlists().remove(String(id), Array.isArray(ids) ? ids.map(String) : [])));
+ipcMain.handle('pl:restore', plCall((id, removed) => playlists().restore(String(id), Array.isArray(removed) ? removed : [])));
+ipcMain.handle('pl:reorder', plCall((id, ids) => playlists().reorder(String(id), Array.isArray(ids) ? ids.map(String) : [])));
+ipcMain.handle('pl:sort', plCall((id, key, dir) => playlists().sortBy(String(id), String(key), Number(dir) < 0 ? -1 : 1)));
+ipcMain.handle('pl:set-filter', plCall((id, filter) => playlists().setFilter(String(id), filter && typeof filter === 'object' ? filter : {})));
+ipcMain.handle('pl:from-crate', plCall((crateId, name) => playlists().fromCrate(readCrates().find((c) => c.id === crateId), name ? String(name) : undefined)));
+
 // ---------- géneros ----------
 ipcMain.handle('genres:all', () => genres.all());
 ipcMain.handle('genres:set', wrap((id, list) => genres.setManual(String(id || ''), list)));
@@ -358,6 +382,9 @@ ipcMain.handle('export:run', wrap(async (source, format) => {
     const c = readCrates().find((x) => x.id === source.slice(6));
     if (!c) throw new Error('Esa playlist ya no está importada');
     name = c.title; rows = c.tracks;
+  } else if (/^pl:/.test(String(source))) {
+    const l = playlists().get(String(source).slice(3));
+    name = l.name; rows = l.tracks;
   } else throw new Error('Origen de exportación no válido');
   const resolve = (id, _rec, a) => (a.saved?.path && fs.existsSync(a.saved.path) ? a.saved.path : localLib.pathOf(id) || analyzer.audioFile(id) || '');
   const entries = rows.map((r) => exporter.normalize(r, analyzer.get(r.videoId), resolve, (id) => genres.get(id)?.genres));

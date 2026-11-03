@@ -59,3 +59,14 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 |---|---|---|
 | `#search-scope` | Ámbito | Todo · Mi equipo · YouTube Music; se recuerda |
 | `#lib-filters` | Filtros | BPM mínimo y máximo, tonalidad, compatibles con la pista cargada y «Limpiar»; la insignia «Modo local» está en la barra superior |
+
+## Playlists locales (cambio `playlists-locales`)
+
+| Control | Nombre | Notas |
+|---|---|---|
+| `#pl-new` · `#pl-new-smart` | Nueva playlist · Nueva lista inteligente | Cabecera de «Mis listas» |
+| `#pl-sources` | Mis listas | Una fila por lista; acepta pistas soltadas |
+| `#pl-bar` | Barra de la lista | `#pl-rename`, `#pl-dup`, `#pl-del`, `#pl-order`, `#pl-dir`, `#pl-filters`, `#pl-undo` |
+| `#sel-bar` | Barra de selección | `#sel-add`, `#sel-remove`, `#sel-queue`, `#sel-analyze`, `#sel-clear`; visible con 2 o más pistas |
+| `#pl-menu` | Añadir a playlist | Menú de la fila y de la barra de selección |
+| `#btn-crate-pl` | Guardar como lista local | Solo dentro de una playlist importada |

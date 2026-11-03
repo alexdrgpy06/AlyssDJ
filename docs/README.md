@@ -9,7 +9,7 @@
 | [0. Instalación](00-instalacion.md) | Windows, macOS y Linux, con lo que está verificado y lo que no |
 | [1. Primeros pasos](01-primeros-pasos.md) | Instalar, iniciar sesión, cargar música y mezclar tu primera transición |
 | [2. Decks y mezclador](02-decks-y-mezclador.md) | Plato, cue, hot cues, loops, beat jump, roll, sync, rejilla, EQ y efectos |
-| [3. Librería y playlists](03-libreria-y-playlists.md) | Buscar, música local, importar playlists, historial, orden y pistas compatibles |
+| [3. Librería y playlists](03-libreria-y-playlists.md) | Buscar, música local, importar playlists, tus propias listas (crear, poner, sacar, ordenar, inteligentes), historial, orden y pistas compatibles |
 | [4. AutoMix](04-automix.md) | DJ automático con la radio de YouTube Music: vista con cola editable, mezclar ahora y modo local |
 | [5. Stems manuales](05-stems.md) | Voz, batería, bajo y resto de una pista local con un clic, en GPU y preparados solos para AutoMix |
 | [6. Sampler, grabación y MIDI](06-sampler-grabacion-midi.md) | Pads, grabar la mezcla, controladoras y atajos |

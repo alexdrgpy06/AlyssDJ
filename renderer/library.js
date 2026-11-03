@@ -5,6 +5,7 @@ import { resolveSource, originChip } from './source.js';
 import { preview } from './preview.js';
 import { fileUrl } from './mixpreview.js';
 import { fmtSize } from './stems.js';
+import { PlaylistsUI } from './playlists.js';
 
 const fmtDur = (s) => (s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -51,6 +52,8 @@ export class Library {
     this.bl = { paused: false, pending: 0, lists: [], items: [] };
     this.bindQueue();
     this.exportBtn = document.getElementById('btn-export');
+    this.crateBtn = document.getElementById('btn-crate-pl');
+    this.crateBtn.addEventListener('click', () => this.pls.fromCrate(String(this.exportSrc).slice(6)));
     this.exportMenu = document.getElementById('export-menu');
     this.exportSrc = null;
     this.bindExport();
@@ -97,8 +100,12 @@ export class Library {
     });
     this.body.addEventListener('dragstart', (e) => {
       const tr = e.target.closest('tr[data-i]');
-      if (tr) e.dataTransfer.setData('application/x-ytdj-track', JSON.stringify(this.rows[tr.dataset.i]));
+      if (!tr) return;
+      const row = this.rows[tr.dataset.i];
+      e.dataTransfer.setData('application/x-ytdj-track', JSON.stringify(row));
+      if (row.videoId && !row.playlist) e.dataTransfer.setData('application/x-ytdj-tracks', JSON.stringify(this.pls.dragRows(row)));
     });
+    this.pls = new PlaylistsUI(this);
     this.refreshAnalyzed();
   }
 
@@ -242,6 +249,7 @@ export class Library {
     this.exportSrc = tab === 'analyzed' ? 'all' : null;
     this.closeExport();
     this.exportBtn.hidden = true;
+    this.pls?.onShow(tab);
     document.dispatchEvent(new CustomEvent('alyss:tab', { detail: tab }));
     document.querySelectorAll('.sources [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     const isAm = tab === 'automix';
@@ -272,6 +280,7 @@ export class Library {
       this.setMsg(r.data.length ? `${r.data.length} resultados` : empty);
       return r.data;
     };
+    if (tab.startsWith('pl:')) return this.pls.openList(tab.slice(3));
     if (tab === 'search') {
       if (!query) return this.render(this.rows.filter((r) => r.videoId));
       await this.runSearch(query);
@@ -344,13 +353,14 @@ export class Library {
     const tr = e.target.closest('tr[data-i]');
     if (!tr) return;
     const row = this.rows[tr.dataset.i];
-    if (row.playlist) return btn?.dataset.act === 'an-list' ? this.analyzePlaylist(row) : this.openPlaylist(row);
+    if (row.playlist) return btn?.dataset.act === 'an-list' ? this.analyzePlaylist(row) : btn?.dataset.act === 'crate-pl' ? this.pls.fromCrate(row.browseId) : this.openPlaylist(row);
     const bar = e.target.closest('.pv-bar');
     if (bar && !btn) {
       const r = bar.getBoundingClientRect();
       return preview.seek((e.clientX - r.left) / r.width);
     }
-    if (!btn) return;
+    if (!btn) return this.pls.select(e, tr, row);
+    if (btn.dataset.act === 'addpl') return this.pls.menuFor(this.pls.sel.has(row.videoId) && this.pls.sel.size > 1 ? this.pls.selectedRows() : [row], btn);
     if (btn.dataset.act === 'prev') return this.togglePreview(row);
     if (btn.dataset.act === 'stems') return this.stemsAction(row);
     if (btn.dataset.act === 'A' || btn.dataset.act === 'B') this.app.decks[btn.dataset.act].load(row);
@@ -396,7 +406,7 @@ export class Library {
 
   rowHtml(r, i) {
     if (r.playlist) {
-      return `<tr class="pl" data-i="${i}"><td>${r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : ''}</td><td>${esc(r.title)}</td><td>${esc(r.subtitle)}</td><td class="num"></td><td class="num"></td><td></td><td class="actions"><button data-act="an-list" title="Analiza en segundo plano todas las pistas de esta lista">Analizar</button> Abrir ›</td></tr>`;
+      return `<tr class="pl" data-i="${i}"><td>${r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : ''}</td><td>${esc(r.title)}</td><td>${esc(r.subtitle)}</td><td class="num"></td><td class="num"></td><td></td><td class="actions"><button data-act="an-list" title="Analiza en segundo plano todas las pistas de esta lista">Analizar</button>${r.crate ? '<button data-act="crate-pl" title="Copia esta playlist como una lista local que puedes editar">Guardar como lista</button>' : ''} Abrir ›</td></tr>`;
     }
     const a = this.analyzed.get(r.videoId);
     const [lbl, cls] = this.analyzeLabel(r.videoId);
@@ -406,14 +416,14 @@ export class Library {
     const chip = `<span class="src-chip${info.origin === 'STREAM' ? '' : ' file'}" title="${info.origin === 'STREAM' ? 'Suena por streaming desde YouTube Music' : 'Suena desde un archivo en este equipo'}">${originChip(info)}</span>`;
     const art = r.thumb ? `<img src="${esc(r.thumb)}" loading="lazy">` : '<div class="noart">♪</div>';
     const loaded = ['A', 'B'].filter((d) => this.app.decks[d]?.track?.videoId === r.videoId).map((d) => `loaded-${d}`).join(' ');
-    return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}">
+    return `<tr data-i="${i}" data-id="${esc(r.videoId)}" draggable="true" class="${loaded}${compat ? ' compat' : ''}${this.pls?.sel.has(r.videoId) ? ' sel' : ''}">
       <td>${art}</td>
       <td title="${esc(r.title)}">${esc(r.title)}${preview.state?.id === r.videoId ? `<div class="pv-bar" style="--p:${preview.state.dur ? Math.min(1, preview.state.t / preview.state.dur) : 0}"><i></i></div>` : ''}</td>
       <td title="${esc(r.artist)}">${esc(r.artist)}${this.srcTags(r)}${chip}${genres.chips(r.videoId)}${this.stemsChip(r)}</td>
       <td class="num">${fmtDur(r.duration)}</td>
       <td class="num">${a?.bpm ? a.bpm.toFixed(1) : ''}</td>
       <td class="key">${a?.camelot ? `<span class="kchip" style="--k:${kc}">${a.camelot}</span>` : ''}</td>
-      <td class="actions">${this.previewBtn(r, a)}${this.stemsBtn(r, a)}<button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
+      <td class="actions">${this.previewBtn(r, a)}${this.stemsBtn(r, a)}<button data-act="addpl" class="ap" aria-haspopup="menu" aria-expanded="false" title="Añadir a una playlist" aria-label="Añadir a playlist">＋</button><button data-act="A" class="la">A</button><button data-act="B" class="lb">B</button><button data-act="radio" class="rd" title="Iniciar AutoMix (radio) desde esta pista">Radio</button><button data-act="queue" class="qq" title="Añadir a la cola de AutoMix" aria-label="Añadir a la cola">+</button><button data-act="genres" class="gn" title="Editar los géneros de esta pista" aria-label="Editar géneros">♯</button><button data-act="analyze" class="an ${cls}">${lbl}</button></td>
     </tr>`;
   }
 
@@ -494,6 +504,8 @@ export class Library {
     this.listBtn.hidden = !rows.some((r) => r.videoId && !r.playlist);
     this.exportBtn.hidden = !this.exportSrc || !rows.some((r) => r.videoId && !r.playlist);
     this.analyzeBtn.hidden = !rows.some((r) => r.videoId && !r.playlist) || ['analyzed', 'automix', 'queue'].includes(this.tab);
+    this.crateBtn.hidden = !String(this.exportSrc || '').startsWith('crate:') || !rows.some((r) => r.videoId && !r.playlist);
+    this.pls?.afterRender();
   }
 
   // ---------- géneros: filtro de la barra ----------
@@ -678,7 +690,7 @@ export class Library {
       local: 'Añade una carpeta de música o arrastra archivos a un deck.',
       analyzed: 'Aún no hay pistas analizadas. Pulsa «Analizar» en cualquier pista.',
       history: 'Aquí aparece lo que suena más de 20 s.',
-    }[this.tab] || 'Sin pistas.';
+    }[this.tab] || (this.tab.startsWith('pl:') ? this.pls.emptyHint() : 'Sin pistas.');
     document.getElementById('lib-empty-text').textContent = this.onlyCompat && this.base?.length ? 'Ninguna pista es compatible con el deck en juego. Desactiva «Solo compatibles».' : hint;
   }
 
