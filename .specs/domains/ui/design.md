@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-02-automix-visual
+last_change: 2026-11-03-interfaz-ordenada
 ---
 # ui · design
 
@@ -40,3 +40,7 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## viz.js
 
 `renderer/viz.js` exporta `beatPhase`, `beatInBar`, `deckRings`, `vizScene`, `pulseOf` (puros) y `Visualizer` (bucle con rAF limitado, cuadro estático solo cuando cambia algo visible en movimiento reducido).
+
+## Inventario de controles
+
+`docs/inventario-controles.md` lista cada control, su lugar y los retirados; `scripts/test-orden.js` (modos automix, topbar, deck, banks, layout, docs) y `scripts/orden-selftest.js` lo comprueban a 1280×720.

@@ -1,7 +1,7 @@
 ---
 domain: library
 paths: [main/analyzer.js, main/ytdlp.js, main/local-library.js, main/main.js, main/settings.js, preload/app.js, renderer/app.js, renderer/deck.js, renderer/library.js, renderer/index.html, docs/**]
-last_change: 2026-11-02-stems-manuales
+last_change: 2026-11-03-stems-gpu-automaticos
 ---
 # library · spec
 
@@ -37,3 +37,7 @@ IF la pista solo existe por streaming THEN THE SYSTEM SHALL mostrar ▶ deshabil
 ## Almacén de stems
 
 THE SYSTEM SHALL guardar los stems en `userData/stems` con un índice, marcar en la Librería las pistas que los tienen (chip con el tamaño) y permitir borrarlos por pista o todos, indicando cuánto ocupan.
+
+## Preparación automática y cuota de stems
+
+WHEN el ajuste de preparación es automático y la GPU está comprobada, o es «Siempre» THE SYSTEM SHALL separar la pista cargada en un deck (prioridad 0) y la siguiente de AutoMix (prioridad 1) antes que las peticiones manuales (prioridad 2); WHILE los stems superen la cuota (5 GB por defecto) THE SYSTEM SHALL borrar primero los menos usados, sin tocar los cargados en un deck ni el recién hecho.

@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-02-automix-transicion-suave
+last_change: 2026-11-03-interfaz-ordenada
 ---
 # automix · spec
 
@@ -82,3 +82,7 @@ WHERE el nivel de efectos es «apagado» THE SYSTEM SHALL omitir los gestos de e
 WHEN AutoMix mezcla con cualquier receta distinta del fundido THE SYSTEM SHALL cortar el grave de la entrante al empezar e intercambiar los graves con una rampa de un compás, y aplicar el crossfader, el EQ y el filtro con rampas actualizadas cada 40 ms como máximo.
 WHILE el estilo es Auto THE SYSTEM SHALL elegir con el análisis la receta y su duración (8, 16 o 32 pulsos), y con tonalidades en conflicto y tempo parecido usar bass swap con filtro en vez de un corte.
 WHEN el usuario pulsa «Siguiente» o «Mezclar ahora» y la entrante se está analizando THE SYSTEM SHALL esperar su análisis hasta 8 s y entrar siempre por su punto de entrada, también en la mezcla de emergencia.
+
+## Un solo panel de control
+
+THE SYSTEM SHALL ofrecer los controles de AutoMix (iniciar o detener, mezclar ahora, estilo, duración, siguiente, cola) únicamente en el panel de la fuente AutoMix; la vista Automix SHALL mostrar solo el estado y un botón para abrir ese panel, y el botón de la barra SHALL mostrar el estado (activo o mezclando).

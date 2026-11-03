@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-02-stems-manuales
+last_change: 2026-11-03-interfaz-ordenada
 ---
 # ui · spec
 
@@ -88,3 +88,19 @@ WHILE una pista se preescucha THE SYSTEM SHALL mostrar su avance en una barra ba
 ## Tira STEMS en el deck
 
 THE SYSTEM SHALL mostrar en cada deck una tira con Separar / progreso con tiempo restante y cancelar / Activar stems / cuatro botones (clic silencia, Mayús o Ctrl + clic aísla) y Completa, con `aria-pressed` y etiquetas que no dependen solo del color.
+
+## Barra superior en tres zonas
+
+THE SYSTEM SHALL organizar la barra superior en vistas (izquierda), herramientas de mezcla (centro) y sistema (derecha), y WHEN la sesión de YouTube Music está iniciada y las herramientas están completas THE SYSTEM SHALL reducir la sesión a un punto de estado y ocultar el aviso de herramientas.
+
+## Menú del deck
+
+THE SYSTEM SHALL ofrecer en cada deck con pista un menú «⋯» con la fuente, Analizar, Puntos de mezcla y YouTube Music, mostrando solo lo que aplica a la pista cargada, cerrándose con Esc o clic fuera.
+
+## Bancos plegables
+
+THE SYSTEM SHALL permitir abrir y cerrar cada banco de pads del deck (LOOP, JUMP/ROLL, FX, GRID) y recordar el banco abierto por deck.
+
+## Ajustes por tarea
+
+THE SYSTEM SHALL agrupar los ajustes en Aspecto y vistas, Audio, Decks, Efectos y filtros, Librería, Entrada y MIDI y Sistema, con la búsqueda de ajustes.
