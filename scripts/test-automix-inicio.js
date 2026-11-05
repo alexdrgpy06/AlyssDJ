@@ -119,7 +119,7 @@ tests.immersive = async () => {
 tests.layout = async () => {
   const { layout: l } = await ui();
   // REQ-4: nada fuera de la ventana ni recortado; la cola y el buscador a la vista sin desplazar
-  assert.deepStrictEqual(l.bad, [], `controles fuera de la ventana (W=${l.W}): ${JSON.stringify(l.badInfo)}`); assert.strictEqual(l.segClip, false, 'estilos recortados'); assert.strictEqual(l.viewScroll, false, 'desplazamiento horizontal');
+  assert.deepStrictEqual(l.bad, [], `controles fuera de la ventana (W=${l.W}): ${JSON.stringify(l.badInfo)} dbg=${JSON.stringify(l.dbg)}`); assert.strictEqual(l.segClip, false, 'estilos recortados'); assert.strictEqual(l.viewScroll, false, 'desplazamiento horizontal');
   assert.ok(l.searchTop < l.H - 40, `buscador fuera de pantalla (${l.searchTop}/${l.H})`); assert.ok(l.listTop < l.H - 40, `cola fuera de pantalla (${l.listTop}/${l.H})`);
   assert.ok(l.automixBtnOne, 'AutoMix en una línea'); assert.ok(l.sessionOne, 'sesión en una línea');
   console.log('layout ok');

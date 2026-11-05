@@ -67,7 +67,9 @@ module.exports = (win) => {
         __app.automix.on = true; __app.renderAutoMix(); __app.automix.on = false;
         const btn = q('#btn-automix'); const sess = q('#session-label');
         const vs = { viewScroll: view.scrollWidth > view.clientWidth + 1 };
-        return { W, H, bad, badInfo, segClip, searchTop: Math.round(search.top), listTop: Math.round(list.top), automixBtnOne: one(q('#btn-automix span')) && btn.getBoundingClientRect().height < 40, sessionOne: one(sess) || getComputedStyle(sess).whiteSpace === 'nowrap', ...vs };`);
+        const rc = (e) => { const r = e?.getBoundingClientRect(); return r ? [Math.round(r.left), Math.round(r.right)] : null; };
+        const dbg = { view: rc(view), main: rc(view.parentElement), lib: rc(view.parentElement?.parentElement), add: rc(q('.am-add')), list: rc(q('#amv-list')), search: rc(q('.am-search')), doc: [document.documentElement.scrollWidth, document.body.scrollWidth], viewScroll: [view.scrollWidth, view.clientWidth, view.offsetWidth], rows: q('#amv-list').children.length, wide: [...view.querySelectorAll('*')].filter((e) => e.getBoundingClientRect().right > W + 1).slice(0, 6).map((e) => [e.tagName, e.id || String(e.className).slice(0, 30), rc(e)]) };
+        return { W, H, dbg, bad, badInfo, segClip, searchTop: Math.round(search.top), listTop: Math.round(list.top), automixBtnOne: one(q('#btn-automix span')) && btn.getBoundingClientRect().height < 40, sessionOne: one(sess) || getComputedStyle(sess).whiteSpace === 'nowrap', ...vs };`);
 
       // ---- inmersiva ----
       await js(`__app.setView('automix'); return 1`); await wait(800);
