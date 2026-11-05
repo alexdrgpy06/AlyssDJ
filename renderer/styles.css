@@ -346,7 +346,7 @@ input.vfader::-webkit-slider-thumb {
 
 /* ---------- librería ---------- */
 .library { display: grid; grid-template-columns: 168px minmax(0, 1fr); min-height: 0; background: var(--bg); }
-.lib-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; }
+.lib-main { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; }
 .lib-main:has(.am-view:not([hidden])) { grid-template-rows: minmax(0, 1fr); }
 .lib-main > .am-view, .lib-main > .table-wrap { grid-row: 2; }
 .lib-main:has(.am-view:not([hidden])) > .am-view { grid-row: 1; }
@@ -1014,7 +1014,7 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .am-radio-menu.up { top: auto; bottom: calc(100% + 4px); }
 .imm-controls { flex-wrap: wrap; }
 .imm-controls .btn { white-space: nowrap; }
-body[data-layout='compact'] .am-view, .lib-main:has(.am-view:not([hidden])) .am-view { gap: 8px; padding-top: 8px; }
+body[data-layout='compact'] .am-view, .lib-main:has(.am-view:not([hidden])) .am-view { gap: 4px; padding-top: 8px; }
 .lib-main:has(.am-view:not([hidden])) .am-card { padding: 6px 12px; }
 .lib-main:has(.am-view:not([hidden])) .am-transport { margin-top: -8px; }
 /* Barra superior: ningún texto se parte; lo que sobra se recorta con puntos suspensivos en la sesión */
