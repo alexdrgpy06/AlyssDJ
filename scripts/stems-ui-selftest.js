@@ -40,7 +40,7 @@ module.exports = (win) => {
       // cancelar un trabajo en curso desde el deck
       await js(`document.querySelector('#deck-A .stem[data-s="2"]').click(); return 1`);
       for (let i = 0; i < 100; i++) { if ((await js(strip)).mode === 'work') break; await wait(30); }
-      R.beforeCancel = await js(strip); fs.writeFileSync(path.join(out, 'stems-work.png'), (await wc.capturePage()).toPNG()); await js(`document.querySelector('#deck-A .stems-x').click(); return 1`); await wait(1200); R.cancelled = await js(strip);
+      R.beforeCancel = await js(strip); fs.writeFileSync(path.join(out, 'stems-work.png'), (await wc.capturePage()).toPNG()); await js(`document.querySelector('#deck-A .stems-x').click(); return 1`); await wait(1200); R.cancelled = await js(strip); for (let i = 0; i < 20 && R.cancelled?.mode !== 'none'; i++) { await wait(500); R.cancelled = await js(strip); } // en macOS (CI) cancelar tarda más
       R.listAfter = await js(`return await window.ytdj.stems.list()`);
     } catch (e) { R.__err = e.stack; }
     fs.writeFileSync(path.join(out, 'stems-ui.json'), JSON.stringify(R));

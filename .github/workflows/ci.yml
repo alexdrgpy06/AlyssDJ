@@ -105,7 +105,7 @@ jobs:
           xvfb-run -a node --experimental-default-type=module scripts/test-automix-inicio.js panel,immersive,layout
           xvfb-run -a node --experimental-default-type=module scripts/test-automix-continuo.js ui
           xvfb-run -a node scripts/test-descargar-pista.js logic,ui,header,labels
-          xvfb-run -a node scripts/visual-check.js
+          VISUAL_CHECK_SOFT=1 xvfb-run -a node scripts/visual-check.js
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
         run: |

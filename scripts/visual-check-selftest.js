@@ -21,8 +21,11 @@ module.exports = (win) => {
 
   function compare(a, b) {
     const sa = a.getSize(), sb = b.getSize();
-    if (sa.width !== sb.width || sa.height !== sb.height) return { pct: 100, motivo: `tamaño ${sa.width}×${sa.height} ≠ referencia ${sb.width}×${sb.height}` };
-    const pa = a.toBitmap(), pb = b.toBitmap();
+    if (Math.abs(sa.width - sb.width) > 3 || Math.abs(sa.height - sb.height) > 3) return { pct: 100, motivo: `tamaño ${sa.width}×${sa.height} ≠ referencia ${sb.width}×${sb.height}` };
+    // el marco de la ventana puede variar 1-3 px entre equipos: se compara la zona común
+    const W = Math.min(sa.width, sb.width), H = Math.min(sa.height, sb.height);
+    const crop = (img, s) => { const bm = img.toBitmap(); if (s.width === W && s.height === H) return bm; const o = Buffer.alloc(W * H * 4); for (let y = 0; y < H; y++) bm.copy(o, y * W * 4, y * s.width * 4, y * s.width * 4 + W * 4); return o; };
+    const pa = crop(a, sa), pb = crop(b, sb);
     let bad = 0;
     for (let i = 0; i < pa.length; i += 4) if (Math.abs(pa[i] - pb[i]) > CHANNEL || Math.abs(pa[i + 1] - pb[i + 1]) > CHANNEL || Math.abs(pa[i + 2] - pb[i + 2]) > CHANNEL) bad++;
     return { pct: +((bad / (pa.length / 4)) * 100).toFixed(3) };
