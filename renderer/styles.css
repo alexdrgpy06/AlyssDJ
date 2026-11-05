@@ -46,6 +46,7 @@ body {
   color: var(--text);
   font: 13px/1.4 var(--ui);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 44px auto auto minmax(150px, 1fr);
   overflow: hidden;
   user-select: none;
