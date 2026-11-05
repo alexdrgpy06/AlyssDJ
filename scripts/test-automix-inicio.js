@@ -45,7 +45,7 @@ tests.engine = async () => {
     lib: { radio: async () => ({ ok: true, data: radio }), search: async () => ({ ok: true, data: [] }), popularity: async () => ({ ok: true, data: {} }) } } };
   const { AutoMix } = await import('../renderer/automix.js');
   const ana = (bpm, camelot) => ({ bpm, camelot, offset: 0, duration: 240, mix: { mixIn: 8, mixOut: [{ t: 200, score: 1 }], phrases: new Array(20).fill(60), phraseBeats: 16 } });
-  const fakeDeck = (id) => ({ id, fxc: { slots: [{ on: false }, { on: false }, { on: false }], owners: [], set() {}, ramp() {} }, fxSet() {}, fxRamp() {}, track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, st: { playing: false, dur: 240 },
+  const fakeDeck = (id) => ({ id, source: 'local', fxc: { slots: [{ on: false }, { on: false }, { on: false }], owners: [], set() {}, ramp() {} }, fxSet() {}, fxRamp() {}, track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, st: { playing: false, dur: 240 },
     async load(t) { this.track = t; this.st = { playing: false, dur: 240, ready: true, videoId: t.videoId }; }, togglePlay() { this.st.playing = true; }, remaining() { return this.st.dur - this.pos; }, bpm() { return this.analysis?.bpm || null; },
     setLoop() {}, matchTempoSmart: () => true, alignPhase() {}, phaseDiff: () => null, setPitch() {}, analyze() {}, seek() {}, transport() {} });
   const mk = (bTrack, bAna) => {
@@ -99,7 +99,7 @@ tests.panel = async () => {
   const { panel, start } = await ui();
   // REQ-1/4: barra fija con iniciar, mezclar ahora, siguiente y radio; los ajustes en un bloque plegado
   assert.strictEqual(panel.sticky, 'sticky'); assert.deepStrictEqual(panel.inBar, [true, true, true, true]);
-  assert.ok(panel.moreExists && !panel.moreOpen, 'ajustes plegados por defecto'); assert.strictEqual(panel.groups, 3, 'Transición, Cola y Fuente');
+  assert.ok(panel.moreExists && !panel.moreOpen, 'ajustes plegados por defecto'); assert.strictEqual(panel.groups, 4, 'Transición, Estilo y salida, Cola y Fuente');
   assert.strictEqual(panel.ghostInRow, 0, 'los botones de la fila no son fantasma');
   // menú Radio: orígenes con los decks cargados, se cierra con Esc
   assert.strictEqual(panel.before.menuHidden, true); assert.strictEqual(panel.expanded, 'true'); assert.deepStrictEqual(panel.ids, ['deckA', 'deckB', 'list', 'search']); assert.strictEqual(panel.closedByEsc, true);

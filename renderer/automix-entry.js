@@ -26,6 +26,7 @@ export class EntryStrip {
     if (!e) return;
     $('#amv-entry-time').textContent = e.bar ? `${mmss(e.t)} · compás ${e.bar}` : mmss(e.t);
     $('#amv-entry-why').textContent = e.user ? 'marcada por ti' : e.why;
+    $('#amv-entry-safe').hidden = e.kind !== 'safe';
     $('#amv-entry-auto').hidden = !e.user;
     this.cv.hidden = !e.strip;
     this.cv.setAttribute('aria-valuemin', '0');

@@ -93,7 +93,7 @@ Efectos de un deck (insert): tres ranuras en serie, cada una con un tipo a elegi
 
 - **Depende de:** —
 - **Lo usan:** `renderer/index.html`, `shared/dsp-chain.js`
-- **Pruebas:** lógica **sin prueba** · en la app `scripts/fx-ampliados-selftest.js`
+- **Pruebas:** lógica **sin prueba** · en la app `scripts/automix-continuo-selftest.js`
 
 ### `shared/scratch-math.js`
 

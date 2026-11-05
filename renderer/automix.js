@@ -6,7 +6,7 @@ import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
 import { genres } from './genres.js';
 import { otherDeckHead } from './automix-origin.js';
-import { chooseStyle, planRecipe, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
+import { chooseStyle, planRecipe, recipeFor, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
 import { EXIT_MODES, planTransition, planNearest, pickEntry, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
 const LS = 'alyssdj:automix';
@@ -124,7 +124,9 @@ export class AutoMix {
     if (tracks?.length) {
       const list = tracks.filter((t) => t.videoId);
       first = first || list[0];
-      this.queue = list.filter((t) => t.videoId !== first?.videoId && !t.playlist);
+      // una misma canción no entra dos veces (otra subida, otro crédito), ni la que ya suena
+      const seen = new Set(first ? [songKey(first)] : []);
+      this.queue = list.filter((t) => t.videoId !== first?.videoId && !t.playlist && !seen.has(songKey(t)) && seen.add(songKey(t)));
     }
     let deck = [A, B].find((d) => d.track?.videoId === first?.videoId && d.st.playing);
     if (!first) {
@@ -356,12 +358,17 @@ export class AutoMix {
 
   // Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola.
   // { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }.
-  addSmart(track, { next = false, analysis = null } = {}) {
+  isSameSong(a, b) {
+    return !!a && !!b && songKey(a) === songKey(b);
+  }
+
+  addSmart(track, { next = false, analysis = null, confirmDup = false } = {}) {
     if (!track?.videoId) return { ok: false, reason: 'invalid' };
     if (this.isKnown(track.videoId)) {
       this.app.toast(`“${track.title || 'La pista'}” ya está en la cola o suena ahora.`, true);
       return { ok: false, reason: 'dup' };
     }
+    if (!confirmDup && this.knownSongs().has(songKey(track))) return { ok: false, reason: 'dup', song: true };
     const t = { ...track };
     if (analysis && !this.ana.get(t.videoId)) this.ana.set(t.videoId, analysis);
     if (next) {
@@ -658,7 +665,7 @@ export class AutoMix {
         pm.since ||= performance.now();
         const noAna = !this.anaOf(next)?.mix && !this.ana.get(head.videoId)?.mix;
         if (noAna && (next.analyzing || this.prepOf(head).state === 'analyze') && performance.now() - pm.since < 8000) return this.emit();
-        if (!pm.plan || (pm.plan.enterAt === 0 && !noAna)) pm.plan = this.makeNearestPlan(cur, next, head);
+        if (!pm.plan || (pm.plan.entry?.kind === 'safe' && !noAna)) pm.plan = this.makeNearestPlan(cur, next, head);
         if (held) this.emit();
         else if (!cur.st.playing || pm.plan.kind === 'now' || posOf(cur) >= pm.plan.exitAt - 0.02) {
           this.pendingMix = false;
@@ -673,15 +680,51 @@ export class AutoMix {
     const rem = cur.remaining();
     // Plan: mejor punto de salida de la pista que suena (alineado a una frase), no necesariamente el final.
     this.plan = this.makePlan(cur, next, head);
-    if (posOf(cur) < this.plan.exitAt - 0.05) return this.resetWait();
+    if (posOf(cur) < this.plan.exitAt - 0.05) {
+      if (posOf(cur) >= this.plan.exitAt - 10) this.prepareEntry(next, head, this.plan);
+      return this.resetWait();
+    }
+    this.prepareEntry(next, head, this.plan);
     // Ya toca mezclar: si la siguiente no está lista se espera; pasado el tiempo, se salta a una que sí lo esté.
     if (!this.isReady(head)) return this.waitForReady(rem);
     this.resetWait();
     // Antes de mezclar, la siguiente debe tener su análisis (BPM y estructura) si va a salir de un archivo.
     const analysisPending = !next.analysis && (next.analyzing || next.source === 'local') && next.track?.videoId === head.videoId && rem > 12;
     const waitingAnalysis = (this.cfg.analyze && next.analyzing && rem > 25) || analysisPending;
-    if (this.ready(next, head) && !waitingAnalysis) this.startTransition(cur, next, this.plan);
+    if (this.ready(next, head) && !waitingAnalysis && this.entryReady(next, this.plan)) this.startTransition(cur, next, this.plan);
     else if (rem <= 1.2 && this.ready(next, head)) this.startTransition(cur, next, { seconds: 2, style: null, tempo: true, enterAt: this.makeNearestPlan(cur, next, head).enterAt, warnings: [] });
+  }
+
+  // ¿AutoMix usa este deck? La que suena (o mezcla) y la siguiente ya preparada en el otro deck no se descargan a mano.
+  holds(deck) {
+    if (!this.on || !deck) return false;
+    if (this.trans) return deck === this.trans.from || deck === this.trans.to;
+    if (deck === this.cur) return true;
+    const head = this.queue[0];
+    return !!head && deck.track?.videoId === head.videoId && this.cur !== deck;
+  }
+
+  // Receta completa (bass swap, tempo, efectos) solo si las dos suenan desde archivo local y están analizadas; si no, fundido y filtro.
+  fullRecipe(a, b) {
+    const ok = (d) => d?.source === 'local' && !!(this.anaOf(d)?.bpm);
+    return ok(a) && ok(b);
+  }
+
+  // La siguiente se deja ya colocada en su punto de entrada (en pausa, sin sonido) antes de empezar la mezcla: así no hay salto al arrancar.
+  prepareEntry(next, head, plan) {
+    if (!this.ready(next, head) || next.st.playing || plan?.enterAt == null || !(plan.enterAt > 0.5)) return false;
+    if (Math.abs(posOf(next) - plan.enterAt) > 0.5 && next.seek) next.seek(plan.enterAt);
+    return true;
+  }
+
+  // ¿La entrante está colocada? Con más de 3 s de espera se arranca igual (la transición hace el salto).
+  entryReady(next, plan) {
+    if (plan?.enterAt == null || !(plan.enterAt > 0.5)) return true;
+    if (Math.abs(posOf(next) - plan.enterAt) <= 1) { this.posWait = 0; return true; }
+    const now = performance.now();
+    if (!this.posWait) this.posWait = now;
+    if (now - this.posWait > 3000) { this.posWait = 0; return true; }
+    return false;
   }
 
   // Duración máxima que se le da al plan: en Auto la receta decide (hasta 32 s); con un estilo fijo, la elegida.
@@ -702,6 +745,8 @@ export class AutoMix {
   // Movimientos sobre los cues de la pista que suena (solo nivel «Marcado»): riser en las subidas y reverb en las roturas.
   fxTrack(cur) {
     this.fxm.sweep();
+    // Efectos durante la reproducción solo con pista local analizada; en streaming no se aplica ninguno.
+    if (!this.fullRecipe(cur, cur)) { if (this.fxLive) { this.fxm.set(cur, this.fxLive.slot, { wet: 0 }); this.fxm.release(cur, this.fxLive.slot, 0); this.fxLive = null; } return; }
     const level = this.fxLevel();
     const pos = posOf(cur);
     const id = cur.track?.videoId;
@@ -848,9 +893,10 @@ export class AutoMix {
     if (from.loop) from.setLoop(null);
     to.setLoop(null);
     // La entrante arranca en su punto de entrada (no necesariamente el principio de la pista).
-    if (p.enterAt != null && p.enterAt > 0.5 && to.seek) to.seek(p.enterAt);
+    if (p.enterAt != null && p.enterAt > 0.5 && to.seek && Math.abs(posOf(to) - p.enterAt) > 0.5) to.seek(p.enterAt);
     let tempo = false;
-    const wantTempo = this.cfg.matchTempo && p.tempo !== false && from.bpm() && to.bpm();
+    const full = this.fullRecipe(from, to);
+    const wantTempo = full && this.cfg.matchTempo && p.tempo !== false && from.bpm() && to.bpm();
     if (wantTempo) {
       tempo = to.matchTempoSmart(from, PITCH_LIMIT * 100); // ajuste limitado a ±8 %
       if (tempo) to.alignPhase(from);
@@ -860,8 +906,13 @@ export class AutoMix {
     // La receta (gestos sobre la rejilla de la saliente) sale del análisis; un salto de BPM brusco del plan fuerza el filtro si el estilo es fijo.
     const curAna = this.anaOf(from);
     const nextAna = this.anaOf(to);
-    const pick = this.cfg.style !== 'auto' && p.style ? { style: p.style, why: 'salto de BPM brusco' } : chooseStyle(curAna, nextAna, { exitAt: p.exitAt ?? posOf(from), enterAt: p.enterAt, seconds: p.seconds }, this.cfg.style);
-    const recipe = planRecipe({ style: pick.style, cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: p.seconds }, level: this.fxLevel(), beats: this.cfg.style === 'auto' ? pick.beats : 0 });
+    const planned = { exitAt: p.exitAt ?? posOf(from), seconds: p.seconds };
+    let pick, recipe;
+    if (!full) ({ pick, recipe } = recipeFor({ cur: curAna, next: nextAna, local: false, plan: planned }));
+    else {
+      pick = this.cfg.style !== 'auto' && p.style ? { style: p.style, why: 'salto de BPM brusco' } : chooseStyle(curAna, nextAna, { ...planned, enterAt: p.enterAt }, this.cfg.style);
+      recipe = planRecipe({ style: pick.style, cur: curAna, plan: planned, level: this.fxLevel(), beats: this.cfg.style === 'auto' ? pick.beats : 0 });
+    }
     const style = pick.style;
     const len = recipe.len || p.seconds;
     this.trans = { from, to, len, t0: performance.now(), tempo, style, why: pick.why, recipe: recipe.gestures.map((x) => ({ ...x, state: 'wait', slot: null })), lastPhase: 0, track: to.track, kind: p.kind, warnings: p.warnings || [] };
@@ -870,7 +921,7 @@ export class AutoMix {
     this.fxLive = null;
     this.fxWarn = '';
     // Los estilos de corte traen su propio eco o reverb; en las mezclas largas siguen el eco de salida y la reverb de rotura.
-    this.trans.moves = ['bass', 'filter', 'crossfade', 'drop-cut'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null })) : [];
+    this.trans.moves = full && ['bass', 'filter', 'crossfade', 'drop-cut'].includes(style) ? planTransitionMoves({ level: this.fxLevel(), cur: curAna, plan: { exitAt: p.exitAt ?? posOf(from), seconds: len }, style }).map((m) => ({ ...m, state: 'wait', slot: null })) : [];
     this.note = `Mezclando ${from.id} → ${to.id} · ${STYLE_LABEL[style] || style} (${pick.why})${tempo ? ' · tempo igualado' : ''}${p.kind && p.kind !== 'final' ? ` · salida en ${p.kind}` : ''}`;
     this.emit();
   }

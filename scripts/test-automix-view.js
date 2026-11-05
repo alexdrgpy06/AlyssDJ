@@ -22,7 +22,7 @@ globalThis.window = {
 const { AutoMix } = await import('../renderer/automix.js');
 
 function fakeDeck(id) {
-  return {
+  return { source: 'local',
     id, track: null, pos: 0, loads: [], pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, wantPlay: false,
     st: { playing: false, dur: 0, ready: false, videoId: null },
     async load(t) { this.loads.push(t.videoId); this.track = t; this.pos = 0; this.st = { playing: false, dur: t.duration || 200, ready: true, videoId: t.videoId }; },

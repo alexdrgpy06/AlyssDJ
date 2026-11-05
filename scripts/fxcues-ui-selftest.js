@@ -17,7 +17,7 @@ module.exports = (win) => {
     // estado en la transición (eco de salida) y chip de la vista inmersiva
     const sc = `const A = __app.decks.A, B = __app.decks.B, am = __app.automix; let posA = 36; A.pos = () => posA; B.pos = () => 0;
       A.track = { videoId: 'FXA', title: 'Uno', artist: 'x' }; B.track = { videoId: 'FXB', title: 'Dos', artist: 'x' };
-      A.analysis = { bpm: 120, offset: 0.5, duration: 84, mix: { phraseBeats: 16, phrases: [80, 80, 80, 80, 80, 30, 30, 90, 90, 90] } }; B.analysis = A.analysis;
+      A.source = 'local'; B.source = 'local'; A.analysis = { bpm: 120, offset: 0.5, duration: 84, mix: { phraseBeats: 16, phrases: [80, 80, 80, 80, 80, 30, 30, 90, 90, 90] } }; B.analysis = A.analysis;
       const realSt = A.st; Object.defineProperty(A, 'st', { configurable: true, get: () => ({ ...realSt, playing: true }), set() {} }); am.cur = A; am.on = true;`;
     await js(`__app.setView('automix'); return 1`); await wait(500);
     await js(`${sc} am.setCfg({ fxLevel: 'subtle', style: 'bass' }); am.startTransition(A, B, { seconds: 16, style: 'bass', tempo: false, exitAt: 36, enterAt: null, kind: 'outro', warnings: [] }); am.trans.t0 = performance.now() - 0.8 * 16000; am.stepTransition(); await new Promise((r) => setTimeout(r, 400)); am.emit(); return 1`);

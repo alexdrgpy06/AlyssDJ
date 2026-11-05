@@ -168,3 +168,8 @@ En **Mezcla** y **Librería** hay un divisor bajo las ondas y otro sobre la libr
 La vista y la opción de ondas se recuerdan entre sesiones. Al abrir la fuente **AutoMix** de la librería se pasa a la vista Librería y, al salir, vuelve la anterior (salvo que hayas elegido otra mientras tanto).
 
 ![Sync](img/10-deck-sync.png)
+
+## Cargar y descargar la pista
+
+- Con el deck vacío, **Cargar pista** abre el selector de audio (o arrastra una pista de la librería).
+- **Descargar pista** (⏏, junto a ⋯; control `deckX.eject`, atajo y MIDI) deja el deck como recién abierto. Si el deck está **al aire** avisa y hace falta pulsar otra vez en 3 s; si AutoMix lo está usando, no se descarga.

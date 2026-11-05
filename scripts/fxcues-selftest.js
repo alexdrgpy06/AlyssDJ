@@ -14,6 +14,7 @@ module.exports = (win) => {
       let posA = 0; A.pos = () => posA; B.pos = () => 0;
       const reset = () => { for (const d of [A, B]) { for (let i = 0; i < 3; i++) d.fxc.set(i, { type: ['echo', 'reverb', 'filter'][i], on: false, wet: 0.5, p: 0.5 }); } am.fxm.releaseAll(); am.fxLive = null; am.fxWarn = ''; am.fxEnd = { id: null, pos: -Infinity }; am.trans = null; };
       const sl = (d) => d.fxc.slots.map((s) => ({ ...s })); const own = (d) => [...d.fxc.owners];
+      A.source = 'local'; B.source = 'local';
       A.track = { videoId: 'FXA', title: 'A', artist: 'x' }; B.track = { videoId: 'FXB', title: 'B', artist: 'x' }; A.analysis = brk; B.analysis = rise; const realSt = A.st; Object.defineProperty(A, 'st', { configurable: true, get: () => ({ ...realSt, playing: true }), set() {} }); am.cur = A; am.on = true;
       const plan = { seconds: 16, style: 'bass', tempo: false, exitAt: 36, enterAt: null, kind: 'outro', warnings: [] };
       const R = {};

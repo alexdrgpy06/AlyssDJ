@@ -17,6 +17,7 @@
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-eject" viewBox="0 0 24 24"><path d="M12 5 4.5 14h15z" fill="currentColor" stroke="none"/><rect x="5" y="17" width="14" height="2.4" rx="1" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
       <symbol id="i-midi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="7.6" cy="11" r=".9" fill="currentColor"/><circle cx="9.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="14.5" cy="7.6" r=".9" fill="currentColor"/><circle cx="16.4" cy="11" r=".9" fill="currentColor"/><circle cx="12" cy="15.5" r=".9" fill="currentColor"/></symbol>
@@ -143,7 +144,9 @@
           <div class="meta">
             <div class="title">Arrastra o carga una pista</div>
             <div class="artist">—</div>
+            <div class="deck-load-row"><button type="button" class="btn sm deck-load" data-tip="Elegir un archivo de audio para este deck"><svg class="ic"><use href="#i-eject"/></svg><span>Cargar pista</span></button><span class="am-sub deck-load-help">o arrastra una pista de la librería</span></div>
             <div class="badges">
+              <button type="button" class="icon-btn deck-eject" disabled aria-label="Descargar la pista del deck" data-tip="Descargar pista"><svg class="ic"><use href="#i-eject"/></svg></button>
               <button type="button" class="icon-btn deck-more" aria-haspopup="menu" aria-expanded="false" aria-label="Más acciones del deck" data-tip="Más: fuente, analizar, puntos de mezcla, YouTube Music"><svg class="ic"><use href="#i-more"/></svg></button>
               <div class="deck-menu" role="menu" hidden>
                 <div class="seg source" role="group" aria-label="Fuente de audio">
@@ -383,6 +386,7 @@
           <button class="btn" id="amv-radio" type="button" aria-haspopup="menu" aria-expanded="false" title="Empezar AutoMix con la radio de una pista: la que suena, la de un deck, la de la lista abierta o una que busques"><svg class="ic"><use href="#i-radio"/></svg><span>Radio</span></button>
           <div class="am-radio-menu" id="amv-radio-menu" role="menu" hidden></div>
         </span>
+        <span class="am-sub am-hint" id="am-hint" aria-live="polite"></span>
       </div>
       <div class="am-top">
         <div class="am-card am-now"><span class="lbl">SUENA</span><div class="am-title" id="amv-cur">—</div><div class="am-sub" id="amv-cur-sub"></div></div>
@@ -398,13 +402,14 @@
         </div>
         <div class="am-card am-next"><span class="lbl">SIGUE</span><div class="am-title" id="amv-next">—</div><div class="am-sub" id="amv-next-sub"></div>
           <div class="am-entry" id="amv-entry" hidden>
-            <div class="am-entry-row"><span class="lbl">Entrada</span><b class="mono" id="amv-entry-time"></b><span class="am-sub" id="amv-entry-why"></span><button type="button" class="btn sm ghost" id="amv-entry-auto" hidden title="Vuelve al punto de entrada automático">Auto</button></div>
+            <div class="am-entry-row"><span class="lbl">Entrada</span><b class="mono" id="amv-entry-time"></b><span class="am-badge" id="amv-entry-safe" hidden title="Sin análisis de la pista: entra un poco dentro, con fundido y filtro">punto seguro</span><span class="am-sub" id="amv-entry-why"></span><button type="button" class="btn sm ghost" id="amv-entry-auto" hidden title="Vuelve al punto de entrada automático">Auto</button></div>
             <canvas class="am-strip" id="amv-entry-strip" height="28" tabindex="0" role="slider" aria-label="Punto de entrada de la pista que sigue (← → mueven un compás)"></canvas>
           </div>
         </div>
       </div>
       <div class="am-add">
         <label class="am-search"><svg class="ic"><use href="#i-search"/></svg><input id="amv-search" type="search" autocomplete="off" placeholder="Buscar para agregar a la cola: YouTube Music, tu librería y lo analizado (Enter agrega la primera)" aria-label="Buscar para agregar a la cola de AutoMix" /></label>
+        <p class="am-dup" id="amv-dup" role="status" hidden><span id="amv-dup-text"></span> <button class="btn sm" id="amv-dup-yes" type="button">Agregar igualmente</button></p>
         <ul class="am-results" id="amv-results" aria-label="Resultados" hidden></ul>
       </div>
       <ol class="am-list" id="amv-list" aria-label="Cola de AutoMix"></ol>
@@ -412,17 +417,28 @@
         <h3>Sugeridas para continuar <small>BPM, tonalidad, estilo y popularidad desde el final de la cola</small></h3>
         <ul class="am-results" id="amv-sug-list" aria-label="Sugeridas"></ul>
       </section>
-      <details class="am-more" id="am-more"><summary>Ajustes de AutoMix <small>transición, cola y fuente</small></summary>
-      <div class="am-controls am-groups">
-        <fieldset class="am-group" aria-labelledby="amg-trans">
+      <details class="am-more" id="am-more"><summary>Ajustes de AutoMix <small>perfil, duración y efectos</small></summary>
+       <div class="am-controls am-groups">
+        <fieldset class="am-group am-simple" aria-labelledby="amg-trans">
           <h3 id="amg-trans">Transición</h3>
           <div class="seg am-profile" id="amv-profile" role="group" aria-label="Perfil de AutoMix">
-            <button data-v="soft" type="button" title="24 s, fundido, efectos apagados">Suave</button><button data-v="club" type="button" title="12 s, receta automática, efectos sutiles">Club</button><button data-v="radio" type="button" title="32 s, fundido, orden de la cola">Radio</button><button data-v="custom" type="button" title="Tus propios ajustes">Personalizado</button>
+            <button data-v="soft" type="button" title="24 s, fundido, efectos apagados">Suave</button><button data-v="club" type="button" title="12 s, receta automática, efectos sutiles">Club</button><button data-v="radio" type="button" title="32 s, fundido, orden de la cola">Radio</button>
           </div>
+          <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
+          <label class="am-exit"><span class="lbl">Efectos</span>
+            <select id="amv-fx" aria-label="Efectos de AutoMix" title="Efectos de DJ que AutoMix pone solo: usa solo ranuras de efecto libres y las devuelve al terminar">
+              <option value="off" title="Sin efectos: solo crossfader, graves o filtro">Apagado</option>
+              <option value="subtle" title="Eco de salida y reverb en una rotura durante las transiciones">Sutil</option>
+              <option value="full" title="Además, riser en las subidas y reverb en las roturas mientras suena la pista">Marcado</option>
+            </select>
+          </label>
+        </fieldset>
+        <details class="am-adv" id="am-adv"><summary>Avanzado <small>estilo, salida, cola y fuente</small></summary>
+        <fieldset class="am-group" aria-labelledby="amg-style">
+          <h3 id="amg-style">Estilo y salida</h3>
           <div class="seg" id="amv-style" role="group" aria-label="Estilo de transición">
             <button data-v="auto" type="button" class="on" title="Elige la receta por pista a pista según BPM, tonalidad y estructura">Auto</button><button data-v="crossfade" type="button">Fundido</button><button data-v="bass" type="button">Bass swap</button><button data-v="filter" type="button">Filtro</button><button data-v="echo-cut" type="button">Bass + eco</button><button data-v="drop-cut" type="button">En la caída</button>
           </div>
-          <label class="am-len"><span class="lbl">Duración</span><input type="range" id="amv-len" min="4" max="48" step="1" aria-label="Duración de la transición" /><output id="amv-len-out">16 s</output></label>
           <label class="check compact"><input type="checkbox" id="amv-tempo" /> Igualar tempo y fase</label>
           <label class="am-exit"><span class="lbl">Salir</span>
             <select id="amv-exit" aria-label="Cuándo sale la pista que suena" title="Cuándo sale la pista que suena (los puntos de salida que editaste siempre mandan)">
@@ -430,13 +446,6 @@
               <option value="intro-outro" title="Al empezar el outro; dura lo que dure el menor entre su outro y el intro de la entrante">Outro y intro</option>
               <option value="outro-start" title="Al empezar el outro, con la duración elegida">Inicio del outro</option>
               <option value="end" title="Casi al final de la pista">Final de la pista</option>
-            </select>
-          </label>
-          <label class="am-exit"><span class="lbl">Efectos</span>
-            <select id="amv-fx" aria-label="Efectos de AutoMix" title="Efectos de DJ que AutoMix pone solo: usa solo ranuras de efecto libres y las devuelve al terminar">
-              <option value="off" title="Sin efectos: solo crossfader, graves o filtro">Apagado</option>
-              <option value="subtle" title="Eco de salida y reverb en una rotura durante las transiciones">Sutil</option>
-              <option value="full" title="Además, riser en las subidas y reverb en las roturas mientras suena la pista">Marcado</option>
             </select>
           </label>
         </fieldset>
@@ -459,6 +468,7 @@
           <label class="check compact" title="Descarga sin sesión, analiza y reproduce el archivo: sin anuncios y con BPM"><input type="checkbox" id="amv-local" /> Analizar y usar archivo (evita anuncios)</label>
           <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
         </fieldset>
+        </details>
       </div>
       </details>
     </div>

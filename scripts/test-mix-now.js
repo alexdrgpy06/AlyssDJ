@@ -63,7 +63,7 @@ globalThis.window = { ytdj: { analysis: { onEvent: (cb) => listeners.push(cb), g
 const { AutoMix } = await import('../renderer/automix.js');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function fakeDeck(id) {
-  return { id, track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, wantPlay: false, st: { playing: false, dur: 0, ready: false, videoId: null }, seeks: [], tempoCalls: 0,
+  return { id, source: 'local', track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, wantPlay: false, st: { playing: false, dur: 0, ready: false, videoId: null }, seeks: [], tempoCalls: 0,
     async load(t) { this.track = t; this.st = { playing: false, dur: 240, ready: true, videoId: t.videoId }; }, togglePlay() { this.st.playing = !this.st.playing; }, remaining() { return this.st.dur - this.pos; },
     bpm() { return this.analysis?.bpm || null; }, setLoop() {}, matchTempoSmart() { this.tempoCalls++; return true; }, alignPhase() {}, phaseDiff: () => null, setPitch() {}, analyze() {}, seek(t) { this.seeks.push(t); },
     transport(c) { if (c.type === 'play') this.st.playing = true; if (c.type === 'pause') this.st.playing = false; } };

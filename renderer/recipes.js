@@ -5,7 +5,8 @@ import { keysCompatible } from './camelot.js';
 import { fxCues } from './fxcues.js';
 
 export const STYLES = ['auto', 'bass', 'filter', 'crossfade', 'echo-cut', 'drop-cut'];
-export const STYLE_LABEL = { bass: 'bass swap', filter: 'bass swap + filtro', crossfade: 'fundido', 'echo-cut': 'bass swap + eco', 'drop-cut': 'bass swap en la caída' };
+export const FADE_FILTER = 'fade-filter'; // pistas en streaming: solo fundido y filtro, sin cortes de graves ni efectos
+export const STYLE_LABEL = { bass: 'bass swap', filter: 'bass swap + filtro', crossfade: 'fundido', 'fade-filter': 'fundido + filtro', 'echo-cut': 'bass swap + eco', 'drop-cut': 'bass swap en la caída' };
 const LONG_BEATS = 32; // outro e intro de al menos 8 compases para un bass swap
 const MODERATE_GAP = 0.03; // por encima de un 3 % de BPM, el filtro disimula mejor que el bass swap
 
@@ -28,6 +29,13 @@ function dropEntry(cur, next, plan) {
   if (!hasBreak || !Array.isArray(E) || !E.length) return false;
   const e = energy(next, plan.enterAt ?? next.mix?.mixIn ?? next.offset ?? 0);
   return e != null && e >= 0.7 * Math.max(...E);
+}
+
+// Receta según el origen: con archivo local y análisis de las dos, la completa; si alguna es streaming o no tiene análisis, fundido + filtro.
+export function recipeFor({ cur, next, local, plan, level = 'subtle', cfgStyle = 'auto' }) {
+  if (!local) return { full: false, pick: { style: FADE_FILTER, why: 'streaming: fundido y filtro', beats: 16 }, recipe: planRecipe({ style: FADE_FILTER, cur, plan, level: 'off', beats: 16 }) };
+  const pick = chooseStyle(cur, next, plan, cfgStyle);
+  return { full: true, pick, recipe: planRecipe({ style: pick.style, cur, plan, level, beats: cfgStyle === 'auto' ? pick.beats : 0 }) };
 }
 
 // → { style, why }. Con un estilo fijo se respeta; con 'auto' decide el análisis (BPM, tonalidad, estructura).
@@ -109,6 +117,15 @@ export function planRecipe({ style, cur, plan, level = 'subtle', beats: want = 0
       if (fx) out.push(g('cola-reverb', 'from', 'fx', 0, 0.5, T(nBeats - 4), T(nBeats - 3), 'ease', { fx: 'reverb', p: 0.8, tailMs: 4000 }));
       out.push(g('graves-entran', 'to', 'eqLow', -1, 0, T(nBeats - 1), T(nBeats), 'ease'));
       out.push(g('graves-salen', 'from', 'eqLow', 0, -1, T(nBeats - 1), T(nBeats), 'ease'));
+      break;
+    }
+    case 'fade-filter': {
+      // Streaming: la saliente se cierra con un filtro y la entrante se abre, con el fundido por debajo. Sin EQ de graves ni efectos.
+      const sweep = Math.max(4, Math.min(nBeats, 16));
+      out.push(g('filtro-entra', 'to', 'filter', 0, 0.85, 0, 0, 'step'));
+      out.push(g('abre-entrante', 'to', 'filter', 0.85, 0, 0, T(sweep), 'ease'));
+      out.push(g('barrido-saliente', 'from', 'filter', 0, -0.9, T(nBeats - sweep), T(nBeats), 'ease'));
+      out.push(g('fundido', 'x', 'x', 0, 1, 0, T(nBeats), 'ease'));
       break;
     }
     default: // crossfade

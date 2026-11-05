@@ -8,7 +8,7 @@ Módulos que corren en la ventana: algunos son puros (sin DOM) y se prueban en N
 
 ### `renderer/app.js`
 
-**Dominio:** ui · **Líneas:** 1271
+**Dominio:** ui · **Líneas:** 1283
 
 Punto de entrada de la interfaz: crea los dos decks y el mezclador y cablea sesión, librería, AutoMix, sampler, grabación, vistas, ajustes, atajos y MIDI.
 
@@ -20,7 +20,7 @@ Punto de entrada de la interfaz: crea los dos decks y el mezclador y cablea sesi
 
 ### `renderer/automix-add.js`
 
-**Dominio:** automix · **Líneas:** 147
+**Dominio:** automix · **Líneas:** 157
 
 Buscar y agregar desde la vista de AutoMix: resultados (YouTube Music + librería), sugeridas para continuar y su pintado.
 
@@ -58,7 +58,7 @@ Compatibilidad de un elemento de la cola con el anterior: tres niveles y el moti
 
 ### `renderer/automix-entry.js`
 
-**Dominio:** automix · **Líneas:** 93
+**Dominio:** automix · **Líneas:** 94
 
 Tarjeta «SIGUE»: punto de entrada elegido para la pista que sigue (tiempo, compás y motivo) sobre una tira con la energía por frase. Arrastrar la línea (o ← → con el foco) elige otro compás y lo guarda como entrada editada de esa pista; «Auto» vuelve al cálculo automático.
 
@@ -77,7 +77,7 @@ Tarjeta «SIGUE»: punto de entrada elegido para la pista que sigue (tiempo, com
 
 - **Depende de:** —
 - **Lo usan:** `renderer/app.js`
-- **Pruebas:** lógica **sin prueba**
+- **Pruebas:** lógica **sin prueba** · en la app `scripts/automix-continuo-selftest.js`
 
 ### `renderer/automix-origin.js`
 
@@ -114,7 +114,7 @@ Perfiles de AutoMix: un clic fija duración, estilo, orden y nivel de efectos. �
 
 ### `renderer/automix-status.js`
 
-**Dominio:** automix · **Líneas:** 35
+**Dominio:** automix · **Líneas:** 52
 
 Estado de AutoMix en una frase: fase, cuenta atrás y motivo. Función pura sobre `AutoMix.snapshot()`.
 
@@ -122,10 +122,13 @@ Estado de AutoMix en una frase: fase, cuenta atrás y motivo. Función pura sobr
 |---|---|
 | `PHASES` | — |
 | `describe` | — |
+| `LABELS` | Rótulos compartidos por la barra de AutoMix y la vista inmersiva. |
+| `startLabel` | Rótulo del botón principal según lo que hará: detener, iniciar con la pista cargada o elegir una radio si no hay ninguna. |
+| `disabledReason` | Motivo por el que un botón de la barra está deshabilitado (una línea; '' si ninguno lo está). |
 
 - **Depende de:** `renderer/recipes.js`
 - **Lo usan:** `renderer/app.js`
-- **Pruebas:** lógica `scripts/test-automix-claro.mjs`
+- **Pruebas:** lógica `scripts/test-automix-claro.mjs` · en la app `scripts/descargar-pista-selftest.js`
 
 ### `renderer/automix-timeline.js`
 
@@ -156,7 +159,7 @@ Línea de tiempo de la próxima mezcla: la pista que sale (arriba) y la que entr
 
 ### `renderer/automix.js`
 
-**Dominio:** automix · **Líneas:** 1036
+**Dominio:** automix · **Líneas:** 1087
 
 AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual); la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 
@@ -170,7 +173,7 @@ AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Mu
 | `duration` | — |
 | `local` | — |
 
-<details><summary>Métodos con contrato (24)</summary>
+<details><summary>Métodos con contrato (28)</summary>
 
 | Método | Qué hace |
 |---|---|
@@ -180,7 +183,7 @@ AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Mu
 | `shuffle(rng = Math.random)` | «Barajar»: orden al azar de lo que no está fijado. No mueve lo fijado a mano ni la pista que ya se está preparando. |
 | `useLocalSource()` | Con el modo local o el ámbito «Mi equipo», las sugerencias salen de la música del equipo ya analizada (BPM y tonalidad compatibles), no de la radio de YouTube Music. |
 | `knownSongs()` | Canciones (no videoId) que ya sonaron, suenan o están en la cola: otra subida de la misma canción no se sugiere. |
-| `addSmart(track, { next = false, analysis = null } = {})` | Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola. { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }. |
+| `isSameSong(a, b)` | Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola. { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }. |
 | `settleMoves()` | Cuando llega el análisis de una agregada sin analizar: dónde quedó (y de dónde se movió). |
 | `analyzeSuggestions(list)` | Analiza en segundo plano (solo analiza, no guarda) las mejores sugeridas que aún no tienen BPM, de a una. |
 | `prepareAhead(n = Infinity, maxParallel = 2)` | Analiza y guarda TODA la cola (no solo las próximas), de a 2 a la vez y en el orden de la cola. Las pistas ya guardadas quedan listas al instante y no ocupan uno de los 2 puestos. |
@@ -188,6 +191,10 @@ AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Mu
 | `reorder({ force = false, manual = false } = {})` | Ordena la cola como una cadena (BPM suave, tonalidad, energía) a partir de lo que suena, respetando lo fijado a mano y la pista que ya se está precargando. Con `manual` ignora el interruptor y la regla de «al menos 3 analizadas». |
 | `reorganizeNow()` | Botón «Reorganizar ahora»: ordena aunque el interruptor esté apagado y suelta lo que el orden manual había fijado. |
 | `failHead(t, why)` | La cabeza de la cola no se pudo cargar (archivo roto, sin conexión…): se descarta y AutoMix sigue con la siguiente, explicándolo en la nota. |
+| `holds(deck)` | ¿AutoMix usa este deck? La que suena (o mezcla) y la siguiente ya preparada en el otro deck no se descargan a mano. |
+| `fullRecipe(a, b)` | Receta completa (bass swap, tempo, efectos) solo si las dos suenan desde archivo local y están analizadas; si no, fundido y filtro. |
+| `prepareEntry(next, head, plan)` | La siguiente se deja ya colocada en su punto de entrada (en pausa, sin sonido) antes de empezar la mezcla: así no hay salto al arrancar. |
+| `entryReady(next, plan)` | ¿La entrante está colocada? Con más de 3 s de espera se arranca igual (la transición hace el salto). |
 | `maxLen()` | Duración máxima que se le da al plan: en Auto la receta decide (hasta 32 s); con un estilo fijo, la elegida. |
 | `previewRecipe()` | Receta que se usaría con la mezcla planificada (para la vista); null si aún no hay plan o análisis de la siguiente. |
 | `fxTrack(cur)` | Movimientos sobre los cues de la pista que suena (solo nivel «Marcado»): riser en las subidas y reverb en las roturas. |
@@ -236,11 +243,11 @@ Registro de controles: la UI, el teclado y MIDI actúan sobre los mismos ids. ki
 
 - **Depende de:** —
 - **Lo usan:** `renderer/app.js`, `renderer/automix.js`, `renderer/deck.js`, `renderer/midi.js`, `renderer/sampler.js`
-- **Pruebas:** lógica **sin prueba** · en la app `scripts/immersive-selftest.js`
+- **Pruebas:** lógica **sin prueba** · en la app `scripts/descargar-pista-selftest.js`
 
 ### `renderer/deck.js`
 
-**Dominio:** audio · **Líneas:** 1149
+**Dominio:** audio · **Líneas:** 1224
 
 Un deck completo en la interfaz: carga la pista (streaming o archivo), motor de audio, ondas, cues, loops, tempo, stems, efectos y los controles de su plantilla DOM.
 
@@ -248,7 +255,7 @@ Un deck completo en la interfaz: carga la pista (streaming o archivo), motor de 
 |---|---|
 | `Deck` | — |
 
-<details><summary>Métodos con contrato (11)</summary>
+<details><summary>Métodos con contrato (13)</summary>
 
 | Método | Qué hace |
 |---|---|
@@ -257,6 +264,8 @@ Un deck completo en la interfaz: carga la pista (streaming o archivo), motor de 
 | `mirrorFx(i, slot)` | Cambio en la cadena de efectos: al motor al instante y a disco (con retraso) si se recuerda entre sesiones. Una ranura con ruta «ambos» se copia a la misma ranura del otro deck (no hay un bus master común: ver efectos-ampliados, A1). |
 | `applyResDefault()` | El valor por defecto de la resonancia cambió en Ajustes: vale para el doble clic y, si no se movió, para el canal. |
 | `fxSet(slot, patch, owner = 'user')` | Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2. `owner` 'auto' marca el cambio como de AutoMix: si el usuario toca después la ranura, vuelve a 'user' y AutoMix la suelta. |
+| `unload({ force = false } = {})` | Deja el deck como recién abierto. Al aire pide una segunda pulsación en 3 s; si AutoMix la usa, no se descarga. true si se descargó. |
+| `pickFile()` | Selector de archivos de audio: lo elegido se registra en la librería y se carga en este deck. |
 | `cue(down)` | CUE estilo CDJ: sonando → vuelve al cue y pausa; en pausa sobre el cue → preview mientras se mantiene; en pausa en otro punto → fija el cue ahí. |
 | `phaseDiff(other)` | Desfase de fase respecto de otro deck, en beats (-0.5..0.5). Positivo = este deck va atrasado. |
 | `matchTempoSmart(other, maxPct = 12)` | Iguala el tempo al del otro deck; si están a doble/mitad de tempo, usa la relación más cercana. |
@@ -420,7 +429,7 @@ Géneros de las pistas en la interfaz: mapa id → etiquetas (viene del almacén
 
 ### `renderer/index.html`
 
-**Dominio:** ui · **Líneas:** 667
+**Dominio:** ui · **Líneas:** 677
 
 Documento HTML de la interfaz: estructura de las vistas, decks, mezclador, librería y diálogos.
 
@@ -528,7 +537,7 @@ Editor de puntos de mezcla: ve y ajusta la entrada y hasta 6 salidas de una pist
 
 ### `renderer/mixplan.js`
 
-**Dominio:** automix · **Líneas:** 413
+**Dominio:** automix · **Líneas:** 424
 
 Plan de mezcla (funciones puras): cuándo salir de la pista que suena, dónde entrar en la siguiente, cuánto dura la transición y qué pista conviene después. Los pesos están a la vista para ajustarlos escuchando.
 
@@ -621,14 +630,16 @@ Preescucha de la Librería: una sola pista a la vez, por los auriculares, sin pa
 
 ### `renderer/recipes.js`
 
-**Dominio:** automix · **Líneas:** 132
+**Dominio:** automix · **Líneas:** 149
 
 Recetas de transición de AutoMix: cada estilo es una línea de tiempo de gestos sobre la rejilla de la pista que sale. Funciones puras (sin DOM ni audio): `chooseStyle` elige la receta según el análisis y `planRecipe` la convierte en gestos.
 
 | Exporta | Qué hace |
 |---|---|
 | `STYLES` | — |
+| `FADE_FILTER` | — |
 | `STYLE_LABEL` | — |
+| `recipeFor` | Receta según el origen: con archivo local y análisis de las dos, la completa; si alguna es streaming o no tiene análisis, fundido + filtro. |
 | `chooseStyle` | → { style, why }. Con un estilo fijo se respeta; con 'auto' decide el análisis (BPM, tonalidad, estructura). |
 | `planRecipe` | Receta de `style` sobre la rejilla de la saliente. Devuelve { style, len, gestures }; `len` ≤ plan.seconds. Gesto: { id, deck: 'from'\|'to'\|'x', param: 'eqLow'\|'filter'\|'x'\|'fx', from, to, at, end, curve: 'lin'\|'ease'\|'step', fx? } `at`/`end` en segundos de mezcla (0 = salida de la saliente), siempre múltiplos del pulso. x: 0 = deck saliente, 1 = entrante. level: 'off' \| 'subtle' \| 'full' (REQ-7: 'off' quita los gestos de efecto). |
 | `gestureValue` | Valor de un gesto en el instante t de la mezcla: null antes de empezar; `to` al terminar. Sirve al motor y a las pruebas. |
@@ -636,7 +647,7 @@ Recetas de transición de AutoMix: cada estilo es una línea de tiempo de gestos
 
 - **Depende de:** `renderer/camelot.js`, `renderer/fxcues.js`, `renderer/mixplan.js`
 - **Lo usan:** `renderer/app.js`, `renderer/automix-status.js`, `renderer/automix.js`
-- **Pruebas:** lógica `scripts/test-recipes.js`
+- **Pruebas:** lógica `scripts/test-automix-continuo.js`
 
 ### `renderer/sampler.js`
 

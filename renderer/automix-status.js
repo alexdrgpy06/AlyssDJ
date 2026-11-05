@@ -32,3 +32,20 @@ export function describe(st) {
   if (wait != null && wait <= WAIT_NEAR) return { phase: 'waiting', text: `${PHASES.waiting} · mezcla en ${mmss(wait)}`, countdown: wait, reason: note };
   return { phase: 'playing', text: wait != null ? `${PHASES.playing} · mezcla en ${mmss(wait)}` : PHASES.playing, countdown: wait, reason: note };
 }
+
+// Rótulos compartidos por la barra de AutoMix y la vista inmersiva.
+export const LABELS = { start: 'Iniciar AutoMix', stop: 'Detener AutoMix', pick: 'Elegir radio…', mix: 'Mezclar ahora', cancelMix: 'Cancelar mezcla' };
+
+// Rótulo del botón principal según lo que hará: detener, iniciar con la pista cargada o elegir una radio si no hay ninguna.
+export function startLabel(st, decks) {
+  if (st?.on) return LABELS.stop;
+  return (decks || []).some((d) => d?.track) ? LABELS.start : LABELS.pick;
+}
+
+// Motivo por el que un botón de la barra está deshabilitado (una línea; '' si ninguno lo está).
+export function disabledReason(st) {
+  if (!st?.on) return 'Mezclar ahora y Siguiente se activan al iniciar AutoMix.';
+  if (st.trans) return 'Mezclando: Mezclar ahora y Siguiente vuelven al terminar la transición.';
+  if (!st.canSkip) return 'Siguiente necesita al menos dos pistas en la cola.';
+  return '';
+}

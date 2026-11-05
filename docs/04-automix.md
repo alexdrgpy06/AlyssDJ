@@ -202,11 +202,18 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 Los controles de AutoMix están agrupados por función, con título:
 
 - **Barra de reproducción** (siempre visible arriba del panel y en la vista **Automix**): iniciar o detener, **Mezclar ahora** (**⇧→**), **Siguiente** y **Radio ▾**. Los ajustes siguientes están plegados en **Ajustes de AutoMix**, debajo de la cola.
-- **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, **Salir** (cuándo sale la pista que suena) y **Efectos** (apagado, sutil o marcado).
-- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Rellenar con radio** y **Vaciar**.
+- **Transición** (a la vista): **perfil** (Suave, Club o Radio), **Duración** y **Efectos** (apagado, sutil o marcado). Tocar un ajuste deja los perfiles sin marcar.
+- **Avanzado** (plegado): estilo (fundido, bass swap, filtro), igualar tempo y fase, **Salir** (cuándo sale la pista que suena), la **cola** (orden automático, **Priorizar lo popular** con su peso, **Reorganizar**, **Barajar**, **Deshacer**, **Rellenar con radio** y **Vaciar**) y la **fuente** (analizar y usar el archivo, seguir con la radio).
   - **Barajar** ordena al azar lo que no está fijado (no mueve lo fijado a mano ni la pista que ya se está preparando), apaga «Orden automático» para que no rehaga el orden y se puede **Deshacer**.
   - **Siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.
-- **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.
+- **Iniciar:** el botón principal dice **Iniciar AutoMix** con una pista cargada y **Elegir radio…** sin ninguna (abre el menú Radio). Bajo la barra, una línea (`am-hint`) explica por qué un botón está deshabilitado.
+
+## Entrada segura y transición continua
+
+- **Nunca entra a ciegas.** Si la pista que sigue aún no tiene análisis, AutoMix espera a que llegue; si no llega, entra en un **punto seguro** (el 8 % de su duración, entre 10 y 40 s) con fundido y filtro. La tarjeta **SIGUE** lo marca con «punto seguro» y se recalcula cuando el análisis llega.
+- **Sin saltos.** Unos segundos antes de la salida, la entrante se coloca en su punto de entrada, en pausa y sin sonido. Si no está lista, sigue sonando la actual; tras 20 s se pasa a la siguiente lista.
+- **Efectos según el origen.** Con las dos pistas en **archivo local y analizadas** se usa la receta completa (bass swap, tempo, eco y reverb) y, según el nivel de efectos, los de reproducción. Si alguna es **streaming** (o no está analizada), solo **fundido y filtro**, sin igualar tempo ni efectos.
+- **Sin repetir canciones.** La misma canción con otro título (con créditos, «Remastered», «Official Video»…) cuenta como repetida: no entra en la cola ni en las sugeridas; si la agregas tú, pide confirmación.
 
 ## Buscar y agregar desde la propia vista
 

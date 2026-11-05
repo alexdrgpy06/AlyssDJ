@@ -434,6 +434,73 @@ export class Deck {
     this.app.onDeckLoaded(this);
   }
 
+  // Deja el deck como recién abierto. Al aire pide una segunda pulsación en 3 s; si AutoMix la usa, no se descarga. true si se descargó.
+  unload({ force = false } = {}) {
+    if (!this.track) return false;
+    if (!force && this.st.playing && this.isAudible()) {
+      const now = performance.now();
+      if (!this.unloadAsk || now - this.unloadAsk > 3000) {
+        this.unloadAsk = now;
+        this.app.toast(`Deck ${this.id} está al aire. Páusalo o baja su canal para descargar la pista (o pulsa otra vez para descargarla igual).`, true);
+        return false;
+      }
+    }
+    if (this.app.automix?.holds?.(this)) {
+      this.app.toast('AutoMix la está usando: detenlo o espera a que termine de mezclarla.', true);
+      return false;
+    }
+    this.unloadAsk = 0;
+    this.sendStream({ type: 'pause' });
+    this.sendLocal({ type: 'pause' });
+    if (this.local?.audio) { try { this.local.audio.removeAttribute('src'); this.local.audio.load(); } catch {} } // eslint-disable-line no-empty
+    this.track = null;
+    this.analysis = null;
+    this.analyzing = null;
+    this.source = 'stream';
+    this.forced = null;
+    this.srcInfo = null;
+    this.wave = null;
+    this.tap = null;
+    this.taps = [];
+    this.cuePoint = 0;
+    this.cuePreview = false;
+    this.hotcues = [null, null, null, null];
+    this.loop = this.lastLoop = null;
+    this.loopIn = null;
+    this.syncLock = false;
+    this.wantPlay = false;
+    this.pitch = 0;
+    this.loadError = null;
+    this.playedMs = 0;
+    this.logged = false;
+    this.streamPlayedMs = 0;
+    this.saveRequested = false;
+    this.trimTouched = false;
+    this.st = { pos: 0, dur: 0, playing: false, rate: this.rate(), level: 0 };
+    this.stAt = performance.now();
+    for (let i = 0; i < this.fxc.slots.length; i++) this.fxc.set(i, { on: false });
+    this.broadcast({ type: 'loop' });
+    this.broadcast({ type: 'rate', rate: this.rate(), keylock: this.keylock });
+    this.pushMix();
+    this.app.onDeckLoaded(this);
+    return true;
+  }
+
+  // Selector de archivos de audio: lo elegido se registra en la librería y se carga en este deck.
+  pickFile() {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'audio/*';
+    inp.addEventListener('change', async () => {
+      const file = inp.files?.[0];
+      if (!file) return;
+      const r = await window.ytdj.local.register(window.ytdj.local.pathFor(file));
+      if (r.ok) this.load(r.data);
+      else this.app.toast(r.error, true);
+    });
+    inp.click();
+  }
+
   async setSource(src) {
     if (!this.track || src === this.source) return;
     if (!this.srcInfo?.canSwitch) return this.app.toast(this.srcInfo?.why || 'Esta pista solo tiene una fuente.');
@@ -833,6 +900,9 @@ export class Deck {
       srcBtns: [...root.querySelectorAll('.source button')],
       viewYtm: q('.view-ytm'),
       more: q('.deck-more'),
+      eject: q('.deck-eject'),
+      loadBtn: q('.deck-load'),
+      loadHelp: q('.deck-load-help'),
       menu: q('.deck-menu'),
       mixPoints: q('.mix-points'),
       srcSeg: q('.seg.source'),
@@ -865,6 +935,8 @@ export class Deck {
     click(q('.loop-in'), `${P}.loopIn`, () => this.loopInPress());
     click(q('.loop-out'), `${P}.loopOut`, () => this.loopOutPress());
     click(q('.loop-exit'), `${P}.loopExit`, () => this.loopExit());
+    click(el.eject, `${P}.eject`, () => this.unload());
+    el.loadBtn?.addEventListener('click', () => this.pickFile());
     click(el.sync, `${P}.sync`, () => this.sync());
     click(q('.tap'), `${P}.tap`, () => this.tapTempo());
     click(q('.grid-l'), `${P}.gridLeft`, () => this.shiftGrid(-5));
@@ -1059,6 +1131,9 @@ export class Deck {
 
     setText(el.title, t ? t.title || 'Cargando…' : 'Arrastra o carga una pista');
     setText(el.artist, t ? t.artist || '' : '—');
+    if (el.eject) el.eject.disabled = !t;
+    if (el.loadBtn) el.loadBtn.hidden = !!t;
+    if (el.loadHelp) el.loadHelp.hidden = !!t;
     const thumb = t ? t.thumb || generatedCover(t) : null;
     for (const c of [el.cover, el.headCover]) if (c.getAttribute('src') !== thumb) thumb ? (c.src = thumb) : c.removeAttribute('src');
     const eb = this.effBpm();

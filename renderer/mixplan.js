@@ -180,7 +180,7 @@ export function orderChain({ cur, queue, analysisOf, pinned = new Set(), budgetM
 // Pone en un plan la entrada elegida por `pickEntry` (la sustituye al punto «base» con que se calculó).
 function withEntry(plan, cur, next) {
   const entry = pickEntry(cur, next, { exitAt: plan.exitAt, seconds: plan.seconds });
-  const warnings = entry.kind === 'start' && next?.mix === undefined && !plan.warnings.some((w) => w.startsWith('sin análisis')) ? [...plan.warnings, 'sin análisis: entra por el inicio'] : plan.warnings;
+  const warnings = (entry.kind === 'start' || entry.kind === 'safe') && next?.mix === undefined && !plan.warnings.some((w) => w.startsWith('sin análisis')) ? [...plan.warnings, 'sin análisis: entra en un punto seguro'] : plan.warnings;
   return { ...plan, enterAt: entry.t, entry, warnings };
 }
 
@@ -257,7 +257,14 @@ export function pickEntry(cur, next, { exitAt, seconds = 16 } = {}) {
   const edit = next?.mixEdit?.in;
   if (Number.isFinite(edit)) return mk(edit, 'edit', 'punto de entrada que marcaste');
   const cands = entryCandidates(next, seconds);
-  if (!cands.length) return mk(next?.mix?.mixIn ?? next?.offset ?? 0, 'start', 'sin análisis: entra por el inicio de la pista');
+  if (!cands.length) {
+    const hasMix = Number.isFinite(next?.mix?.mixIn);
+    if (hasMix) return mk(next.mix.mixIn, 'start', 'entra donde empieza la música');
+    // Sin análisis nunca se entra a ciegas por el 0:00: punto seguro, un poco dentro de la pista (8 % de su duración, entre 10 y 40 s).
+    const d = Number(next?.duration);
+    const t = Number.isFinite(d) && d > 0 ? Math.min(40, Math.max(10, 0.08 * d), Math.max(0, d - seconds - 2)) : 10;
+    return mk(t, 'safe', 'sin análisis: entra en un punto seguro');
+  }
   const dur = next.duration || Infinity;
   const eo = cur ? energyAt(cur, exitAt ?? cur?.mix?.mixOut?.[0]?.t ?? 0) : null;
   const body = next.mix.energy ?? 60;
@@ -404,9 +411,13 @@ export function planTransition(cur, next, { len: chosenLen = 16, exitMode, optim
 // Clave de "es la misma canción": título sin acentos ni ruido entre paréntesis (remaster, official…) + primer artista.
 // Una misma canción llega con varios videoId (subida oficial, lyric video, otro crédito de artistas).
 const NOISE = /\b(official|video|audio|lyrics?|remaster(ed)?|visuali[sz]er|hd|hq|clean|explicit|version|mv)\b/;
+const COLLAB = /^\s*(feat|ft|featuring|con|with|prod)\b/; // «(con L.V.)», «(feat. X)»: otra subida de la misma canción
 const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 export function songKey(t) {
-  const title = fold(t?.title).replace(/[(\[][^)\]]*[)\]]/g, (m) => (NOISE.test(m) ? ' ' : m)).replace(/[^a-z0-9]+/g, ' ').trim();
-  const artist = fold(t?.artist).split(/\s*(?:,|&|\bx\b|\bfeat\.?|\bft\.?|\bwith\b|\band\b)\s*/)[0].replace(/[^a-z0-9]+/g, ' ').trim();
+  const title = fold(t?.title)
+    .replace(/[(\[][^)\]]*[)\]]/g, (m) => (NOISE.test(m) || COLLAB.test(m.slice(1)) ? ' ' : m))
+    .replace(/\s[-–—]\s*(feat|ft|featuring|con|with|prod|remaster(ed)?|radio edit|single version|album version)\b.*$/, ' ')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+  const artist = fold(t?.artist).split(/\s*(?:,|&|\bx\b|\bfeat\.?|\bft\.?|\bwith\b|\band\b|\by\b|\bcon\b)\s*/)[0].replace(/[^a-z0-9]+/g, ' ').trim();
   return `${title}|${artist}`;
 }

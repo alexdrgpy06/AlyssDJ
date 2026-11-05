@@ -32,7 +32,7 @@ tests.ui = () => {
   assert.ok(/unknown/.test(r.queue[1].cls) && r.queue[1].marks.includes('sin análisis'), `REQ-5: sin análisis marcada: ${JSON.stringify(r.queue[1])}`);
   assert.deepStrictEqual(r.club.cfg, { len: 12, style: 'auto', smartOrder: true, fxLevel: 'subtle' }, 'REQ-6: Club'); assert.deepStrictEqual(r.club.on, ['club']); assert.strictEqual(r.club.saved, 'club');
   assert.deepStrictEqual(r.soft.cfg, { len: 24, style: 'crossfade', smartOrder: true, fxLevel: 'off' }, 'REQ-6: Suave'); assert.deepStrictEqual(r.soft.on, ['soft']);
-  assert.deepStrictEqual(r.custom, ['custom'], 'REQ-6: tocar un ajuste pasa a Personalizado');
+  assert.deepStrictEqual(r.custom, [], 'REQ-6: tocar un ajuste deja los perfiles sin marcar (ya no hay botón «Personalizado»)');
   const shown = Number(/· (\d+) s$/.exec(r.lenDrag)?.[1]);
   assert.ok(Math.abs(shown - (r.len0 + 4)) <= 1, `REQ-3: la duración se ve mientras se arrastra (${r.len0} + 4 ≈ ${shown}): ${r.lenDrag}`);
   assert.ok(Math.abs(r.len.len - (r.len0 + 4)) <= 1, `REQ-3: duración aplicada: ${r.len0} → ${r.len.len}`);

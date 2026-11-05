@@ -1022,3 +1022,27 @@ body[data-layout='compact'] .am-view, .lib-main:has(.am-view:not([hidden])) .am-
 .topbar .session { flex: 0 1 auto; min-width: 0; }
 .topbar .session .btn { white-space: nowrap; }
 #btn-automix span { white-space: nowrap; }
+.am-dup { margin: 6px 2px 0; color: var(--dim); font-size: var(--fs-2); display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.am-dup[hidden] { display: none; }
+
+/* AutoMix simple: lo de cada día a la vista, lo demás en «Avanzado» */
+.am-simple { display: grid; gap: var(--s-2); }
+.am-adv { border-top: 1px solid var(--line); margin-top: var(--s-2); padding-top: var(--s-2); }
+.am-adv > summary { cursor: pointer; padding: var(--s-1) 0; font-weight: 600; list-style: none; color: var(--dim); }
+.am-adv > summary::-webkit-details-marker { display: none; }
+.am-adv > summary::before { content: '▸'; display: inline-block; width: 1.2em; }
+.am-adv[open] > summary::before { content: '▾'; }
+.am-adv > summary small { font-weight: 400; margin-left: var(--s-1); }
+.am-badge { display: inline-block; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2, var(--surface)); color: var(--warn, var(--dim)); font-size: 11px; line-height: 1.5; }
+.am-badge[hidden] { display: none; }
+
+/* Descargar y cargar pista en el deck */
+.deck-eject { width: 28px; height: 28px; min-height: 28px; }
+.deck-eject:disabled { opacity: 0.4; cursor: default; }
+.deck-eject:focus-visible, .deck-load:focus-visible { outline: 2px solid var(--focus, var(--accent)); outline-offset: 2px; }
+.deck-load-row { display: flex; gap: var(--s-2); align-items: center; margin-top: 4px; min-width: 0; }
+.deck-load-row[hidden], .deck-load[hidden], .deck-load-help[hidden] { display: none; }
+.deck-load-help { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.deck-head .title, .deck-head .artist { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.am-hint { flex: 1 1 8em; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
+.am-hint:empty { display: none; }

@@ -73,6 +73,8 @@ jobs:
           for m in structure tempo plan pick engine reanalyze; do node scripts/test-mix-points.js $m; done
           for m in registry ipc docs; do node scripts/test-arquitectura.js $m; done
           for m in model engine docs; do node --experimental-default-type=module scripts/test-automix-inicio.js $m; done
+          for m in dup entry seamless source docs; do node --experimental-default-type=module scripts/test-automix-continuo.js $m; done
+          node scripts/test-descargar-pista.js docs
       - name: Arranque de la app (Linux, pantalla virtual)
         if: runner.os == 'Linux'
         run: |
@@ -101,6 +103,8 @@ jobs:
           xvfb-run -a node scripts/test-entrada.js ui
           xvfb-run -a node scripts/test-automix-claro.js ui,robust
           xvfb-run -a node --experimental-default-type=module scripts/test-automix-inicio.js panel,immersive,layout
+          xvfb-run -a node --experimental-default-type=module scripts/test-automix-continuo.js ui
+          xvfb-run -a node scripts/test-descargar-pista.js logic,ui,header,labels
           xvfb-run -a node scripts/visual-check.js
       - name: Arranque de la app (Windows y macOS)
         if: runner.os != 'Linux'
@@ -127,6 +131,8 @@ jobs:
           node scripts/test-entrada.js ui
           node scripts/test-automix-claro.js ui,robust
           node --experimental-default-type=module scripts/test-automix-inicio.js panel,immersive,layout
+          node --experimental-default-type=module scripts/test-automix-continuo.js ui
+          node scripts/test-descargar-pista.js logic,ui,header,labels
       - name: Paquete de la app (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/test-installers.js packaged

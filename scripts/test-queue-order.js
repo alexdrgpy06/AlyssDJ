@@ -13,7 +13,7 @@ globalThis.localStorage = { getItem: () => null, setItem() {} };
 globalThis.window = { ytdj: { analysis: { onEvent: (cb) => listeners.push(cb), get: async (id) => store[id] || null, request: (id, o) => requests.push([id, o]) }, lib: { radio: async () => ({ ok: true, data: [] }), search: async () => ({ ok: true, data: [] }) } } };
 const { AutoMix } = await import('../renderer/automix.js');
 function fakeDeck(id) {
-  return { id, track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, wantPlay: false, st: { playing: false, dur: 0, ready: false, videoId: null },
+  return { id, source: 'local', track: null, pos: 0, pitch: 0, loop: null, syncLock: false, analyzing: null, analysis: null, wantPlay: false, st: { playing: false, dur: 0, ready: false, videoId: null },
     async load(t) { this.track = t; this.st = { playing: false, dur: 200, ready: true, videoId: t.videoId }; }, togglePlay() {}, remaining() { return this.st.dur - this.pos; },
     bpm: () => null, setLoop() {}, matchTempoSmart: () => false, alignPhase() {}, phaseDiff: () => null, setPitch() {}, analyze() {}, transport() {} };
 }

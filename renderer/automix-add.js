@@ -136,7 +136,17 @@ export class AddPanel {
     if (!t) return;
     const am = this.app.automix;
     const { source, cost, analyzed, fits, ...track } = t;
-    const r = am.addSmart(track, { next });
+    const dupLine = $('#amv-dup');
+    const r = am.addSmart(track, { next, confirmDup: this.confirmed === track.videoId });
+    if (r.song) {
+      // otra versión de una canción que ya suena o está en la cola: se pregunta antes de repetirla
+      this.confirmed = null;
+      $('#amv-dup-text').textContent = `Ya suena o está en la cola otra versión de «${track.title || 'esta canción'}».`;
+      dupLine.hidden = false;
+      $('#amv-dup-yes').onclick = () => { this.confirmed = track.videoId; dupLine.hidden = true; this.add(i, { next, kind }); this.confirmed = null; };
+      return;
+    }
+    dupLine.hidden = true;
     if (r.ok) {
       this.app.toast(am.note);
       this.render();

@@ -23,6 +23,8 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 | Zona | Control | Nombre | Siempre visible |
 |---|---|---|---|
 | Cabecera | Título, artista, BPM, tonalidad | — | Sí |
+| Cabecera | Descargar pista (`deck-eject`, control `deckX.eject`, atajo y MIDI) | Descargar pista | Sí; atenuado sin pista; al aire pide una segunda pulsación en 3 s |
+| Cabecera | Cargar pista (`deck-load`) y «o arrastra una pista de la librería» | Cargar pista | Solo con el deck vacío |
 | Cabecera | Menú «⋯» (`deck-more`) | Más | Sí; sus entradas solo si aplican |
 | Menú «⋯» | STREAM / ARCHIVO | Fuente | Solo si hay versión local y de stream |
 | Menú «⋯» | Analizar | Analizar | Solo si no está analizada |
@@ -39,14 +41,15 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 
 | Acción | Dónde vive | Retirado de |
 |---|---|---|
-| Iniciar / Detener | Barra de reproducción del panel (`amv-toggle`) y vista Automix (`imm-toggle`) | botón de la barra |
+| Iniciar / Detener | Barra de reproducción del panel (`amv-toggle`) y vista Automix (`imm-toggle`); sin pista cargada dice «Elegir radio…» y abre el menú Radio | botón de la barra |
 | Mezclar ahora | Barra del panel (`amv-mix`), vista Automix (`imm-mix`), `Mayús + →` | — |
 | Radio ▾ (empezar desde una pista) | Barra del panel (`amv-radio`) y vista Automix (`imm-radio`); «Radio» en cada resultado de búsqueda | — |
-| Estilo, Duración | Panel, «Ajustes de AutoMix» (`amv-style`, `amv-len`) | Vista Automix (`imm-style`, `imm-len`) |
+| Perfil (Suave, Club, Radio), Duración, Efectos | Panel, «Ajustes de AutoMix» (`amv-profile`, `amv-len`, `amv-fx`) | Botón «Personalizado»; vista Automix (`imm-style`, `imm-len`) |
+| Motivo de un botón deshabilitado | Línea bajo la barra (`am-hint`) | — |
 | Siguiente (quitar la que sigue) | Barra del panel (`amv-skip`) y vista Automix (`imm-skip`) | — |
 | Ver cola | Panel | Vista Automix (`imm-queue`) → «Abrir panel» (`imm-open`) |
 | Visual | Vista Automix (`imm-viz-toggle`) | — |
-| Salir, Efectos, Orden, Popularidad, Fuente | Panel | — |
+| Estilo, Igualar tempo, Salir, Orden, Popularidad, Fuente, Radio continua | Panel, plegable «Avanzado» (`am-adv`) | — |
 
 ## Nombres unificados
 

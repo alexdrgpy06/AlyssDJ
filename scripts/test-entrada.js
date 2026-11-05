@@ -53,9 +53,9 @@ tests.pick = async () => {
   // REQ-3: lo del usuario manda, aunque no esté en límite de frase
   const u = longIntro(); u.mixEdit = { in: 12.345, outs: [] }; const e4 = pickEntry(cur(), u, { exitAt: 10, seconds: 16 });
   assert.deepStrictEqual([e4.kind, e4.t], ['edit', 12.345]); assert.match(e4.why, /marcaste/);
-  // REQ-7: sin análisis, por el inicio y avisando
-  const e5 = pickEntry(cur(), { videoId: 'x' }, { exitAt: 10, seconds: 16 }); assert.deepStrictEqual([e5.kind, e5.t], ['start', 0]); assert.match(e5.why, /sin análisis/);
-  const e6 = pickEntry(cur(), { bpm: 120, offset: 0.4 }, { exitAt: 10, seconds: 16 }); assert.strictEqual(e6.kind, 'start'); assert.strictEqual(e6.t, 0.4);
+  // REQ-7: sin análisis, en un punto seguro y avisando
+  const e5 = pickEntry(cur(), { videoId: 'x' }, { exitAt: 10, seconds: 16 }); assert.deepStrictEqual([e5.kind, e5.t], ['safe', 10]); assert.match(e5.why, /sin análisis/);
+  const e6 = pickEntry(cur(), { bpm: 120, offset: 0.4 }, { exitAt: 10, seconds: 16 }); assert.strictEqual(e6.kind, 'safe'); assert.ok(e6.t >= 10, 'nunca a ciegas por el 0:00');
   // pura: no muta nada
   const snap = JSON.stringify(l); pickEntry(cur(), l, { exitAt: 10, seconds: 16 }); assert.strictEqual(JSON.stringify(l), snap);
   console.log('entrada pick: OK');
@@ -84,9 +84,9 @@ tests.plan = async () => {
   assert.strictEqual(previewPlan({ a: c, b: l, exitAt: 40, len: 16 }).enterAt, pickEntry(c, l, { exitAt: 40, seconds: 16 }).t, 'preescucha = pickEntry');
   // sin BPM en alguna de las dos: fundido corto ahora mismo, con entrada coherente
   const nb = planNearest({ ...c, bpm: null }, l, { pos: 3, len: 16 }); assert.strictEqual(nb.kind, 'now'); assert.ok(Number.isFinite(nb.enterAt) && nb.entry);
-  // REQ-7: la siguiente sin análisis entra por el inicio y avisa en el plan
+  // REQ-7: la siguiente sin análisis entra en un punto seguro y avisa en el plan
   const un = { videoId: 'sin-analisis', duration: 200 };
-  const pu = planTransition(c, un, { len: 16, exitMode: 'optimal', pos: 0 }); assert.strictEqual(pu.enterAt, 0); assert.strictEqual(pu.entry.kind, 'start'); assert.ok(pu.warnings.some((w) => /sin análisis/.test(w)), `aviso: ${JSON.stringify(pu.warnings)}`);
+  const pu = planTransition(c, un, { len: 16, exitMode: 'optimal', pos: 0 }); assert.strictEqual(pu.enterAt, 16); assert.strictEqual(pu.entry.kind, 'safe'); assert.ok(pu.warnings.some((w) => /sin análisis/.test(w)), `aviso: ${JSON.stringify(pu.warnings)}`);
   const pn = planNearest(c, un, { pos: 3, len: 16 }); assert.ok(pn.warnings.some((w) => /sin análisis|sin BPM/.test(w)));
   // sin tocar lo demás: la salida y la duración siguen siendo las de siempre
   const base = planTransition(c, sh, { len: 16, exitMode: 'optimal', pos: 0 }); assert.ok(base.exitAt > 0 && base.seconds > 0 && base.beats >= 8);
@@ -113,7 +113,7 @@ tests.ui = async () => {
   assert.ok(r.saved.in > r.auto.entry.t - 1 || r.saved.in > 5, 'se movió hacia la mitad de la pista');
   assert.ok(r.key.saved && Math.abs(r.key.saved.in - (r.saved.in + 4 * r.moved.entry.beat)) < 0.05, `← → mueven un compás: ${JSON.stringify([r.saved, r.key.saved])}`);
   assert.ok(!r.reset.saved?.in && !r.reset.view.auto && !r.reset.view.entry.user, `«Auto» vuelve al cálculo: ${JSON.stringify(r.reset)}`); assert.ok(Math.abs(r.reset.view.entry.t - r.auto.entry.t) < 0.01, 'a la misma entrada automática');
-  assert.ok(!r.unanalyzed.hidden && !r.unanalyzed.strip && /sin análisis/.test(r.unanalyzed.why), `sin análisis, por el inicio y avisando: ${JSON.stringify(r.unanalyzed)}`);
+  assert.ok(!r.unanalyzed.hidden && !r.unanalyzed.strip && /sin análisis/.test(r.unanalyzed.why), `sin análisis, en un punto seguro y avisando: ${JSON.stringify(r.unanalyzed)}`);
   console.log('entrada ui: OK');
 };
 

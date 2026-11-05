@@ -34,7 +34,7 @@ module.exports = (win) => {
       // «Auto» devuelve el cálculo automático
       await js(`document.getElementById('amv-entry-auto').click(); return 1`); await wait(900);
       R.reset = { view: await js(view), saved: await js(`return (await window.ytdj.analysis.get(${JSON.stringify(B.videoId)})).mixEdit || null`) };
-      // la que sigue sin analizar: entra por el inicio y lo dice
+      // la que sigue sin analizar: entra en un punto seguro y lo dice
       await js(`const am = __app.automix; am.queue.length = 0; am.queue.push(${JSON.stringify(C)}); am.emit(); return 1`); await wait(1200);
       R.unanalyzed = await js(view);
     } catch (e) { R.__err = e.stack; }

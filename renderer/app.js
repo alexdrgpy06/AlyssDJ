@@ -12,7 +12,7 @@ import { renderUpdate } from './update-ui.js';
 import { AddPanel } from './automix-add.js';
 import { EntryStrip } from './automix-entry.js';
 import { Timeline } from './automix-timeline.js';
-import { describe } from './automix-status.js';
+import { describe, LABELS, startLabel, disabledReason } from './automix-status.js';
 // Instant FX: mantener la tecla aplica la ranura (deck, ranura) y soltarla la quita.
 const FX_KEYS = { e: ['A', 0], r: ['A', 1], t: ['A', 2], u: ['B', 0], i: ['B', 1], o: ['B', 2] };
 import { LEVELS } from './automix-compat.js';
@@ -142,6 +142,7 @@ class App {
 
   onDeckLoaded() {
     this.library.render();
+    this.automix.emit?.(); // el rótulo de «Iniciar» depende de si hay pista cargada
     // la cola de análisis atiende primero las pistas que están cargadas en un deck
     window.ytdj.backlog.setPriority([this.decks.A, this.decks.B].map((d) => d?.track?.videoId).filter(Boolean));
     // los stems de lo que suena o está cargado se preparan solos (si el ajuste lo permite)
@@ -319,7 +320,7 @@ class App {
     $('#btn-automix').addEventListener('click', () => this.library.show('automix'));
     am.subscribe(() => !view.hidden && this.renderAutoMix());
     setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
-    $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#amv-toggle').addEventListener('click', () => this.toggleAutoMix());
     this.bindRadioMenu('#amv-radio', '#amv-radio-menu');
     $('#amv-mix').addEventListener('click', () => am.mixNow());
     $('#amv-clear').addEventListener('click', () => am.clear());
@@ -451,7 +452,7 @@ class App {
   // ---------- vista Automix inmersiva ----------
   bindImmersive() {
     const am = this.automix;
-    $('#imm-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#imm-toggle').addEventListener('click', () => this.toggleAutoMix());
     $('#imm-mix').addEventListener('click', () => am.mixNow());
     $('#imm-skip').addEventListener('click', () => am.skipNext());
     this.bindRadioMenu('#imm-radio', '#imm-radio-menu');
@@ -477,7 +478,7 @@ class App {
     const vizOn = st.cfg.visual !== false;
     $('#imm-viz-toggle').setAttribute('aria-pressed', String(vizOn));
     $('#imm-viz-toggle').classList.toggle('active', vizOn);
-    $('#imm-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
+    $('#imm-toggle span').textContent = startLabel(st, [this.decks.A, this.decks.B]);
     $('#imm-mix').disabled = !st.on || !!st.trans;
     $('#imm-mix span').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
     $('#imm-skip').disabled = !st.canSkip;
@@ -709,6 +710,16 @@ class App {
   }
 
   // Menú «Radio»: empezar AutoMix con la radio de la pista que suena, la de un deck, la de la lista abierta o una que se busque.
+  // Detiene AutoMix; si está parado, lo inicia con la pista cargada, o sin pista abre el menú Radio para elegir el origen.
+  toggleAutoMix() {
+    const am = this.automix;
+    if (am.on) return am.stop();
+    if ([this.decks.A, this.decks.B].some((d) => d.track)) return am.start();
+    this.setView('library');
+    this.library.show('automix');
+    setTimeout(() => $('#amv-radio').click(), 0); // después del clic que lo pidió, para que el cierre por clic fuera no lo cierre
+  }
+
   bindRadioMenu(btnSel, menuSel) {
     const btn = $(btnSel);
     const menu = $(menuSel);
@@ -757,10 +768,11 @@ class App {
     };
     $('#btn-automix').classList.toggle('active', st.on);
     $('#btn-automix span').textContent = st.trans ? 'Mezclando' : st.on ? 'AutoMix activo' : 'AutoMix';
-    $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
+    $('#amv-toggle span').textContent = startLabel(st, [this.decks.A, this.decks.B]);
+    $('#am-hint').textContent = disabledReason(st);
     $('#amv-mix').disabled = !st.on || !!st.trans;
     $('#amv-mix').classList.toggle('on', !!st.pendingMix);
-    $('#amv-mix-label').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
+    $('#amv-mix-label').textContent = st.pendingMix ? LABELS.cancelMix : LABELS.mix;
     document.querySelectorAll('#amv-style button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.cfg.style));
     $('#amv-len').value = st.cfg.len;
     $('#amv-len-out').textContent = `${st.cfg.len} s`;

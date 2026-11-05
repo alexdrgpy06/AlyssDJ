@@ -1118,7 +1118,7 @@
     "qa": {
       "logica": null,
       "estatica": null,
-      "arranque": "fx-ampliados-selftest.js",
+      "arranque": "automix-continuo-selftest.js",
       "visual": null
     }
   },
@@ -1336,7 +1336,7 @@
     ],
     "debeVivir": "renderer/app.js",
     "notas": "Cableado de todo: decks, mezclador, librería, AutoMix, ajustes y atajos en 1232 líneas; las vistas deberían tener un archivo cada una.",
-    "lineas": 1271,
+    "lineas": 1283,
     "qa": {
       "logica": null,
       "estatica": "test-fxcues.js",
@@ -1373,7 +1373,7 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/automix-add.js",
-    "lineas": 147,
+    "lineas": 157,
     "qa": {
       "logica": null,
       "estatica": null,
@@ -1438,11 +1438,11 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/automix-entry.js",
-    "lineas": 93,
+    "lineas": 94,
     "qa": {
       "logica": null,
       "estatica": null,
-      "arranque": null,
+      "arranque": "automix-continuo-selftest.js",
       "visual": null
     }
   },
@@ -1526,9 +1526,25 @@
     "responsabilidad": "Estado de AutoMix en una frase: fase, cuenta atrás y motivo. Función pura sobre `AutoMix.snapshot()`.",
     "api": [
       "PHASES",
-      "describe"
+      "describe",
+      "LABELS",
+      "startLabel",
+      "disabledReason"
     ],
-    "contrato": [],
+    "contrato": [
+      {
+        "nombre": "LABELS",
+        "hace": "Rótulos compartidos por la barra de AutoMix y la vista inmersiva."
+      },
+      {
+        "nombre": "startLabel",
+        "hace": "Rótulo del botón principal según lo que hará: detener, iniciar con la pista cargada o elegir una radio si no hay ninguna."
+      },
+      {
+        "nombre": "disabledReason",
+        "hace": "Motivo por el que un botón de la barra está deshabilitado (una línea; '' si ninguno lo está)."
+      }
+    ],
     "metodos": [],
     "depende": [
       "renderer/recipes.js"
@@ -1538,11 +1554,11 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/automix-status.js",
-    "lineas": 35,
+    "lineas": 52,
     "qa": {
       "logica": "test-automix-claro.mjs",
       "estatica": null,
-      "arranque": null,
+      "arranque": "descargar-pista-selftest.js",
       "visual": null
     }
   },
@@ -1633,7 +1649,7 @@
         "hace": "Canciones (no videoId) que ya sonaron, suenan o están en la cola: otra subida de la misma canción no se sugiere."
       },
       {
-        "nombre": "addSmart(track, { next = false, analysis = null } = {})",
+        "nombre": "isSameSong(a, b)",
         "hace": "Agrega una pista. Analizada → va al hueco de menor coste de la cadena; sin analizar → al final, se analiza y se mueve sola. { next: true } la pone la siguiente. Devuelve { ok, index, moved, reason }."
       },
       {
@@ -1663,6 +1679,22 @@
       {
         "nombre": "failHead(t, why)",
         "hace": "La cabeza de la cola no se pudo cargar (archivo roto, sin conexión…): se descarta y AutoMix sigue con la siguiente, explicándolo en la nota."
+      },
+      {
+        "nombre": "holds(deck)",
+        "hace": "¿AutoMix usa este deck? La que suena (o mezcla) y la siguiente ya preparada en el otro deck no se descargan a mano."
+      },
+      {
+        "nombre": "fullRecipe(a, b)",
+        "hace": "Receta completa (bass swap, tempo, efectos) solo si las dos suenan desde archivo local y están analizadas; si no, fundido y filtro."
+      },
+      {
+        "nombre": "prepareEntry(next, head, plan)",
+        "hace": "La siguiente se deja ya colocada en su punto de entrada (en pausa, sin sonido) antes de empezar la mezcla: así no hay salto al arrancar."
+      },
+      {
+        "nombre": "entryReady(next, plan)",
+        "hace": "¿La entrante está colocada? Con más de 3 s de espera se arranca igual (la transición hace el salto)."
       },
       {
         "nombre": "maxLen()",
@@ -1722,7 +1754,7 @@
       "localStorage:alyssdj:automix"
     ],
     "debeVivir": "renderer/automix.js",
-    "lineas": 1036,
+    "lineas": 1087,
     "qa": {
       "logica": "local-automix-test.mjs",
       "estatica": "test-jog.js",
@@ -1801,7 +1833,7 @@
     "qa": {
       "logica": null,
       "estatica": null,
-      "arranque": "immersive-selftest.js",
+      "arranque": "descargar-pista-selftest.js",
       "visual": null
     }
   },
@@ -1833,6 +1865,14 @@
       {
         "nombre": "fxSet(slot, patch, owner = 'user')",
         "hace": "Interfaz para el AutoMix: cambio inmediato o con rampa lineal (segundos) de la ranura 0, 1 o 2. `owner` 'auto' marca el cambio como de AutoMix: si el usuario toca después la ranura, vuelve a 'user' y AutoMix la suelta."
+      },
+      {
+        "nombre": "unload({ force = false } = {})",
+        "hace": "Deja el deck como recién abierto. Al aire pide una segunda pulsación en 3 s; si AutoMix la usa, no se descarga. true si se descargó."
+      },
+      {
+        "nombre": "pickFile()",
+        "hace": "Selector de archivos de audio: lo elegido se registra en la librería y se carga en este deck."
       },
       {
         "nombre": "cue(down)",
@@ -1877,7 +1917,7 @@
     ],
     "debeVivir": "renderer/deck.js",
     "notas": "Mezcla el deck (audio, ondas, cues, loops, FX) con su DOM: el modelo y la vista deberían separarse.",
-    "lineas": 1149,
+    "lineas": 1224,
     "qa": {
       "logica": null,
       "estatica": "test-fx.js",
@@ -2169,7 +2209,7 @@
     "usadoPor": [],
     "persiste": [],
     "debeVivir": "renderer/index.html",
-    "lineas": 667,
+    "lineas": 677,
     "qa": {
       "logica": null,
       "estatica": "test-automix-claro.js",
@@ -2467,7 +2507,7 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/mixplan.js",
-    "lineas": 413,
+    "lineas": 424,
     "qa": {
       "logica": "test-automix-add.js",
       "estatica": null,
@@ -2575,13 +2615,19 @@
     "responsabilidad": "Recetas de transición de AutoMix: cada estilo es una línea de tiempo de gestos sobre la rejilla de la pista que sale. Funciones puras (sin DOM ni audio): `chooseStyle` elige la receta según el análisis y `planRecipe` la convierte en gestos.",
     "api": [
       "STYLES",
+      "FADE_FILTER",
       "STYLE_LABEL",
+      "recipeFor",
       "chooseStyle",
       "planRecipe",
       "gestureValue",
       "GESTURE_LABEL"
     ],
     "contrato": [
+      {
+        "nombre": "recipeFor",
+        "hace": "Receta según el origen: con archivo local y análisis de las dos, la completa; si alguna es streaming o no tiene análisis, fundido + filtro."
+      },
       {
         "nombre": "chooseStyle",
         "hace": "→ { style, why }. Con un estilo fijo se respeta; con 'auto' decide el análisis (BPM, tonalidad, estructura)."
@@ -2612,9 +2658,9 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/recipes.js",
-    "lineas": 132,
+    "lineas": 149,
     "qa": {
-      "logica": "test-recipes.js",
+      "logica": "test-automix-continuo.js",
       "estatica": null,
       "arranque": null,
       "visual": null
