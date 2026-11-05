@@ -41,7 +41,7 @@ WHEN la pista que sigue no tiene análisis THE SYSTEM SHALL esperar a que llegue
 WHEN falta poco para la salida THE SYSTEM SHALL colocar la entrante en su punto de entrada, en pausa y sin sonido, y mezclar solo cuando esté lista; IF no lo está THEN sigue sonando la actual y, pasados 20 s, se pasa a la siguiente lista.
 #### ADDED spec: Efectos según el origen
 WHEN las dos pistas son archivos locales analizados THE SYSTEM SHALL usar la receta completa y los efectos de reproducción del nivel elegido; IF alguna es streaming o no tiene análisis THEN solo fundido y filtro, sin igualar tempo ni efectos.
-#### ADDED spec: Sin canciones repetidas
+#### ADDED spec: Misma canción con otro título cuenta como repetida
 THE SYSTEM SHALL tratar como la misma canción la que difiere solo en créditos, «Remastered», «Official Video» u otros sufijos, no repetirla en la cola, la lista inicial, la radio ni las sugeridas, y pedir confirmación si el usuario la agrega.
 #### ADDED design: Entrada, receta y claves
 `pickEntry` devuelve `kind: 'safe'`; `AutoMix.prepareEntry/entryReady` colocan la entrante; `recipeFor` y el estilo `fade-filter` (recipes.js) y `AutoMix.fullRecipe` deciden por origen; `songKey` e `isSameSong` detectan repetidas.

@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/library.js, scripts/automix-compact-selftest.js, renderer/styles.css, renderer/app.js, renderer/automix.js, renderer/index.html, scripts/test-automix-compact.js]
-last_change: 2026-11-03-arquitectura-documentada
+last_change: 2026-11-04-automix-simple-y-continuo
 ---
 # ui · design
 
@@ -64,3 +64,15 @@ Diálogo `#about` con `app:info`, marca «by AlystechPY» en la barra superior (
 ## Herramientas del mapa
 
 `scripts/arquitectura-lib.js` (lectura del código), `arquitectura-gen.js` (escribe registro y documentos), `test-arquitectura.js` (registry, ipc, docs) y `visual-check.js` con `visual-check-selftest.js` (comparación dentro de Electron, `--approve` para aceptar un cambio intencionado).
+
+## Barra de reproducción y menú Radio
+
+`#am-transport` (sticky) con `#amv-toggle`, `#amv-mix`, `#amv-skip` y `#amv-radio`; `#am-more` (`<details>`) con las tres fieldset; `.imm-controls` con `#imm-toggle`, `#imm-mix`, `#imm-skip` y `#imm-radio`; `App.bindRadioMenu(btn, menu)` comparte el menú y se cierra con Esc o clic fuera.
+
+## Deck.unload y rótulos
+
+`Deck.unload({ force })`, `Deck.pickFile`, `AutoMix.holds(deck)`, `startLabel`, `disabledReason` y `LABELS` (automix-status.js); controles `deckX.eject`, `.deck-eject`, `.deck-load`, `#am-hint`.
+
+## Panel simple
+
+`#am-more` contiene `.am-simple` (`#amv-profile`, `#amv-len`, `#amv-fx`) y `#am-adv` con el resto; la tarjeta SIGUE muestra `#amv-entry-safe`.

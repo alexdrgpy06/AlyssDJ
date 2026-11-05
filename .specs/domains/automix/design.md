@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-03-automix-claro
+last_change: 2026-11-04-automix-simple-y-continuo
 ---
 # automix · design
 
@@ -56,3 +56,11 @@ La vista es una pestaña de la librería que lee `AutoMix.snapshot()`; el motor 
 ## Módulos de estado, compatibilidad y perfiles
 
 `renderer/automix-status.js` (`describe`), `renderer/automix-compat.js` (`compat`) y `renderer/automix-profiles.js` (`PROFILES`, `applyProfile`, `detect`); `AutoMix.failHead` descarta la cabeza que falla (`Deck.loadError` o excepción de `preload`) y `snapshot()` añade `timeline` y `compat` por elemento de la cola.
+
+## automix-origin.js
+
+`radioOrigins({ decks, list })` devuelve los orígenes disponibles y `otherDeckHead(cur, other, ana)` la pista del otro deck apta; `AutoMix.start` hace `queue.unshift` de esa pista cuando no recibe `tracks`.
+
+## Entrada, receta y claves
+
+`pickEntry` devuelve `kind: 'safe'`; `AutoMix.prepareEntry/entryReady` colocan la entrante; `recipeFor` y el estilo `fade-filter` (recipes.js) y `AutoMix.fullRecipe` deciden por origen; `songKey` e `isSameSong` detectan repetidas.

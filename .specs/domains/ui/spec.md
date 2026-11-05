@@ -1,7 +1,7 @@
 ---
 domain: ui
 paths: [renderer/styles.css, renderer/app.js, renderer/index.html, main/settings.js, docs/**, scripts/test-layouts.js]
-last_change: 2026-11-03-arquitectura-documentada
+last_change: 2026-11-04-automix-simple-y-continuo
 ---
 # ui · spec
 
@@ -132,3 +132,19 @@ THE SYSTEM SHALL permitir, desde el botón ⋯ del panel FX, elegir la división
 ## Mapa de arquitectura mantenido por pruebas
 
 THE SYSTEM SHALL mantener en docs/arquitectura un registro por módulo (modulos.json) y documentos generados, y fallar la integración continua si un módulo, canal IPC o cita de archivo diverge del código, y si una de las seis capturas de referencia cambia más del 0,5 % de sus píxeles.
+
+## Controles de AutoMix completos y sin recortes
+
+WHILE la ventana mide 1280×720 THE SYSTEM SHALL mostrar la barra de reproducción de AutoMix (iniciar o detener, mezclar ahora, siguiente y radio) fija arriba del panel y también en la vista Automix, la cola y el buscador a la vista, los ajustes de transición, cola y fuente plegados, los botones con borde y los segmentos de estilo sin recortar, y la barra superior sin textos partidos.
+
+## Descargar la pista de un deck
+
+WHEN el usuario pulsa «Descargar pista» (botón, atajo o MIDI) THE SYSTEM SHALL dejar el deck como recién abierto; IF está al aire THEN avisa y exige una segunda pulsación en 3 s; IF AutoMix la usa THEN no la descarga.
+
+## Cargar pista y rótulos coherentes
+
+WHILE un deck está vacío THE SYSTEM SHALL ofrecer «Cargar pista» con la ayuda «o arrastra una pista de la librería», y el botón de AutoMix dirá «Iniciar AutoMix» con una pista cargada o «Elegir radio…» (abre el menú Radio) sin ninguna, con el motivo de un botón deshabilitado en una línea de la barra.
+
+## Panel de AutoMix simple
+
+WHILE se ven los ajustes de AutoMix THE SYSTEM SHALL mostrar solo perfil (Suave, Club, Radio), duración y efectos, y dejar estilo, tempo, salida, cola, fuente y radio continua en un bloque plegado «Avanzado».

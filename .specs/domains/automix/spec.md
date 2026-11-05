@@ -1,7 +1,7 @@
 ---
 domain: automix
 paths: [renderer/automix.js, renderer/app.js, renderer/index.html, renderer/styles.css, renderer/library.js, renderer/deck.js, main/analyzer.js, docs/**]
-last_change: 2026-11-03-efectos-ampliados
+last_change: 2026-11-04-automix-simple-y-continuo
 ---
 # automix · spec
 
@@ -98,3 +98,27 @@ THE SYSTEM SHALL describir en todo momento la fase de AutoMix (Detenido, Sonando
 ## Frenazo en la caída
 
 WHEN la receta es «En la caída», el nivel de efectos es «Marcado» y la transición dura al menos 8 s THE SYSTEM SHALL frenar la pista que sale en los últimos 4 pulsos usando una ranura libre; IF no hay ranura libre THEN THE SYSTEM SHALL omitirlo y anotarlo.
+
+## Empezar desde una radio
+
+THE SYSTEM SHALL ofrecer en AutoMix un menú «Radio» con la pista que suena, la de cada deck, la primera de la lista abierta y una búsqueda como orígenes, y WHEN el usuario elige uno THE SYSTEM SHALL cargar esa pista, llenar la cola con su radio (o con pistas compatibles de la librería en modo local o sin sesión) e iniciar AutoMix; cada resultado del buscador de AutoMix tiene su botón «Radio».
+
+## El otro deck cuenta como siguiente
+
+WHEN AutoMix inicia sin lista propia y el otro deck tiene una pista distinta, analizada y sin salto de BPM mayor al 8 % ni tonalidad en choque THE SYSTEM SHALL usarla como la siguiente antes de pedir pistas a la radio.
+
+## Entrada segura
+
+WHEN la pista que sigue no tiene análisis THE SYSTEM SHALL esperar a que llegue y, si no llega, entrar en un punto seguro (el 8 % de su duración, entre 10 y 40 s) con fundido y filtro, nunca por el 0:00, y recalcular el plan cuando el análisis llegue.
+
+## Transición continua
+
+WHEN falta poco para la salida THE SYSTEM SHALL colocar la entrante en su punto de entrada, en pausa y sin sonido, y mezclar solo cuando esté lista; IF no lo está THEN sigue sonando la actual y, pasados 20 s, se pasa a la siguiente lista.
+
+## Efectos según el origen
+
+WHEN las dos pistas son archivos locales analizados THE SYSTEM SHALL usar la receta completa y los efectos de reproducción del nivel elegido; IF alguna es streaming o no tiene análisis THEN solo fundido y filtro, sin igualar tempo ni efectos.
+
+## Misma canción con otro título cuenta como repetida
+
+THE SYSTEM SHALL tratar como la misma canción la que difiere solo en créditos, «Remastered», «Official Video» u otros sufijos, no repetirla en la cola, la lista inicial, la radio ni las sugeridas, y pedir confirmación si el usuario la agrega.
