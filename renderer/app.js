@@ -20,6 +20,7 @@ import { applyProfile, detect } from './automix-profiles.js';
 import { Sampler } from './sampler.js';
 import { camelotColor } from './camelot.js';
 import { ViewState, VIEWS, STORE as VIEW_STORE } from './views.js';
+import { radioOrigins } from './automix-origin.js';
 import { Visualizer } from './viz.js';
 import { settingsFilter, settingPatch, sectionDefaults } from './settings-ui.js';
 import { StemsStore } from './stems.js';
@@ -319,6 +320,7 @@ class App {
     am.subscribe(() => !view.hidden && this.renderAutoMix());
     setInterval(() => !view.hidden && am.on && this.renderAutoMix(), 400);
     $('#amv-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    this.bindRadioMenu('#amv-radio', '#amv-radio-menu');
     $('#amv-mix').addEventListener('click', () => am.mixNow());
     $('#amv-clear').addEventListener('click', () => am.clear());
     $('#amv-fill').addEventListener('click', () => {
@@ -449,6 +451,10 @@ class App {
   // ---------- vista Automix inmersiva ----------
   bindImmersive() {
     const am = this.automix;
+    $('#imm-toggle').addEventListener('click', () => (am.on ? am.stop() : am.start()));
+    $('#imm-mix').addEventListener('click', () => am.mixNow());
+    $('#imm-skip').addEventListener('click', () => am.skipNext());
+    this.bindRadioMenu('#imm-radio', '#imm-radio-menu');
     $('#imm-open').addEventListener('click', () => {
       this.setView('library');
       this.library.show('automix');
@@ -471,6 +477,10 @@ class App {
     const vizOn = st.cfg.visual !== false;
     $('#imm-viz-toggle').setAttribute('aria-pressed', String(vizOn));
     $('#imm-viz-toggle').classList.toggle('active', vizOn);
+    $('#imm-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
+    $('#imm-mix').disabled = !st.on || !!st.trans;
+    $('#imm-mix span').textContent = st.pendingMix ? 'Cancelar mezcla' : 'Mezclar ahora';
+    $('#imm-skip').disabled = !st.canSkip;
     this.viz?.refresh();
     const pick = () => {
       if (st.cur && this.decks[st.curDeck]?.track) return this.decks[st.curDeck];
@@ -698,6 +708,35 @@ class App {
     if (r.t != null) now.style.left = `${Math.min(100, (r.t / r.len) * 100)}%`;
   }
 
+  // Menú «Radio»: empezar AutoMix con la radio de la pista que suena, la de un deck, la de la lista abierta o una que se busque.
+  bindRadioMenu(btnSel, menuSel) {
+    const btn = $(btnSel);
+    const menu = $(menuSel);
+    const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const close = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+    const open = () => {
+      menu._origins = radioOrigins({ decks: this.decks, list: this.library.base || this.library.rows || [] });
+      menu.innerHTML = menu._origins.map((o) => `<button type="button" role="menuitem" data-id="${o.id}"><b>${esc(o.label)}</b><small>${esc(o.title || o.sub)}</small></button>`).join('');
+      menu.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      menu.querySelector('button')?.focus();
+    };
+    btn.addEventListener('click', () => (menu.hidden ? open() : close()));
+    menu.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-id]');
+      const o = b && menu._origins.find((x) => x.id === b.dataset.id);
+      close();
+      if (!o) return;
+      if (o.id === 'search') {
+        this.setView('library');
+        this.library.show('automix');
+        $('#amv-search').focus();
+      } else this.automix.start({ seed: o.track });
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { close(); btn.focus(); } });
+    document.addEventListener('click', (e) => { if (!menu.hidden && !e.target.closest(menuSel) && !e.target.closest(btnSel)) close(); });
+  }
+
   renderAutoMix() {
     const am = this.automix;
     const st = am.snapshot();
@@ -717,7 +756,7 @@ class App {
       return ['Pendiente', ''];
     };
     $('#btn-automix').classList.toggle('active', st.on);
-    $('#btn-automix span').textContent = st.trans ? 'AutoMix · mezclando' : st.on ? 'AutoMix · activo' : 'AutoMix';
+    $('#btn-automix span').textContent = st.trans ? 'Mezclando' : st.on ? 'AutoMix activo' : 'AutoMix';
     $('#amv-toggle span').textContent = st.on ? 'Detener AutoMix' : 'Iniciar AutoMix';
     $('#amv-mix').disabled = !st.on || !!st.trans;
     $('#amv-mix').classList.toggle('on', !!st.pendingMix);
@@ -748,7 +787,7 @@ class App {
     const planKinds = { outro: 'outro', rotura: 'rotura', final: 'final' };
     $('#amv-cur-sub').textContent = st.cur
       ? [st.cur.artist, `Deck ${st.curDeck}`, st.curInfo?.bpm ? `${st.curInfo.bpm.toFixed(1)} BPM` : '', st.curInfo?.camelot || '', st.plan && Number.isFinite(st.pos) ? `mezcla en ${mmss(Math.max(0, st.plan.exitAt - st.pos))} (${planKinds[st.plan.kind] || 'final'}, ${mmss(st.plan.exitAt)})` : Number.isFinite(st.rem) ? `termina en ${mmss(st.rem)}` : ''].filter(Boolean).join(' · ')
-      : 'Carga una pista y pulsa Iniciar, o usa “Radio” en la librería';
+      : 'Pulsa Iniciar con una pista cargada o elige «Radio»';
     $('#amv-next').textContent = st.next ? st.next.title || '—' : st.on ? 'Buscando en la radio…' : '—';
     $('#amv-next-sub').textContent = st.next ? [st.next.artist, st.queue[0] ? badge(st.queue[0])[0] : '', st.queue[0]?.bpm ? `${st.queue[0].bpm.toFixed(1)} BPM` : '', st.queue[0]?.jump ? 'salto de BPM' : ''].filter(Boolean).join(' · ') : '';
     (this.entryStrip ||= new EntryStrip()).render(st.entry, getComputedStyle(document.documentElement).getPropertyValue(st.curDeck === 'A' ? '--b' : '--a').trim());

@@ -17,11 +17,12 @@ const run = (args) => {
 
 tests.automix = async () => {
   const html = read('renderer/index.html'); const app = read('renderer/app.js');
-  for (const id of ['imm-toggle', 'imm-mix', 'imm-style', 'imm-len', 'imm-skip', 'imm-queue']) assert.ok(!html.includes(`id="${id}"`), `${id} debe retirarse`);
-  assert.ok(html.includes('id="imm-open"') && /imm-open/.test(app), 'botón «Abrir panel de AutoMix»');
+  for (const id of ['imm-style', 'imm-len', 'imm-queue']) assert.ok(!html.includes(`id="${id}"`), `${id} debe retirarse`);
+  for (const id of ['imm-toggle', 'imm-mix', 'imm-skip', 'imm-radio']) assert.ok(html.includes(`id="${id}"`), `${id} en la vista Automix (automix-inicio-y-controles)`);
+  assert.ok(html.includes('id="imm-open"') && /imm-open/.test(app), 'botón «Abrir panel»');
   for (const id of ['amv-toggle', 'amv-mix', 'amv-style', 'amv-len', 'amv-skip']) assert.ok(html.includes(`id="${id}"`), `${id} en el panel`);
   assert.ok(!/Saltar siguiente/.test(html), 'nombre unificado «Siguiente»');
-  assert.ok(/AutoMix · activo/.test(app) && /AutoMix · mezclando/.test(app), 'el botón de la barra muestra el estado');
+  assert.ok(/AutoMix activo/.test(app) && /Mezclando/.test(app), 'el botón de la barra muestra el estado');
   run(['scripts/test-sinvideo.js', 'immersive']);
   run(['scripts/test-salida.js', 'ui']);
   console.log('orden automix: OK');

@@ -122,7 +122,14 @@
       </div>
     </div>
     <div class="imm-controls">
-      <button class="btn primary" id="imm-open" type="button" title="Los controles de AutoMix están en su panel"><svg class="ic"><use href="#i-radio"/></svg><span>Abrir panel de AutoMix</span></button>
+      <button class="btn primary" id="imm-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+      <button class="btn" id="imm-mix" type="button" title="Mezcla ahora con la mejor salida y entrada cercanas (Mayús + →)"><svg class="ic"><use href="#i-skip"/></svg><span>Mezclar ahora</span></button>
+      <button class="btn" id="imm-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg><span>Siguiente</span></button>
+      <span class="am-radio-wrap">
+        <button class="btn" id="imm-radio" type="button" aria-haspopup="menu" aria-expanded="false" title="Empezar AutoMix con la radio de una pista"><svg class="ic"><use href="#i-radio"/></svg><span>Radio</span></button>
+        <div class="am-radio-menu up" id="imm-radio-menu" role="menu" hidden></div>
+      </span>
+      <button class="btn ghost" id="imm-open" type="button" title="Cola, transiciones y ajustes de AutoMix"><span>Abrir panel</span></button>
       <span class="spacer"></span>
       <button class="btn ghost" id="imm-viz-toggle" type="button" aria-pressed="true" title="Visualizador: anillos que laten con el beat"><svg class="ic"><use href="#i-radio"/></svg><span>Visual</span></button>
     </div>
@@ -368,6 +375,15 @@
       <div class="empty" id="qv-empty"><svg class="ic"><use href="#i-queue"/></svg><p>No hay nada en cola. Usa «Analizar lista» en cualquier lista o «Analizar» en una playlist.</p></div>
     </div>
     <div class="am-view" id="am-view" hidden>
+      <div class="am-transport" id="am-transport" role="group" aria-label="Reproducción de AutoMix">
+        <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
+        <button class="btn" id="amv-mix" type="button" title="Busca la salida y la entrada más cercanas que suenen bien y mezcla (Mayús + →; otra pulsación cancela)"><svg class="ic"><use href="#i-skip"/></svg><span id="amv-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
+        <button class="btn" id="amv-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Siguiente</button>
+        <span class="am-radio-wrap">
+          <button class="btn" id="amv-radio" type="button" aria-haspopup="menu" aria-expanded="false" title="Empezar AutoMix con la radio de una pista: la que suena, la de un deck, la de la lista abierta o una que busques"><svg class="ic"><use href="#i-radio"/></svg><span>Radio</span></button>
+          <div class="am-radio-menu" id="amv-radio-menu" role="menu" hidden></div>
+        </span>
+      </div>
       <div class="am-top">
         <div class="am-card am-now"><span class="lbl">SUENA</span><div class="am-title" id="amv-cur">—</div><div class="am-sub" id="amv-cur-sub"></div></div>
         <div class="am-card am-flow">
@@ -387,14 +403,17 @@
           </div>
         </div>
       </div>
+      <div class="am-add">
+        <label class="am-search"><svg class="ic"><use href="#i-search"/></svg><input id="amv-search" type="search" autocomplete="off" placeholder="Buscar para agregar a la cola: YouTube Music, tu librería y lo analizado (Enter agrega la primera)" aria-label="Buscar para agregar a la cola de AutoMix" /></label>
+        <ul class="am-results" id="amv-results" aria-label="Resultados" hidden></ul>
+      </div>
+      <ol class="am-list" id="amv-list" aria-label="Cola de AutoMix"></ol>
+      <section class="am-suggest" id="amv-suggest" hidden>
+        <h3>Sugeridas para continuar <small>BPM, tonalidad, estilo y popularidad desde el final de la cola</small></h3>
+        <ul class="am-results" id="amv-sug-list" aria-label="Sugeridas"></ul>
+      </section>
+      <details class="am-more" id="am-more"><summary>Ajustes de AutoMix <small>transición, cola y fuente</small></summary>
       <div class="am-controls am-groups">
-        <fieldset class="am-group" aria-labelledby="amg-play">
-          <h3 id="amg-play">Reproducción</h3>
-          <div class="am-row">
-            <button class="btn primary" id="amv-toggle" type="button"><svg class="ic"><use href="#i-radio"/></svg><span>Iniciar AutoMix</span></button>
-            <button class="btn" id="amv-mix" type="button" title="Busca la salida y la entrada más cercanas que suenen bien y mezcla (Mayús + →; otra pulsación cancela)"><svg class="ic"><use href="#i-skip"/></svg><span id="amv-mix-label">Mezclar ahora</span> <kbd>⇧→</kbd></button>
-          </div>
-        </fieldset>
         <fieldset class="am-group" aria-labelledby="amg-trans">
           <h3 id="amg-trans">Transición</h3>
           <div class="seg am-profile" id="amv-profile" role="group" aria-label="Perfil de AutoMix">
@@ -428,11 +447,10 @@
             <select id="amv-popw" aria-label="Peso de la popularidad" title="Cuánto pesa la popularidad frente al BPM y la tonalidad"><option value="low">Poco</option><option value="mid">Medio</option><option value="high">Mucho</option></select></label>
           <div class="am-row">
             <button class="btn sm" id="amv-reorder" type="button" title="Reordena toda la cola como una cadena de BPM suave, tonalidad y energía">Reorganizar</button>
-            <button class="btn ghost sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
+            <button class="btn sm" id="amv-undo" type="button" title="Vuelve al orden anterior" disabled>Deshacer</button>
             <button class="btn sm" id="amv-shuffle" type="button" title="Ordena al azar lo que no está fijado; apaga «Orden automático»">Barajar</button>
-            <button class="btn sm" id="amv-skip" type="button" title="Quita la pista que sigue; la mezcla irá a la siguiente"><svg class="ic"><use href="#i-skip"/></svg>Siguiente</button>
-            <button class="btn ghost sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
-            <button class="btn ghost sm" id="amv-clear" type="button">Vaciar</button>
+            <button class="btn sm" id="amv-fill" type="button" title="Añade pistas parecidas de la radio de YouTube Music">Rellenar con radio</button>
+            <button class="btn sm" id="amv-clear" type="button">Vaciar</button>
           </div>
           <span class="am-sub" id="amv-quality" aria-live="polite"></span>
         </fieldset>
@@ -442,15 +460,7 @@
           <label class="check compact"><input type="checkbox" id="amv-endless" /> Seguir con la radio</label>
         </fieldset>
       </div>
-      <div class="am-add">
-        <label class="am-search"><svg class="ic"><use href="#i-search"/></svg><input id="amv-search" type="search" autocomplete="off" placeholder="Buscar para agregar a la cola: YouTube Music, tu librería y lo analizado (Enter agrega la primera)" aria-label="Buscar para agregar a la cola de AutoMix" /></label>
-        <ul class="am-results" id="amv-results" aria-label="Resultados" hidden></ul>
-      </div>
-      <ol class="am-list" id="amv-list" aria-label="Cola de AutoMix"></ol>
-      <section class="am-suggest" id="amv-suggest" hidden>
-        <h3>Sugeridas para continuar <small>BPM, tonalidad, estilo y popularidad desde el final de la cola</small></h3>
-        <ul class="am-results" id="amv-sug-list" aria-label="Sugeridas"></ul>
-      </section>
+      </details>
     </div>
     </div>
   </section>

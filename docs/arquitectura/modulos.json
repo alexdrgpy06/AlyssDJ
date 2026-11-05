@@ -1305,6 +1305,7 @@
       "renderer/automix-add.js",
       "renderer/automix-compat.js",
       "renderer/automix-entry.js",
+      "renderer/automix-origin.js",
       "renderer/automix-profiles.js",
       "renderer/automix-status.js",
       "renderer/automix-timeline.js",
@@ -1335,7 +1336,7 @@
     ],
     "debeVivir": "renderer/app.js",
     "notas": "Cableado de todo: decks, mezclador, librería, AutoMix, ajustes y atajos en 1232 líneas; las vistas deberían tener un archivo cada una.",
-    "lineas": 1232,
+    "lineas": 1271,
     "qa": {
       "logica": null,
       "estatica": "test-fxcues.js",
@@ -1372,7 +1373,7 @@
     ],
     "persiste": [],
     "debeVivir": "renderer/automix-add.js",
-    "lineas": 139,
+    "lineas": 147,
     "qa": {
       "logica": null,
       "estatica": null,
@@ -1440,6 +1441,43 @@
     "lineas": 93,
     "qa": {
       "logica": null,
+      "estatica": null,
+      "arranque": null,
+      "visual": null
+    }
+  },
+  "renderer/automix-origin.js": {
+    "capa": "interfaz",
+    "dominio": "automix",
+    "responsabilidad": "Desde dónde empezar AutoMix y qué pista del otro deck puede ser la siguiente. Funciones puras (sin DOM ni audio).",
+    "api": [
+      "radioOrigins",
+      "otherDeckHead"
+    ],
+    "contrato": [
+      {
+        "nombre": "radioOrigins",
+        "hace": "Orígenes de radio disponibles. decks: { A, B } (con `track` y `st.playing`); list: pistas de la lista abierta; «Buscar» siempre está."
+      },
+      {
+        "nombre": "otherDeckHead",
+        "hace": "Pista del otro deck que puede ser la siguiente: otra distinta, analizada y sin salto brusco de tempo ni tonalidad en choque."
+      }
+    ],
+    "metodos": [],
+    "depende": [
+      "renderer/camelot.js",
+      "renderer/mixplan.js"
+    ],
+    "usadoPor": [
+      "renderer/app.js",
+      "renderer/automix.js"
+    ],
+    "persiste": [],
+    "debeVivir": "renderer/automix-origin.js",
+    "lineas": 37,
+    "qa": {
+      "logica": "test-automix-inicio.js",
       "estatica": null,
       "arranque": null,
       "visual": null
@@ -1669,6 +1707,7 @@
     ],
     "depende": [
       "renderer/automix-compat.js",
+      "renderer/automix-origin.js",
       "renderer/controls.js",
       "renderer/fxcues.js",
       "renderer/genres.js",
@@ -1683,7 +1722,7 @@
       "localStorage:alyssdj:automix"
     ],
     "debeVivir": "renderer/automix.js",
-    "lineas": 1030,
+    "lineas": 1036,
     "qa": {
       "logica": "local-automix-test.mjs",
       "estatica": "test-jog.js",
@@ -1716,6 +1755,7 @@
       "renderer/app.js",
       "renderer/automix-add.js",
       "renderer/automix-compat.js",
+      "renderer/automix-origin.js",
       "renderer/deck.js",
       "renderer/library.js",
       "renderer/mixplan.js",
@@ -2129,7 +2169,7 @@
     "usadoPor": [],
     "persiste": [],
     "debeVivir": "renderer/index.html",
-    "lineas": 657,
+    "lineas": 667,
     "qa": {
       "logica": null,
       "estatica": "test-automix-claro.js",
@@ -2194,7 +2234,7 @@
     "qa": {
       "logica": "test-layouts.js",
       "estatica": null,
-      "arranque": "layouts-selftest.js",
+      "arranque": "automix-inicio-selftest.js",
       "visual": null
     }
   },
@@ -2420,6 +2460,7 @@
     "usadoPor": [
       "renderer/automix-add.js",
       "renderer/automix-compat.js",
+      "renderer/automix-origin.js",
       "renderer/automix.js",
       "renderer/mixpreview.js",
       "renderer/recipes.js"
@@ -2602,7 +2643,7 @@
     "qa": {
       "logica": null,
       "estatica": null,
-      "arranque": "visual-check-selftest.js",
+      "arranque": "automix-inicio-selftest.js",
       "visual": null
     }
   },
@@ -2680,7 +2721,7 @@
     "qa": {
       "logica": "test-sinvideo.js",
       "estatica": null,
-      "arranque": "automix-view-selftest.js",
+      "arranque": "automix-inicio-selftest.js",
       "visual": null
     }
   },

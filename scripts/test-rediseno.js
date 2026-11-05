@@ -72,10 +72,12 @@ tests.sources = async () => {
 
 tests.automix = async () => {
   const html = read('renderer/index.html');
-  // REQ-6: cuatro grupos con título y todos los controles de antes
+  // REQ-6 (actualizado por automix-inicio-y-controles: la reproducción pasó a la barra fija #am-transport): tres grupos de ajustes y la barra
   const groups = [...html.matchAll(/<fieldset class="am-group" aria-labelledby="(amg-\w+)">\s*<h3 id="\1">([^<]+)<\/h3>([\s\S]*?)<\/fieldset>/g)];
-  assert.deepStrictEqual(groups.map((g) => g[2]), ['Reproducción', 'Transición', 'Cola', 'Fuente']);
-  const want = { 'Reproducción': ['amv-toggle', 'amv-mix'], 'Transición': ['amv-style', 'amv-len', 'amv-tempo', 'amv-exit'], 'Cola': ['amv-order', 'amv-reorder', 'amv-undo', 'amv-clear', 'amv-fill', 'amv-pop', 'amv-popw', 'amv-quality'], 'Fuente': ['amv-local', 'amv-endless'] };
+  assert.deepStrictEqual(groups.map((g) => g[2]), ['Transición', 'Cola', 'Fuente']);
+  const bar = html.slice(html.indexOf('id="am-transport"'), html.indexOf('class="am-top"'));
+  for (const id of ['amv-toggle', 'amv-mix', 'amv-skip', 'amv-radio']) assert.ok(bar.includes(`id="${id}"`), `${id} en la barra de reproducción`);
+  const want = { 'Transición': ['amv-style', 'amv-len', 'amv-tempo', 'amv-exit'], 'Cola': ['amv-order', 'amv-reorder', 'amv-undo', 'amv-clear', 'amv-fill', 'amv-pop', 'amv-popw', 'amv-quality'], 'Fuente': ['amv-local', 'amv-endless'] };
   for (const g of groups) for (const id of want[g[2]]) assert.ok(g[3].includes(`id="${id}"`), `${id} en ${g[2]}`);
   for (const id of ['amv-cur', 'amv-next', 'amv-status', 'amv-search', 'amv-list', 'amv-suggest', 'amv-mix-label']) assert.ok(html.includes(`id="${id}"`), `${id} se conserva`);
   assert.ok(/<kbd>⇧→<\/kbd>/.test(html), 'atajo Mayús + → visible');

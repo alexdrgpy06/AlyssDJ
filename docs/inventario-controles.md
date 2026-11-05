@@ -39,11 +39,12 @@ Lista de qué control vive dónde tras el reordenamiento (cambio `interfaz-orden
 
 | Acción | Dónde vive | Retirado de |
 |---|---|---|
-| Iniciar / Detener | Panel de la fuente AutoMix (`amv-toggle`) | Vista Automix (`imm-toggle`), botón de la barra |
-| Mezclar ahora | Panel (`amv-mix`), `Mayús + →` | Vista Automix (`imm-mix`) |
-| Estilo, Duración | Panel (`amv-style`, `amv-len`) | Vista Automix (`imm-style`, `imm-len`) |
-| Siguiente (quitar la que sigue) | Panel (`amv-skip`) | Vista Automix (`imm-skip`) |
-| Ver cola | Panel | Vista Automix (`imm-queue`) → «Abrir panel de AutoMix» (`imm-open`) |
+| Iniciar / Detener | Barra de reproducción del panel (`amv-toggle`) y vista Automix (`imm-toggle`) | botón de la barra |
+| Mezclar ahora | Barra del panel (`amv-mix`), vista Automix (`imm-mix`), `Mayús + →` | — |
+| Radio ▾ (empezar desde una pista) | Barra del panel (`amv-radio`) y vista Automix (`imm-radio`); «Radio» en cada resultado de búsqueda | — |
+| Estilo, Duración | Panel, «Ajustes de AutoMix» (`amv-style`, `amv-len`) | Vista Automix (`imm-style`, `imm-len`) |
+| Siguiente (quitar la que sigue) | Barra del panel (`amv-skip`) y vista Automix (`imm-skip`) | — |
+| Ver cola | Panel | Vista Automix (`imm-queue`) → «Abrir panel» (`imm-open`) |
 | Visual | Vista Automix (`imm-viz-toggle`) | — |
 | Salir, Efectos, Orden, Popularidad, Fuente | Panel | — |
 

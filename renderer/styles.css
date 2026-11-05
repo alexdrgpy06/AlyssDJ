@@ -990,3 +990,35 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .fx-pop select, .fx-pop input { flex: 1; min-width: 0; min-height: 26px; font-size: 11px; }
 .fx-pmsg { margin: 0; min-height: 14px; font-size: 11px; color: var(--dim); }
 .fx-pmsg.err { color: var(--err); }
+
+/* AutoMix: barra de reproducción fija, ajustes plegados y menú «Radio» */
+.am-transport { position: sticky; top: -10px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); margin: -10px -12px 0; background: var(--surface); border-bottom: 1px solid var(--line); }
+.am-transport .btn { min-height: var(--ctl-h-lg); white-space: nowrap; }
+.am-radio-wrap { position: relative; margin-left: auto; }
+.am-radio-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; min-width: 240px; max-width: 320px; display: flex; flex-direction: column; padding: var(--s-1); background: var(--raised-2); border: 1px solid var(--line-2); border-radius: var(--r-3); box-shadow: 0 10px 28px #0008; }
+.am-radio-menu[hidden] { display: none; }
+.am-radio-menu button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: var(--s-2) var(--s-3); background: transparent; border: 0; border-radius: var(--r-2); color: var(--text); text-align: left; cursor: pointer; min-height: 36px; }
+.am-radio-menu button:hover, .am-radio-menu button:focus-visible { background: var(--raised); }
+.am-radio-menu small { color: var(--dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.am-more { border: 1px solid var(--line); border-radius: var(--r-3); background: var(--surface); }
+.am-more > summary { cursor: pointer; padding: var(--s-2) var(--s-3); font-weight: 600; list-style: none; }
+.am-more > summary::-webkit-details-marker { display: none; }
+.am-more > summary::before { content: '▸'; display: inline-block; width: 1.2em; color: var(--dim); }
+.am-more[open] > summary::before { content: '▾'; }
+.am-more > summary small { color: var(--dim); font-weight: 400; margin-left: var(--s-2); }
+.am-more > .am-controls { padding: 0 var(--s-2) var(--s-2); }
+.am-group .seg { flex-wrap: wrap; max-width: 100%; }
+.am-group .seg button { flex: 1 1 auto; white-space: nowrap; }
+.am-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.am-row .btn { white-space: nowrap; }
+.am-radio-menu.up { top: auto; bottom: calc(100% + 4px); }
+.imm-controls { flex-wrap: wrap; }
+.imm-controls .btn { white-space: nowrap; }
+body[data-layout='compact'] .am-view, .lib-main:has(.am-view:not([hidden])) .am-view { gap: 8px; padding-top: 8px; }
+.lib-main:has(.am-view:not([hidden])) .am-card { padding: 6px 12px; }
+.lib-main:has(.am-view:not([hidden])) .am-transport { margin-top: -8px; }
+/* Barra superior: ningún texto se parte; lo que sobra se recorta con puntos suspensivos en la sesión */
+.topbar .btn, .topbar .icon-btn { white-space: nowrap; flex: none; }
+.topbar .session { flex: 0 1 auto; min-width: 0; }
+.topbar .session .btn { white-space: nowrap; }
+#btn-automix span { white-space: nowrap; }

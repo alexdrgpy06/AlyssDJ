@@ -18,7 +18,7 @@ module.exports = (win) => {
       return { view: document.body.dataset.view, imm: vis('#immersive'), console: vis('.console'), library: vis('.library'), waves: vis('.waves'),
         title: document.getElementById('imm-title').textContent, artist: document.getElementById('imm-artist').textContent, bpm: document.getElementById('imm-bpm').textContent,
         origin: document.getElementById('imm-origin').textContent, cover: !!document.getElementById('imm-cover').getAttribute('src'),
-        removed: ['imm-toggle', 'imm-mix', 'imm-style', 'imm-len', 'imm-skip', 'imm-queue'].filter((i) => document.getElementById(i)), open: vis('#imm-open'), status: document.getElementById('imm-status').textContent, sw: document.documentElement.scrollWidth, w: innerWidth, h: innerHeight,
+        removed: ['imm-style', 'imm-len', 'imm-queue'].filter((i) => document.getElementById(i)), open: vis('#imm-open'), status: document.getElementById('imm-status').textContent, sw: document.documentElement.scrollWidth, w: innerWidth, h: innerHeight,
         controls: (() => { const b = document.querySelector('.imm-controls').getBoundingClientRect(); return { b: Math.round(b.bottom) }; })() }`;
     // Alt+3
     await js(`window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit3', key: '3', altKey: true, bubbles: true })); return 1`); await wait(700);

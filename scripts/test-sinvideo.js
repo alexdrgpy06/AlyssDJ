@@ -286,9 +286,9 @@ tests.immersive = async () => {
   assert.deepStrictEqual([r.on.view, r.on.imm, r.on.console, r.on.library, r.on.waves], ['automix', true, false, false, false], 'Alt+3 muestra solo la vista inmersiva');
   assert.ok(r.on.title && r.on.title !== 'Nada cargado' && /Deck [AB]/.test(r.on.artist), `pista que suena: ${r.on.title} / ${r.on.artist}`);
   assert.ok(/BPM/.test(r.on.bpm) && r.on.origin === 'ARCHIVO' && r.on.cover);
-  assert.deepStrictEqual([r.on.removed, r.on.open], [[], true], 'la vista Automix ya no repite los controles');
+  assert.deepStrictEqual([r.on.removed, r.on.open], [[], true], 'la vista Automix no repite estilo, duración ni cola (sí inicia, mezcla y salta; cambio automix-inicio-y-controles)');
   assert.deepStrictEqual([r.queue.view, r.queue.tab, r.queue.amView], ['library', 'automix', true], '«Abrir panel de AutoMix» abre la fuente AutoMix');
-  assert.deepStrictEqual([r.started.on, r.started.label, r.started.bar], [true, 'Detener AutoMix', 'AutoMix · activo']);
+  assert.deepStrictEqual([r.started.on, r.started.label, r.started.bar], [true, 'Detener AutoMix', 'AutoMix activo']);
   assert.deepStrictEqual([r.stopped.on, r.stopped.label, r.stopped.bar], [false, 'Iniciar AutoMix', 'AutoMix']);
   assert.ok(r.small.sw <= r.small.w + 1 && r.small.controls.b <= r.small.h, `1366x768 cabe: ${JSON.stringify(r.small)}`);
   console.log('immersive: OK');

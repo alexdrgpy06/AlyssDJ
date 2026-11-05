@@ -97,7 +97,7 @@ export class AddPanel {
       <div class="am-info"><b title="${esc(t.title)}">${esc(t.title)}</b><small>${esc(sub)}</small></div>
       <span class="am-meta">${chips(t, a)}${kind === 'sug' && t.cost != null ? `<span class="am-q ${t.cost < 6 ? 'good' : t.cost < 14 ? 'ok' : 'poor'}" title="Calidad de la transición desde el final de la cola">${t.cost < 6 ? '●●●' : t.cost < 14 ? '●●○' : '●○○'}</span>` : ''}${kind === 'sug' && !t.analyzed ? '<small class="am-wait">analizando…</small>' : ''}${kind === 'sug' && t.fits === false ? '<small class="am-misfit" title="Salto de BPM o tonalidad incompatible">no encaja</small>' : ''}</span>
       <span class="am-hint">${known ? 'ya está en la cola' : pos ? `→ posición ${pos}` : a ? '' : 'se analizará'}</span>
-      <span class="am-actions"><button class="btn sm" data-act="add" ${known ? 'disabled' : ''}>Agregar</button><button class="btn ghost sm" data-act="next" ${known ? 'disabled' : ''} title="Ponerla la siguiente">A continuación</button></span></li>`;
+      <span class="am-actions"><button class="btn sm" data-act="add" ${known ? 'disabled' : ''}>Agregar</button><button class="btn ghost sm" data-act="next" ${known ? 'disabled' : ''} title="Ponerla la siguiente">A continuación</button>${kind === 'results' ? '<button class="btn ghost sm" data-act="radio" title="Empezar AutoMix con la radio de esta pista">Radio</button>' : ''}</span></li>`;
   }
 
   render() {
@@ -120,6 +120,14 @@ export class AddPanel {
     const b = e.target.closest('button[data-act]');
     const li = e.target.closest('li[data-i]');
     if (!b || !li) return;
+    if (b.dataset.act === 'radio') {
+      const t = (kind === 'sug' ? this.sug : this.results)[Number(li.dataset.i)];
+      if (t) {
+        const { source, cost, analyzed, fits, ...seed } = t;
+        this.app.automix.start({ seed });
+      }
+      return;
+    }
     this.add(Number(li.dataset.i), { next: b.dataset.act === 'next', kind });
   }
 

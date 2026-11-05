@@ -29,7 +29,15 @@ module.exports = (win) => {
   }
 
   async function shot(name) {
-    const img = await wc.capturePage();
+    // espera a que la imagen deje de cambiar (diálogos que aparecen, ondas que se dibujan) antes de comparar
+    let img = await wc.capturePage();
+    for (let i = 0; i < 20; i++) {
+      await wait(200);
+      const next = await wc.capturePage();
+      const same = Buffer.compare(img.toBitmap(), next.toBitmap()) === 0;
+      img = next;
+      if (same) break;
+    }
     fs.writeFileSync(path.join(out, `${name}.png`), img.toPNG());
     const refFile = path.join(refs, `${name}.png`);
     const rec = { nombre: name };
@@ -63,7 +71,7 @@ module.exports = (win) => {
       await view('mix', `document.querySelector('#deck-A .deck-more').click();`); await shot('deck-menu');
       await js(`document.querySelector('#deck-A .deck-more').click(); document.getElementById('btn-settings').click(); return 1`);
       await wait(900);
-      await js(`__app.setSettingsPane('general'); return 1`); await wait(300); await shot('ajustes');
+      await js(`__app.setSettingsPane('general'); return 1`); await wait(1500); await shot('ajustes');
     } catch (e) { result.errores.push(String(e.stack || e).slice(0, 400)); }
     done();
   });

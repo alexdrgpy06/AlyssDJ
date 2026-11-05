@@ -6,7 +6,8 @@ AutoMix es un DJ automático: elige la siguiente pista y la **mezcla solo**, con
 
 ## Cómo iniciarlo
 
-- **Con lo que suena**: carga una pista, abre la fuente **AutoMix** (en el panel de la librería, o el botón de la barra superior) y pulsa **Iniciar AutoMix**.
+- **Con lo que suena**: carga una pista, abre la fuente **AutoMix** (en el panel de la librería, o el botón de la barra superior) y pulsa **Iniciar AutoMix**. Si el otro deck ya tiene una pista analizada y compatible (BPM y tonalidad), será la siguiente antes de buscar en la radio.
+- **Desde una radio**: el botón **Radio ▾** (en la barra del panel y en la vista **Automix**) ofrece empezar con la radio de **lo que suena**, de **Deck A** o **Deck B**, de la **lista abierta** o de una pista que **busques** (cada resultado del buscador de AutoMix tiene su botón **Radio**). Con el modo local o sin sesión la cola se llena con pistas compatibles de tu equipo.
 - **Desde una pista**: botón **Radio** en su fila de la librería.
 - **Desde una lista**: **AutoMix de esta lista** mezcla la lista seguida. Al acabarse sigue con la radio, salvo que lo desactives.
 - **A tu medida**: añade pistas con **+**, o **arrástralas desde la librería** a la posición que quieras dentro de la cola.
@@ -200,9 +201,9 @@ Durante la transición la vista muestra de qué deck a cuál se mezcla, el estil
 
 Los controles de AutoMix están agrupados por función, con título:
 
-- **Reproducción:** iniciar o detener AutoMix y **Mezclar ahora** (**⇧→**).
+- **Barra de reproducción** (siempre visible arriba del panel y en la vista **Automix**): iniciar o detener, **Mezclar ahora** (**⇧→**), **Siguiente** y **Radio ▾**. Los ajustes siguientes están plegados en **Ajustes de AutoMix**, debajo de la cola.
 - **Transición:** estilo (fundido, bass swap, filtro), duración, igualar tempo y fase, **Salir** (cuándo sale la pista que suena) y **Efectos** (apagado, sutil o marcado).
-- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Siguiente**, **Rellenar con radio** y **Vaciar**.
+- **Cola:** orden automático, **Priorizar lo popular** (con su peso), **Reorganizar**, **Barajar**, **Deshacer**, **Rellenar con radio** y **Vaciar**.
   - **Barajar** ordena al azar lo que no está fijado (no mueve lo fijado a mano ni la pista que ya se está preparando), apaga «Orden automático» para que no rehaga el orden y se puede **Deshacer**.
   - **Siguiente** quita de la cola la pista que sigue; la mezcla irá a la que venía después. También está en la vista **Automix**.
 - **Fuente:** analizar y usar el archivo (evita anuncios) y seguir con la radio.

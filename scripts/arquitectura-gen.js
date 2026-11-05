@@ -49,6 +49,7 @@ const SEED = {
   'renderer/automix-add.js': ['automix'],
   'renderer/automix-compat.js': ['automix'],
   'renderer/automix-entry.js': ['automix'],
+  'renderer/automix-origin.js': ['automix'],
   'renderer/automix-profiles.js': ['automix'],
   'renderer/automix-status.js': ['automix'],
   'renderer/automix-timeline.js': ['automix'],

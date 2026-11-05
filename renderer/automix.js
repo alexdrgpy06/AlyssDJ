@@ -5,6 +5,7 @@ import { compat } from './automix-compat.js';
 import { controls } from './controls.js';
 import { fxCues, planTransitionMoves, planTrackMoves, FxMoves, LEVELS } from './fxcues.js';
 import { genres } from './genres.js';
+import { otherDeckHead } from './automix-origin.js';
 import { chooseStyle, planRecipe, gestureValue, STYLE_LABEL, GESTURE_LABEL } from './recipes.js';
 import { EXIT_MODES, planTransition, planNearest, pickEntry, rankCandidates, songKey, bestInsertion, pickNext, orderChain, edgeCost, bpmGap, PITCH_LIMIT, HOME_MS, MAX_BPM_GAP } from './mixplan.js';
 
@@ -130,7 +131,7 @@ export class AutoMix {
       deck = [A, B].find((d) => d.track && d.st.playing) || [A, B].find((d) => d.track);
       first = deck?.track;
     }
-    if (!first) return this.app.toast('Carga una pista, o usa “Radio” en la librería, para iniciar el AutoMix.', true);
+    if (!first) return this.app.toast('Carga una pista o elige «Radio» para iniciar el AutoMix.', true);
 
     this.on = true;
     if (!deck) {
@@ -151,6 +152,11 @@ export class AutoMix {
     }
     this.cur = deck;
     this.setX(side(deck.id));
+    // Sin lista propia, la pista ya cargada en el otro deck (si encaja) es la siguiente, antes de ir a la radio.
+    if (!tracks?.length) {
+      const head = otherDeckHead(deck, this.app.other(deck), this.ana);
+      if (head) this.queue.unshift(head);
+    }
     this.history.add(first.videoId);
     this.histTracks.push(first);
     this.note = '';

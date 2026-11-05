@@ -4,15 +4,15 @@
 
 Módulos que corren en la ventana: algunos son puros (sin DOM) y se prueban en Node; los que tocan el DOM se prueban dentro de Electron con autopruebas (`YTDJ_SELFTEST_MODULE`).
 
-37 módulos.
+38 módulos.
 
 ### `renderer/app.js`
 
-**Dominio:** ui · **Líneas:** 1232
+**Dominio:** ui · **Líneas:** 1271
 
 Punto de entrada de la interfaz: crea los dos decks y el mezclador y cablea sesión, librería, AutoMix, sampler, grabación, vistas, ajustes, atajos y MIDI.
 
-- **Depende de:** `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/automix-entry.js`, `renderer/automix-profiles.js`, `renderer/automix-status.js`, `renderer/automix-timeline.js`, `renderer/automix.js`, `renderer/camelot.js`, `renderer/controls.js`, `renderer/deck.js`, `renderer/genres.js`, `renderer/knob.js`, `renderer/layout.js`, `renderer/library.js`, `renderer/midi.js`, `renderer/mixeditor.js`, `renderer/recipes.js`, `renderer/sampler.js`, `renderer/settings-ui.js`, `renderer/splits.js`, `renderer/stems.js`, `renderer/update-ui.js`, `renderer/views.js`, `renderer/viz.js`
+- **Depende de:** `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/automix-entry.js`, `renderer/automix-origin.js`, `renderer/automix-profiles.js`, `renderer/automix-status.js`, `renderer/automix-timeline.js`, `renderer/automix.js`, `renderer/camelot.js`, `renderer/controls.js`, `renderer/deck.js`, `renderer/genres.js`, `renderer/knob.js`, `renderer/layout.js`, `renderer/library.js`, `renderer/midi.js`, `renderer/mixeditor.js`, `renderer/recipes.js`, `renderer/sampler.js`, `renderer/settings-ui.js`, `renderer/splits.js`, `renderer/stems.js`, `renderer/update-ui.js`, `renderer/views.js`, `renderer/viz.js`
 - **Lo usan:** `renderer/index.html`
 - **Guarda:** `localStorage:alyssdj:history`
 - **Nota:** Cableado de todo: decks, mezclador, librería, AutoMix, ajustes y atajos en 1232 líneas; las vistas deberían tener un archivo cada una.
@@ -20,7 +20,7 @@ Punto de entrada de la interfaz: crea los dos decks y el mezclador y cablea sesi
 
 ### `renderer/automix-add.js`
 
-**Dominio:** automix · **Líneas:** 139
+**Dominio:** automix · **Líneas:** 147
 
 Buscar y agregar desde la vista de AutoMix: resultados (YouTube Music + librería), sugeridas para continuar y su pintado.
 
@@ -78,6 +78,21 @@ Tarjeta «SIGUE»: punto de entrada elegido para la pista que sigue (tiempo, com
 - **Depende de:** —
 - **Lo usan:** `renderer/app.js`
 - **Pruebas:** lógica **sin prueba**
+
+### `renderer/automix-origin.js`
+
+**Dominio:** automix · **Líneas:** 37
+
+Desde dónde empezar AutoMix y qué pista del otro deck puede ser la siguiente. Funciones puras (sin DOM ni audio).
+
+| Exporta | Qué hace |
+|---|---|
+| `radioOrigins` | Orígenes de radio disponibles. decks: { A, B } (con `track` y `st.playing`); list: pistas de la lista abierta; «Buscar» siempre está. |
+| `otherDeckHead` | Pista del otro deck que puede ser la siguiente: otra distinta, analizada y sin salto brusco de tempo ni tonalidad en choque. |
+
+- **Depende de:** `renderer/camelot.js`, `renderer/mixplan.js`
+- **Lo usan:** `renderer/app.js`, `renderer/automix.js`
+- **Pruebas:** lógica `scripts/test-automix-inicio.js`
 
 ### `renderer/automix-profiles.js`
 
@@ -141,7 +156,7 @@ Línea de tiempo de la próxima mezcla: la pista que sale (arriba) y la que entr
 
 ### `renderer/automix.js`
 
-**Dominio:** automix · **Líneas:** 1030
+**Dominio:** automix · **Líneas:** 1036
 
 AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Music (pistas parecidas a la actual); la siguiente se precarga en el deck libre y se mezcla sola: tempo y fase igualados (si hay BPM), fundido, bass swap o filtro.
 
@@ -186,7 +201,7 @@ AutoMix: DJ automático. La cola sale de una lista o de la "radio" de YouTube Mu
 
 </details>
 
-- **Depende de:** `renderer/automix-compat.js`, `renderer/controls.js`, `renderer/fxcues.js`, `renderer/genres.js`, `renderer/mixplan.js`, `renderer/mixpreview.js`, `renderer/recipes.js`
+- **Depende de:** `renderer/automix-compat.js`, `renderer/automix-origin.js`, `renderer/controls.js`, `renderer/fxcues.js`, `renderer/genres.js`, `renderer/mixplan.js`, `renderer/mixpreview.js`, `renderer/recipes.js`
 - **Lo usan:** `renderer/app.js`
 - **Guarda:** `localStorage:alyssdj:automix`
 - **Pruebas:** lógica `scripts/local-automix-test.mjs` · estática `scripts/test-jog.js` · en la app `scripts/automix-add-selftest.js`
@@ -204,7 +219,7 @@ Rueda Camelot: color por clave y compatibilidad armónica entre pistas.
 | `bpmCompatible` | BPM dentro de ±tol (también a mitad o doble de tempo). |
 
 - **Depende de:** —
-- **Lo usan:** `renderer/app.js`, `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/deck.js`, `renderer/library.js`, `renderer/mixplan.js`, `renderer/recipes.js`
+- **Lo usan:** `renderer/app.js`, `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/automix-origin.js`, `renderer/deck.js`, `renderer/library.js`, `renderer/mixplan.js`, `renderer/recipes.js`
 - **Pruebas:** lógica `scripts/test-local.js` · en la app `scripts/local-selftest.js`
 
 ### `renderer/controls.js`
@@ -405,7 +420,7 @@ Géneros de las pistas en la interfaz: mapa id → etiquetas (viene del almacén
 
 ### `renderer/index.html`
 
-**Dominio:** ui · **Líneas:** 657
+**Dominio:** ui · **Líneas:** 667
 
 Documento HTML de la interfaz: estructura de las vistas, decks, mezclador, librería y diálogos.
 
@@ -444,7 +459,7 @@ Perfiles de diseño según el tamaño de la ventana: compacto (portátiles peque
 
 - **Depende de:** —
 - **Lo usan:** `renderer/app.js`
-- **Pruebas:** lógica `scripts/test-layouts.js` · en la app `scripts/layouts-selftest.js`
+- **Pruebas:** lógica `scripts/test-layouts.js` · en la app `scripts/automix-inicio-selftest.js`
 
 ### `renderer/library.js`
 
@@ -547,7 +562,7 @@ Plan de mezcla (funciones puras): cuándo salir de la pista que suena, dónde en
 | `fits` | — |
 
 - **Depende de:** `renderer/camelot.js`, `renderer/fxcues.js`
-- **Lo usan:** `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/automix.js`, `renderer/mixpreview.js`, `renderer/recipes.js`
+- **Lo usan:** `renderer/automix-add.js`, `renderer/automix-compat.js`, `renderer/automix-origin.js`, `renderer/automix.js`, `renderer/mixpreview.js`, `renderer/recipes.js`
 - **Pruebas:** lógica `scripts/test-automix-add.js`
 
 ### `renderer/mixpreview.js`
@@ -636,7 +651,7 @@ Sampler de 8 pads: sonidos sintetizados de fábrica (sin archivos) o tus propios
 - **Depende de:** `renderer/controls.js`
 - **Lo usan:** `renderer/app.js`
 - **Guarda:** `localStorage:alyssdj:sampler`
-- **Pruebas:** lógica **sin prueba** · en la app `scripts/visual-check-selftest.js`
+- **Pruebas:** lógica **sin prueba** · en la app `scripts/automix-inicio-selftest.js`
 
 ### `renderer/settings-ui.js`
 
@@ -669,7 +684,7 @@ Fuente de una pista: archivo (local o copia guardada) o streaming. Función pura
 
 - **Depende de:** —
 - **Lo usan:** `renderer/deck.js`, `renderer/library.js`
-- **Pruebas:** lógica `scripts/test-sinvideo.js` · en la app `scripts/automix-view-selftest.js`
+- **Pruebas:** lógica `scripts/test-sinvideo.js` · en la app `scripts/automix-inicio-selftest.js`
 
 ### `renderer/splits.js`
 
