@@ -60,13 +60,14 @@ module.exports = (win) => {
         __app.setView('library'); __app.library.show('automix'); await new Promise((r) => setTimeout(r, 600));
         const W = innerWidth, H = innerHeight, view = q('#am-view');
         const bad = [...view.querySelectorAll('button, select, input')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > W + 1 || r.left < -1); }).map((e) => e.id || e.className);
+        const badInfo = [...view.querySelectorAll('button, select, input')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > W + 1 || r.left < -1); }).map((e) => { const r = e.getBoundingClientRect(); return [e.id || e.className, Math.round(r.left), Math.round(r.right), e.parentElement?.className || e.parentElement?.id]; });
         const seg = q('#amv-style'); const segClip = seg.scrollWidth > seg.clientWidth + 1;
         const list = q('#amv-list').getBoundingClientRect(); const search = q('#amv-search').getBoundingClientRect();
         const one = (e) => e.getClientRects().length <= 1 && e.getBoundingClientRect().height < 40;
         __app.automix.on = true; __app.renderAutoMix(); __app.automix.on = false;
         const btn = q('#btn-automix'); const sess = q('#session-label');
         const vs = { viewScroll: view.scrollWidth > view.clientWidth + 1 };
-        return { W, H, bad, segClip, searchTop: Math.round(search.top), listTop: Math.round(list.top), automixBtnOne: one(q('#btn-automix span')) && btn.getBoundingClientRect().height < 40, sessionOne: one(sess) || getComputedStyle(sess).whiteSpace === 'nowrap', ...vs };`);
+        return { W, H, bad, badInfo, segClip, searchTop: Math.round(search.top), listTop: Math.round(list.top), automixBtnOne: one(q('#btn-automix span')) && btn.getBoundingClientRect().height < 40, sessionOne: one(sess) || getComputedStyle(sess).whiteSpace === 'nowrap', ...vs };`);
 
       // ---- inmersiva ----
       await js(`__app.setView('automix'); return 1`); await wait(800);

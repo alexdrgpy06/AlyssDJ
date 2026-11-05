@@ -551,9 +551,9 @@ fieldset { min-width: 0; }
 .inline-hint { color: var(--faint); font-size: 11px; margin-left: 6px; }
 
 /* ---------- vista AutoMix ---------- */
-.am-view { overflow: auto; min-height: 0; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-color: var(--line-2) transparent; }
+.am-view { overflow: auto; min-height: 0; padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px; scrollbar-color: var(--line-2) transparent; }
 .am-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); gap: 10px; }
-.am-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.am-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .am-now { border-top: 2px solid var(--play); }
 .am-next { border-top: 2px solid var(--cue); }
 .am-flow { justify-content: center; }
@@ -992,7 +992,7 @@ body[data-waves='deck'] .splitter[data-split='waves'] { display: none; }
 .fx-pmsg.err { color: var(--err); }
 
 /* AutoMix: barra de reproducción fija, ajustes plegados y menú «Radio» */
-.am-transport { position: sticky; top: -10px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); margin: -10px -12px 0; background: var(--surface); border-bottom: 1px solid var(--line); }
+.am-transport { position: sticky; top: -8px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); margin: -8px -12px 0; background: var(--surface); border-bottom: 1px solid var(--line); }
 .am-transport .btn { min-height: var(--ctl-h-lg); white-space: nowrap; }
 .am-radio-wrap { position: relative; margin-left: auto; }
 .am-radio-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; min-width: 240px; max-width: 320px; display: flex; flex-direction: column; padding: var(--s-1); background: var(--raised-2); border: 1px solid var(--line-2); border-radius: var(--r-3); box-shadow: 0 10px 28px #0008; }
